@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import (
-    TrainingData, Employee, CourseCategory, Course,
+    Employee, CourseCategory, Course,
     Vendor, TnaPeriod, TnaMaster, TnaParticipant, Hotel,
     TrainingMaster, TrainingEvent, EventLocation, EventSchedule,
     EventParticipant, EventCost, EventDocument, Division,
@@ -67,25 +67,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
 
-class TrainingDataSerializer(serializers.ModelSerializer):
-    employee_name = serializers.CharField(source='employee.full_name', read_only=True)
-    employee_division = serializers.CharField(source='employee.division.division_name', read_only=True)
 
-    class Meta:
-        model = TrainingData
-        fields = [
-            'id',
-            'employee',           
-            'employee_name',      
-            'employee_division',  
-            'training_name',
-            'description',
-            'training_date',
-            'status',
-            'created_at',
-            'updated_at',
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 # Super admin serializer
@@ -149,25 +131,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
             pass
         return "Employee"
 
-    def get_attended_events(self, obj):
-        # Use prefetched data from employee_viewset to avoid N+1
-        if hasattr(obj, '_prefetched_events'):
-            return obj._prefetched_events
-        
-        # Fallback if not prefetched
-        events = list(obj.eventparticipant_set.select_related('event', 'event__training').prefetch_related('event__schedules').all())
-        obj._prefetched_events = events
-        return events
-
-    def get_completed_events(self, obj):
-        # Count as 'completed' if the event is NOT cancelled AND the employee was NOT absent
-        return [
-            ep for ep in self.get_attended_events(obj) 
-            if ep.event.status.lower() != 'cancelled' and ep.attendance_status != 'Absent'
-        ]
-
     def get_attendance_details(self, obj):
-        events = self.get_completed_events(obj)
+        events = obj.completed_events
         details = []
         from datetime import datetime, date
         for ep in events:
@@ -190,107 +155,43 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return details
 
     def get_attendance(self, obj):
-        return len(self.get_completed_events(obj))
-
-    def get_training_stats(self, obj):
-        if hasattr(obj, '_training_stats'):
-            return obj._training_stats
-        
-        stats = {
-            'inhouse_count': 0, 'public_count': 0, 'ks_count': 0, 'elearning_count': 0,
-            'inhouse_hours': 0, 'public_hours': 0, 'ks_hours': 0, 'elearning_hours': 0,
-            'total_hours': 0
-        }
-        
-        events = self.get_completed_events(obj)
-        from datetime import datetime, date
-        
-        for ep in events:
-            tt = (ep.event.training.training_type or '').strip()
-            
-            # Calculate hours for this event
-            event_hours = 0
-            for sch in ep.event.schedules.all():
-                if sch.start_time and sch.end_time:
-                    dummy_date = date(2000, 1, 1)
-                    t1 = datetime.combine(dummy_date, sch.start_time)
-                    t2 = datetime.combine(dummy_date, sch.end_time)
-                    event_hours += (t2 - t1).total_seconds() / 3600
-            
-            # Map to stats
-            if tt == 'Inhouse Training':
-                stats['inhouse_count'] += 1
-                stats['inhouse_hours'] += event_hours
-            elif tt == 'Public Training':
-                stats['public_count'] += 1
-                stats['public_hours'] += event_hours
-            elif tt == 'Knowledge Sharing':
-                stats['ks_count'] += 1
-                stats['ks_hours'] += event_hours
-            elif tt == 'E-Learning':
-                stats['elearning_count'] += 1
-                stats['elearning_hours'] += event_hours
-            
-            stats['total_hours'] += event_hours
-            
-        obj._training_stats = stats
-        return stats
+        return obj.attendance
 
     def get_inhouse_training(self, obj):
-        return self.get_training_stats(obj)['inhouse_count']
+        return obj.training_stats['inhouse_count']
 
     def get_public_training(self, obj):
-        return self.get_training_stats(obj)['public_count']
+        return obj.training_stats['public_count']
 
     def get_knowledge_sharing(self, obj):
-        return self.get_training_stats(obj)['ks_count']
+        return obj.training_stats['ks_count']
 
     def get_elearning(self, obj):
-        return self.get_training_stats(obj)['elearning_count']
+        return obj.training_stats['elearning_count']
 
     def get_iht_plus_public(self, obj):
-        stats = self.get_training_stats(obj)
-        return stats['inhouse_count'] + stats['public_count']
+        return obj.iht_plus_public
 
     def get_total_hours(self, obj):
-        return round(self.get_training_stats(obj)['total_hours'], 2)
+        return obj.total_hours
 
     def get_inhouse_hours(self, obj):
-        return round(self.get_training_stats(obj)['inhouse_hours'], 2)
+        return round(obj.training_stats['inhouse_hours'], 2)
 
     def get_public_hours(self, obj):
-        return round(self.get_training_stats(obj)['public_hours'], 2)
+        return round(obj.training_stats['public_hours'], 2)
 
     def get_ks_hours(self, obj):
-        return round(self.get_training_stats(obj)['ks_hours'], 2)
+        return round(obj.training_stats['ks_hours'], 2)
 
     def get_elearning_hours(self, obj):
-        return round(self.get_training_stats(obj)['elearning_hours'], 2)
+        return round(obj.training_stats['elearning_hours'], 2)
 
     def get_tna_count(self, obj):
-        if hasattr(obj, 'tnaparticipant_set'):
-            return obj.tnaparticipant_set.count()
-        from .models import TnaParticipant
-        return TnaParticipant.objects.filter(nik=obj).count()
+        return obj.tnaparticipant_set.count()
 
     def get_tna_fulfilled(self, obj):
-        tna_list = []
-        if hasattr(obj, 'tnaparticipant_set'):
-            tna_list = obj.tnaparticipant_set.all()
-        else:
-            from .models import TnaParticipant
-            tna_list = TnaParticipant.objects.filter(nik=obj).select_related('tna', 'tna__course')
-        
-        if not tna_list:
-            return 0
-            
-        events = self.get_completed_events(obj)
-        attended_course_ids = set(ep.event.training.course_id for ep in events)
-        fulfilled_count = 0
-        for tp in tna_list:
-            if tp.tna.course_id in attended_course_ids:
-                fulfilled_count += 1
-        return fulfilled_count
+        return obj.tna_fulfilled
 
 
 class CourseCategorySerializer(serializers.ModelSerializer):
@@ -386,13 +287,23 @@ class TnaParticipantSerializer(serializers.ModelSerializer):
     position_name = serializers.CharField(source='nik.position_name', read_only=True)
     course_name = serializers.CharField(source='tna.course.course_name', read_only=True)
     category_name = serializers.CharField(source='tna.course_category.category_name', read_only=True)
+    
+    iht_plus_public = serializers.SerializerMethodField()
+    tna_fulfilled = serializers.SerializerMethodField()
 
     class Meta:
         model = TnaParticipant
         fields = [
             'tna_participant_id', 'tna', 'category_name', 'course_name', 
-            'nik', 'employee_name', 'division_name', 'position_name'
+            'nik', 'employee_name', 'division_name', 'position_name',
+            'iht_plus_public', 'tna_fulfilled'
         ]
+
+    def get_iht_plus_public(self, obj):
+        return obj.nik.iht_plus_public
+
+    def get_tna_fulfilled(self, obj):
+        return obj.nik.tna_fulfilled
 
 
 class HotelSerializer(serializers.ModelSerializer):

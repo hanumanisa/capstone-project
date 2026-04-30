@@ -63,7 +63,8 @@ export default function TrainingEvaluationPage() {
     const loadTrainingMasters = async () => {
         try {
             const res = await api.get('/api/training-master/');
-            setTrainingMasters(res.data);
+            const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+            setTrainingMasters(data);
         } catch (err) {
             console.error("Failed to fetch trainings", err);
         }
@@ -508,7 +509,7 @@ export default function TrainingEvaluationPage() {
                             <select
                                 value={selectedMainTemplate}
                                 onChange={e => setSelectedMainTemplate(e.target.value)}
-                                className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] focus:border-transparent appearance-none bg-no-repeat bg-right-4"
+                                className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
                                 style={{
                                     backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
                                     backgroundSize: '20px 20px',
@@ -579,51 +580,101 @@ export default function TrainingEvaluationPage() {
 
                 {/* Template Modal */}
                 {showTpl && (
-                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden p-8 relative">
-                            <h2 className="text-3xl font-bold text-gray-800 mb-2">Templates Form</h2>
-                            <hr className="mb-8 border-gray-200" />
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-10 relative">
+                            <button 
+                                onClick={() => { setShowTpl(false); setTplName(''); }}
+                                className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+
+                            <h2 className="text-4xl font-bold text-black mb-2">Templates Form</h2>
+                            <p className="text-sm text-gray-400 mb-8">Create a new evaluation template header</p>
+                            <hr className="mb-10 border-gray-100" />
+                            
                             <div className="space-y-6">
-                                <div className="mb-4">
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Select Training <span className="text-red-500">*</span></label>
-                                    <select
-                                        value={tplTrainingId}
-                                        onChange={e => setTplTrainingId(e.target.value)}
-                                        className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2174C3] transition-all bg-white"
+                                <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                                    <label className="text-black font-semibold">Select Training <span className="text-red-500">*</span></label>
+                                    <div className="sm:col-span-2">
+                                        <select
+                                            value={tplTrainingId}
+                                            onChange={e => setTplTrainingId(e.target.value)}
+                                            className="w-full border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-[#2174C3] transition-all bg-gray-100 text-black outline-none"
+                                        >
+                                            <option value="">-- Choose Training --</option>
+                                            {trainingMasters.map(t => (
+                                                <option key={t.training_id} value={t.training_id}>{t.training_title} ({t.training_code})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                                    <label className="text-black font-semibold">Template Name <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="text" 
+                                        value={tplName} 
+                                        onChange={e => setTplName(e.target.value)} 
+                                        placeholder="Enter template name..." 
+                                        className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none text-sm text-black" 
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                                    <label className="text-black font-semibold">Template Type</label>
+                                    <select 
+                                        value={tplType} 
+                                        onChange={e => setTplType(e.target.value)} 
+                                        className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none text-sm text-black"
                                     >
-                                        <option value="">-- Choose Training --</option>
-                                        {trainingMasters.map(t => (
-                                            <option key={t.training_id} value={t.training_id}>{t.training_title} ({t.training_code})</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="grid grid-cols-3 items-center">
-                                    <label className="text-gray-600 font-semibold">Template Name <span className="text-red-400">*</span></label>
-                                    <input type="text" value={tplName} onChange={e => setTplName(e.target.value)} placeholder="Enter template name..." className="col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none text-sm" />
-                                </div>
-                                <div className="grid grid-cols-3 items-center">
-                                    <label className="text-gray-600 font-semibold">Template Type</label>
-                                    <select value={tplType} onChange={e => setTplType(e.target.value)} className="col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none text-sm">
                                         <option value="L1_Templates">L1_Templates</option>
                                         <option value="L2_Templates">L2_Templates</option>
                                     </select>
                                 </div>
-                                <div className="grid grid-cols-3 items-start">
-                                    <label className="text-gray-600 font-semibold pt-2">Description</label>
-                                    <textarea value={tplDesc} onChange={e => setTplDesc(e.target.value)} placeholder="Template description..." className="col-span-2 bg-gray-100 border-none rounded-lg p-3 h-24 resize-none focus:ring-2 focus:ring-[#2174C3] outline-none text-sm"></textarea>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 items-start gap-4">
+                                    <label className="text-black font-semibold pt-2">Description</label>
+                                    <textarea 
+                                        value={tplDesc} 
+                                        onChange={e => setTplDesc(e.target.value)} 
+                                        placeholder="Template description..." 
+                                        className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 h-32 resize-none focus:ring-2 focus:ring-[#2174C3] outline-none text-sm text-black"
+                                    ></textarea>
                                 </div>
-                                <div className="grid grid-cols-3 items-center">
-                                    <label className="text-gray-600 font-semibold">Deadline</label>
-                                    <input type="datetime-local" value={tplDeadline} onChange={e => setTplDeadline(e.target.value)} className="col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none text-sm" />
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                                    <label className="text-black font-semibold">Deadline</label>
+                                    <input 
+                                        type="datetime-local" 
+                                        value={tplDeadline} 
+                                        onChange={e => setTplDeadline(e.target.value)} 
+                                        className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none text-sm text-black" 
+                                    />
                                 </div>
                             </div>
-                            <div className="mt-3 text-right space-y-1">
+
+                            <div className="mt-6 flex flex-col items-end space-y-2">
                                 {!tplName.trim() && <p className="text-xs text-red-400">* Template name is required</p>}
-                                {tplName.trim() && tplNameDuplicate && <p className="text-xs text-red-400">* Name "{tplName.trim()}" is already used for this training in {tplType}</p>}
-                            </div>
-                            <div className="flex justify-end space-x-2 mt-4">
-                                <button onClick={() => { setShowTpl(false); setTplName(''); setTplType('L1_Templates'); setTplDesc(''); }} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Cancel</button>
-                                <button onClick={submitTemplate} disabled={!tplName.trim() || tplNameDuplicate} className={`text-white px-4 py-1 text-sm rounded font-medium shadow transition-all disabled:opacity-50 cursor-pointer ${(!tplName.trim() || tplNameDuplicate) ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#2174C3] hover:bg-[#1A5E9D]'}`}>{(!tplName.trim() || tplNameDuplicate) ? 'Save' : 'Save'}</button>
+                                {tplName.trim() && tplNameDuplicate && <p className="text-xs text-red-400">* Name "{tplName.trim()}" is already used for this training</p>}
+                                
+                                <div className="flex justify-end space-x-2 mt-4">
+                                    <button 
+                                        onClick={() => { setShowTpl(false); setTplName(''); }} 
+                                        className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        onClick={submitTemplate} 
+                                        disabled={!tplName.trim() || tplNameDuplicate || !tplTrainingId} 
+                                        className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer disabled:opacity-50 disabled:bg-gray-300"
+                                    >
+                                        Save
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -631,11 +682,22 @@ export default function TrainingEvaluationPage() {
 
                 {/* Response Modal */}
                 {showResponse && (
-                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden relative max-h-[90vh] flex flex-col">
-                            <div className="px-8 pt-8 pb-6 overflow-y-auto">
-                                <h2 className="text-4xl font-bold text-gray-900 mb-1">Response</h2>
-                                <p className="text-sm text-gray-400 mb-4">{selectedCard?.title}</p>
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative max-h-[90vh] flex flex-col">
+                            <div className="px-10 pt-10 pb-8 overflow-y-auto">
+                                <button 
+                                    onClick={() => setShowResponse(false)}
+                                    className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+
+                                <h2 className="text-4xl font-bold text-black mb-1">Response</h2>
+                                <p className="text-sm text-gray-400 mb-6">{selectedCard?.title}</p>
+                                
+                                <hr className="mb-8 border-gray-100" />
 
                                 {selectedCard?.description && (
                                     <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-4">
@@ -738,7 +800,7 @@ export default function TrainingEvaluationPage() {
                                     </table>
                                 </div>
                                 <div className="flex justify-end mt-5">
-                                    <button onClick={() => setShowResponse(false)} className="px-6 py-2 rounded-lg text-sm font-semibold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">Close</button>
+                                    <button onClick={() => setShowResponse(false)} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Close</button>
                                 </div>
                             </div>
                         </div>
@@ -747,7 +809,7 @@ export default function TrainingEvaluationPage() {
 
                 {/* Description Modal (Child of Response) */}
                 {showDescModal && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
                             <div className="px-6 py-4 border-b border-gray-100 bg-blue-50 flex items-center justify-between">
                                 <h3 className="font-bold text-blue-900">Full Description</h3>
@@ -767,14 +829,14 @@ export default function TrainingEvaluationPage() {
 
                 {/* Evaluation Modal */}
                 {showEval && (
-                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1280px] p-8 overflow-hidden relative">
-                            <div className="flex items-center justify-between mb-1">
-                                <h2 className="text-3xl font-bold text-gray-800">{isL2 ? 'Evaluation Form L2' : 'Evaluation Form L1'}</h2>
-                                <button onClick={() => setShowEval(false)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors text-xl">&times;</button>
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1400px] max-h-[95vh] p-10 relative flex flex-col">
+                            <div className="flex items-center justify-between mb-2">
+                                <h2 className="text-4xl font-bold text-black">{isL2 ? 'Evaluation Builder L2' : 'Evaluation Builder L1'}</h2>
+                                <button onClick={() => setShowEval(false)} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors text-2xl">&times;</button>
                             </div>
-                            <p className="text-sm text-gray-400 mb-5">{isL2 ? 'Create multiple choice questions with correct answers and scores' : 'Create evaluation questions with ratings or comments'}</p>
-                            <hr className="mb-6 border-gray-100" />
+                            <p className="text-sm text-gray-400 mb-6">{isL2 ? 'Construct multiple choice assessments' : 'Define feedback criteria and ratings'}</p>
+                            <hr className="mb-8 border-gray-100" />
 
                             <div>
                                 <div className="flex items-end gap-4 mb-5">
@@ -917,10 +979,9 @@ export default function TrainingEvaluationPage() {
                                     </>
                                 )}
                             </div>
-
-                            <div className="flex justify-end space-x-2 mt-8 pt-5 border-t border-gray-100">
+                             <div className="flex justify-end space-x-2 mt-8 pt-5 border-t border-gray-100">
                                 <button onClick={() => setShowEval(false)} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Cancel</button>
-                                <button onClick={saveEvaluation} disabled={isSaving} className={`px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer disabled:opacity-50 ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#2174C3] hover:bg-[#1A5E9D] text-white'}`}>
+                                <button onClick={saveEvaluation} disabled={isSaving} className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer disabled:opacity-50 disabled:bg-gray-400">
                                     {isSaving ? (
                                         <div className="flex items-center gap-1">
                                             <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>

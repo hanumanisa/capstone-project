@@ -47,9 +47,9 @@ const TnaPeriodModal = ({ isOpen, onClose, period, onSave, setToast }) => {
             } else {
                 await api.post('/api/tna-period/', formData);
             }
-            setToast({ 
-                message: isEdit ? 'TNA Period Update succesfully' : 'TNA Period Added succesfully', 
-                type: 'success' 
+            setToast({
+                message: isEdit ? 'TNA Period Update succesfully' : 'TNA Period Added succesfully',
+                type: 'success'
             });
             onSave();
             onClose();
@@ -80,109 +80,125 @@ const TnaPeriodModal = ({ isOpen, onClose, period, onSave, setToast }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden p-8 animate-in fade-in zoom-in duration-200">
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                    {period ? 'Edit TNA Period' : 'Add TNA Period'}
-                </h2>
-                <hr className="mb-8 border-gray-100" />
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden relative flex flex-col animate-in zoom-in duration-300">
+                <button 
+                    onClick={onClose}
+                    className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors z-20"
+                >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <div className="p-10 pb-6 shrink-0">
+                    <h2 className="text-4xl font-bold text-black mb-2">
+                        {period ? 'Edit Period' : 'Add Period'}
+                    </h2>
+                    <p className="text-sm text-gray-400">Manage the Training Needs Analysis timeline</p>
+                </div>
                 
+                <div className="px-10 pb-10 overflow-y-auto flex-1 custom-scrollbar">
+                    <hr className="mb-10 border-gray-100" />
+
                 <div className="space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
-                        <label className="text-gray-600 font-bold">Period Code</label>
-                        <input 
-                            type="text" 
+                    <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                        <label className="text-black font-semibold">Period Code</label>
+                        <input
+                            type="text"
                             value={formData.period_code}
-                            onChange={(e) => setFormData({...formData, period_code: e.target.value})}
-                            className="sm:col-span-2 bg-gray-50 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none transition-all text-black"
+                            onChange={(e) => setFormData({ ...formData, period_code: e.target.value })}
+                            className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none transition-all text-sm text-black"
                             placeholder="e.g. TNA-2026"
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
-                        <label className="text-gray-600 font-bold">Year</label>
-                        <input 
-                            type="number" 
+                    <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                        <label className="text-black font-semibold">Year</label>
+                        <input
+                            type="number"
                             value={formData.year}
-                            onChange={(e) => setFormData({...formData, year: e.target.value})}
-                            className="sm:col-span-2 bg-gray-50 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none transition-all text-black"
+                            onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                            className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none transition-all text-sm text-black"
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
-                        <label className="text-gray-600 font-bold">Period Name</label>
-                        <input 
-                            type="text" 
+                    <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                        <label className="text-black font-semibold">Period Name</label>
+                        <input
+                            type="text"
                             value={formData.period_name}
-                            onChange={(e) => setFormData({...formData, period_name: e.target.value})}
-                            className="sm:col-span-2 bg-gray-50 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none transition-all text-black"
+                            onChange={(e) => setFormData({ ...formData, period_name: e.target.value })}
+                            className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none transition-all text-sm text-black"
                             placeholder="e.g. Training Needs Analysis 2026"
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 items-start gap-2">
-                        <label className="text-gray-600 font-bold mt-3">Duration</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 items-start gap-4">
+                        <label className="text-black font-semibold pt-2">Duration</label>
                         <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Open Date</label>
-                                <input 
-                                    type="date" 
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Open Date</label>
+                                <input
+                                    type="date"
                                     value={formData.open_date}
-                                    onChange={(e) => setFormData({...formData, open_date: e.target.value})}
-                                    className="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-black calendar-black"
+                                    onChange={(e) => setFormData({ ...formData, open_date: e.target.value })}
+                                    className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black calendar-black"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Close Date</label>
-                                <input 
-                                    type="date" 
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Close Date</label>
+                                <input
+                                    type="date"
                                     value={formData.close_date}
-                                    onChange={(e) => setFormData({...formData, close_date: e.target.value})}
-                                    className="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-black calendar-black"
+                                    onChange={(e) => setFormData({ ...formData, close_date: e.target.value })}
+                                    className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black calendar-black"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <style dangerouslySetInnerHTML={{ __html: `
+                    <style dangerouslySetInnerHTML={{
+                        __html: `
                         .calendar-black::-webkit-calendar-picker-indicator {
                             filter: brightness(0);
                             cursor: pointer;
                         }
                     `}} />
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
-                        <label className="text-gray-600 font-bold">Status</label>
-                        <div className="sm:col-span-2 flex space-x-8">
-                            <label className="flex items-center space-x-2 cursor-pointer group">
-                                <input 
-                                    type="radio" 
-                                    name="status" 
-                                    value="Open" 
+                    <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                        <label className="text-black font-semibold">Status</label>
+                        <div className="sm:col-span-2 flex space-x-10">
+                            <label className="flex items-center space-x-3 cursor-pointer group">
+                                <input
+                                    type="radio"
+                                    name="status"
+                                    value="Open"
                                     checked={formData.status === 'Open'}
-                                    onChange={(e) => setFormData({...formData, status: e.target.value})}
-                                    className="w-5 h-5 text-[#2174C3] focus:ring-[#2174C3]"
+                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                    className="w-5 h-5 text-[#2174C3] focus:ring-[#2174C3] cursor-pointer"
                                 />
                                 <span className="text-black font-medium group-hover:text-[#2174C3] transition-colors">Open</span>
                             </label>
-                            <label className="flex items-center space-x-2 cursor-pointer group">
-                                <input 
-                                    type="radio" 
-                                    name="status" 
-                                    value="Closed" 
+                            <label className="flex items-center space-x-3 cursor-pointer group">
+                                <input
+                                    type="radio"
+                                    name="status"
+                                    value="Closed"
                                     checked={formData.status === 'Closed'}
-                                    onChange={(e) => setFormData({...formData, status: e.target.value})}
-                                    className="w-5 h-5 text-[#2174C3] focus:ring-[#2174C3]"
+                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                    className="w-5 h-5 text-[#2174C3] focus:ring-[#2174C3] cursor-pointer"
                                 />
                                 <span className="text-black font-medium group-hover:text-[#2174C3] transition-colors">Closed</span>
                             </label>
                         </div>
                     </div>
                 </div>
+                </div>
 
-                <div className="flex justify-end space-x-2 mt-10">
+                <div className="flex justify-end space-x-2 px-10 py-6 bg-gray-50/80 border-t border-gray-100 shrink-0">
                     {period && (
-                        <button 
+                        <button
                             id="btn-delete-period"
                             onClick={handleDeleteClick}
                             className="bg-[#F15E5E] hover:bg-[#D32F2F] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer"
@@ -190,13 +206,13 @@ const TnaPeriodModal = ({ isOpen, onClose, period, onSave, setToast }) => {
                             Delete
                         </button>
                     )}
-                    <button 
+                    <button
                         onClick={onClose}
                         className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer"
                     >
                         Cancel
                     </button>
-                    <button 
+                    <button
                         onClick={handleSave}
                         disabled={saving}
                         className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer disabled:opacity-50"
@@ -204,16 +220,16 @@ const TnaPeriodModal = ({ isOpen, onClose, period, onSave, setToast }) => {
                         {saving ? 'Saving...' : 'Save'}
                     </button>
                 </div>
-            </div>
 
-            {/* ─── Delete Confirmation ─────────────────────────────────── */}
-            <ConfirmModal
-                isOpen={showDeleteConfirm}
-                onClose={() => setShowDeleteConfirm(false)}
-                onConfirm={handleConfirmDelete}
-                title="Confirm Delete"
-                message="Are you sure you want to delete this TNA period?"
-            />
+                {/* ─── Delete Confirmation ─────────────────────────────────── */}
+                <ConfirmModal
+                    isOpen={showDeleteConfirm}
+                    onClose={() => setShowDeleteConfirm(false)}
+                    onConfirm={handleConfirmDelete}
+                    title="Confirm Delete"
+                    message="Are you sure you want to delete this TNA period?"
+                />
+            </div>
         </div>
     );
 };

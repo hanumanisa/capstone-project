@@ -630,18 +630,18 @@ export default function TrainingMasterPage() {
           <select
             value={division}
             onChange={(e) => setDivision(e.target.value)}
-            className="w-full appearance-none bg-gray-100 border-none rounded-lg pl-4 pr-10 py-2 text-gray-600 focus:ring-1 focus:ring-[#2174C3] outline-none text-sm font-medium cursor-pointer"
+            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+            style={{
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                backgroundSize: '20px 20px',
+                backgroundPosition: 'right 12px center'
+            }}
           >
             <option value="">All Division</option>
             {divisions.map((d, i) => (
               <option key={i} value={d.division_name}>{d.division_name}</option>
             ))}
           </select>
-          <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-400">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-          </div>
         </div>
 
         {/* Month Filter */}
@@ -649,18 +649,18 @@ export default function TrainingMasterPage() {
           <select
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="w-full appearance-none bg-gray-100 border-none rounded-lg pl-4 pr-10 py-2 text-gray-600 focus:ring-1 focus:ring-[#2174C3] outline-none text-sm font-medium cursor-pointer"
+            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+            style={{
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                backgroundSize: '20px 20px',
+                backgroundPosition: 'right 12px center'
+            }}
           >
             <option value="">All Month</option>
             {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m, idx) => (
               <option key={m} value={idx + 1}>{m}</option>
             ))}
           </select>
-          <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-400">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-          </div>
         </div>
 
         {/* Right Section: Year & Actions */}
@@ -703,8 +703,8 @@ export default function TrainingMasterPage() {
 
       {/* ─── Table ───────────────────────────────────────────────── */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-auto max-h-[60vh]">
-        <table className="w-full text-left text-[11px] min-w-[2800px]">
-          <thead className="bg-[#5C85BB] text-white uppercase tracking-wider sticky top-0 z-10">
+        <table className="w-full text-left text-sm min-w-[2800px]">
+          <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
             <tr>
               <th className="px-3 py-4 font-normal">Course Category</th>
               <th className="px-3 py-4 font-bold">Course Name</th>

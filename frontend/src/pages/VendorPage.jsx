@@ -232,8 +232,8 @@ const VendorPage = () => {
 
             {/* ─── Table ───────────────────────────────────────────────── */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-auto max-h-[60vh]">
-                <table className="w-full text-left text-[11px] font-semibold min-w-[1500px]">
-                    <thead className="bg-[#5C85BB] text-white uppercase tracking-wider sticky top-0 z-10">
+                <table className="w-full text-left text-sm min-w-[1500px]">
+                    <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
                         <tr>
                             <th className="px-3 py-3">Vendor Code</th>
                             <th className="px-3 py-3">Vendor Name</th>
@@ -512,7 +512,7 @@ const VendorPage = () => {
                                 disabled={saving}
                                 className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer disabled:opacity-50"
                             >
-                                {saving ? 'Saving...' : 'Submit'}
+                                {saving ? 'Saving...' : 'Save'}
                             </button>
                         </div>
                     </div>

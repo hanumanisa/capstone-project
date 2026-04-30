@@ -40,12 +40,12 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                     api.get('/api/tna-period/'),
                     api.get('/api/course-categories/'),
                     api.get('/api/courses/'),
-                    api.get('/api/employee/')
+                    api.get('/api/employee/?nopage=true')
                 ]);
                 setPeriods(resP.data);
                 setCategories(resC.data);
                 setCourses(resCo.data);
-                setEmployees(resE.data);
+                setEmployees(Array.isArray(resE.data) ? resE.data : (resE.data.results || []));
             } catch (err) {
                 console.error('Failed to fetch modal data:', err);
             } finally {
@@ -240,33 +240,43 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
         }
     };
 
-    const administratorList = employees.filter(e => e.role === 'Administrator');
+    const administratorList = Array.isArray(employees) ? employees.filter(e => e.role === 'Administrator') : [];
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white rounded-2xl w-full max-w-[1200px] shadow-2xl p-0 my-8 animate-in slide-in-from-bottom-4 duration-300 overflow-hidden">
-                <div className="p-8 pb-4">
-                    <h2 className="text-3xl font-bold mb-2 text-gray-800 tracking-tight">
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] shadow-2xl p-0 overflow-hidden relative flex flex-col animate-in zoom-in duration-300">
+                <button 
+                    onClick={onClose}
+                    className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors z-20"
+                >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <div className="p-10 pb-6 shrink-0">
+                    <h2 className="text-4xl font-bold text-black mb-2 tracking-tight">
                         Training Needs Analysis
                     </h2>
+                    <p className="text-sm text-gray-400">Map courses to specific employees and time periods</p>
                 </div>
 
-                <div className="px-8 pb-8">
-                    <div className="border border-gray-100 rounded-xl overflow-hidden mb-6">
-                        <div className="bg-gray-100 flex text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200">
-                            <div className="w-[20%] p-3 border-r border-gray-200">Tna Period</div>
-                            <div className="w-[20%] p-3 border-r border-gray-200">Category</div>
-                            <div className="w-[25%] p-3 border-r border-gray-200">Courses</div>
-                            <div className="w-[10%] p-3 border-r border-gray-200 text-center">Group</div>
-                            <div className="w-[15%] p-3 border-r border-gray-200">Tna ID</div>
-                            <div className="w-[10%] p-3 text-center">Add</div>
+                <div className="px-10 pb-10 overflow-y-auto flex-1 custom-scrollbar">
+                    <div className="border border-gray-100 rounded-2xl overflow-hidden mb-8 shadow-sm">
+                        <div className="bg-gray-50 flex text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200">
+                            <div className="w-[20%] p-4 border-r border-gray-200">Tna Period</div>
+                            <div className="w-[20%] p-4 border-r border-gray-200">Category</div>
+                            <div className="w-[25%] p-4 border-r border-gray-200">Courses</div>
+                            <div className="w-[10%] p-4 border-r border-gray-200 text-center">Group</div>
+                            <div className="w-[15%] p-4 border-r border-gray-200">Tna ID</div>
+                            <div className="w-[10%] p-4 text-center">Add</div>
                         </div>
                         <div className="flex bg-white items-start">
-                            <div className="w-[20%] p-3 border-r border-gray-50">
+                            <div className="w-[20%] p-4 border-r border-gray-50">
                                 <select 
                                     value={formData.tna_period}
                                     onChange={(e) => setFormData({...formData, tna_period: e.target.value})}
-                                    className="w-full border border-gray-200 rounded-lg p-2 bg-gray-50 underline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
+                                    className="w-full border-none rounded-lg p-3 bg-gray-100 focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black outline-none"
                                 >
                                     <option value="">Select Period</option>
                                     {periods.map(p => (
@@ -274,11 +284,11 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                     ))}
                                 </select>
                             </div>
-                            <div className="w-[20%] p-3 border-r border-gray-50">
+                            <div className="w-[20%] p-4 border-r border-gray-50">
                                 <select 
                                     value={formData.course_category}
                                     onChange={(e) => setFormData({...formData, course_category: e.target.value})}
-                                    className="w-full border border-gray-200 rounded-lg p-2 bg-gray-50 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
+                                    className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
                                 >
                                     <option value="">Select Category</option>
                                     {categories.map(c => (
@@ -286,11 +296,11 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                     ))}
                                 </select>
                             </div>
-                            <div className="w-[25%] p-3 border-r border-gray-50">
+                            <div className="w-[25%] p-4 border-r border-gray-50">
                                 <select 
                                     value={formData.course}
                                     onChange={(e) => setFormData({...formData, course: e.target.value})}
-                                    className="w-full border border-gray-200 rounded-lg p-2 bg-gray-50 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
+                                    className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
                                 >
                                     <option value="">Select Course</option>
                                     {courses
@@ -301,51 +311,51 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                     }
                                 </select>
                             </div>
-                            <div className="w-[10%] p-3 border-r border-gray-50">
+                            <div className="w-[10%] p-4 border-r border-gray-50">
                                 <select 
                                     value={formData.group_name}
                                     onChange={(e) => handleGroupSwitch(parseInt(e.target.value))}
-                                    className="w-full border border-gray-200 rounded-lg p-2 bg-gray-50 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black text-center"
+                                    className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black text-center"
                                 >
                                     {[1,2,3,4,5,6].map(v => (
                                         <option key={v} value={v}>{v}</option>
                                     ))}
                                 </select>
                             </div>
-                            <div className="w-[15%] p-3 border-r border-gray-50">
+                            <div className="w-[15%] p-4 border-r border-gray-50">
                                 <input 
                                     type="text" 
                                     placeholder="ID"
                                     value={formData.tna_id}
                                     onChange={(e) => setFormData({...formData, tna_id: e.target.value})}
-                                    className="w-full border border-gray-200 rounded-lg p-2 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
+                                    className="w-full border-none rounded-lg p-3 bg-gray-200 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black font-bold"
                                 />
                             </div>
-                            <div className="w-[10%] p-3 flex justify-center">
+                            <div className="w-[10%] p-4 flex justify-center">
                                 <button 
                                     onClick={handleAddParticipant}
-                                    className="bg-blue-50 hover:bg-[#2174C3] text-[#2174C3] hover:text-white w-8 h-8 rounded-lg font-bold transition-all flex items-center justify-center border border-blue-100 shadow-sm cursor-pointer"
+                                    className="bg-blue-50 hover:bg-[#2174C3] text-[#2174C3] hover:text-white w-10 h-10 rounded-xl font-bold transition-all flex items-center justify-center border border-blue-100 shadow-sm cursor-pointer"
                                 >
-                                    <span className="text-xl">+</span>
+                                    <span className="text-2xl">+</span>
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <div className="border border-gray-100 rounded-xl overflow-hidden">
-                        <div className="bg-gray-100 flex text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200">
-                            <div className="w-[50%] p-3 border-r border-gray-200">Employee</div>
-                            <div className="w-[40%] p-3 border-r border-gray-200">Created By</div>
-                            <div className="w-[10%] p-3 text-center">Del</div>
+                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                        <div className="bg-gray-50 flex text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200">
+                            <div className="w-[50%] p-4 border-r border-gray-200">Employee</div>
+                            <div className="w-[40%] p-4 border-r border-gray-200">Created By</div>
+                            <div className="w-[10%] p-4 text-center">Del</div>
                         </div>
-                        <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                        <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
                             {participants.map((participant, idx) => (
-                                <div key={idx} className="flex bg-white items-center border-b border-gray-50 last:border-0 hover:bg-gray-50/30 transition-all">
-                                    <div className="w-[50%] p-3 border-r border-gray-50">
+                                <div key={idx} className="flex bg-white items-center border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-all">
+                                    <div className="w-[50%] p-4 border-r border-gray-50">
                                         <select 
                                             value={participant.nik}
                                             onChange={(e) => handleParticipantChange(idx, e.target.value)}
-                                            className="w-full border border-gray-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
+                                            className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
                                         >
                                             <option value="">Select Employee</option>
                                             {employees.map(e => (
@@ -353,12 +363,12 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="w-[40%] p-3 border-r border-gray-50">
+                                    <div className="w-[40%] p-4 border-r border-gray-50">
                                         {idx === 0 ? (
                                             <select 
                                                 value={formData.created_by}
                                                 onChange={(e) => setFormData({...formData, created_by: e.target.value})}
-                                                className="w-full border border-gray-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
+                                                className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
                                             >
                                                 <option value="">Select Creator</option>
                                                 {administratorList.map(e => (
@@ -366,16 +376,16 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                                 ))}
                                             </select>
                                         ) : (
-                                            <div className="text-gray-300 text-xs px-2 flex items-center h-full">Same as above</div>
+                                            <div className="text-gray-300 text-[11px] px-2 flex items-center h-full italic">Same as above</div>
                                         )}
                                     </div>
-                                    <div className="w-[10%] p-3 flex justify-center">
+                                    <div className="w-[10%] p-4 flex justify-center">
                                         <button 
                                             onClick={() => handleRemoveParticipant(idx)}
                                             disabled={participants.length === 1}
-                                            className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white w-7 h-7 flex items-center justify-center rounded-lg transition-all disabled:opacity-30 border border-red-50 cursor-pointer"
+                                            className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white w-9 h-9 flex items-center justify-center rounded-xl transition-all disabled:opacity-30 border border-red-50 cursor-pointer"
                                         >
-                                            <span className="mb-0.5 text-lg font-bold">—</span>
+                                            <span className="mb-0.5 text-xl font-bold">—</span>
                                         </button>
                                     </div>
                                 </div>
@@ -384,7 +394,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                     </div>
                 </div>
 
-                <div className="bg-gray-50 px-8 py-5 flex justify-end items-center border-t border-gray-100 space-x-2">
+                <div className="bg-gray-50/80 px-10 py-6 flex justify-end items-center border-t border-gray-100 space-x-2 shrink-0">
                     {isAdmin && formData.tna_id && (
                         <button 
                             onClick={handleDeleteClick}
@@ -402,7 +412,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                     <button 
                         onClick={handleSave}
                         disabled={saving}
-                        className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow-lg cursor-pointer disabled:opacity-50"
+                        className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer disabled:opacity-50"
                     >
                         {saving ? 'Saving...' : 'Save'}
                     </button>

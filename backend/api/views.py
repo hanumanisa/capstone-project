@@ -13,7 +13,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import (
-    TrainingData, Employee, CourseCategory, Course,
+    Employee, CourseCategory, Course,
     Vendor, TnaPeriod, TnaMaster, TnaParticipant, Hotel,
     TrainingMaster, TrainingEvent, EventLocation, EventSchedule,
     EventParticipant, EventCost, EventDocument, Division,
@@ -22,7 +22,7 @@ from .models import (
     AiAdminConfig, AiFaq, AiChatSession, AiChatLog, AiUnauthorizedAttempt
 )
 from .serializers import (
-    TrainingDataSerializer, UserSerializer, MyTokenObtainPairSerializer,
+    UserSerializer, MyTokenObtainPairSerializer,
     EmployeeSerializer, CourseCategorySerializer, CourseSerializer,
     VendorSerializer, TnaPeriodSerializer, TnaMasterSerializer,
     TnaParticipantSerializer, HotelSerializer,
@@ -72,77 +72,6 @@ class MyTokenObtainPairView(TokenObtainPairView):
     untuk menyertakan role, email, dan nik di JWT token.
     """
     serializer_class = MyTokenObtainPairSerializer
-
-class TrainingDataViewSet(viewsets.ModelViewSet):
-    """
-    RBAC untuk Training Data:
-    - Super Administrator : CRUD semua data
-    - Administrator       : CRUD semua data (tapi tidak bisa akses endpoint User)
-    - Dean                : READ semua data
-    - Head of Division    : READ data divisi sendiri
-    - Team Leader         : READ data divisi sendiri
-    - Employee            : READ data diri sendiri
-    """
-    serializer_class = TrainingDataSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        user_groups = list(user.groups.values_list('name', flat=True))
-
-        if user.is_superuser or "Administrator" in user_groups:
-            return TrainingData.objects.all()
-
-        if "Dean" in user_groups:
-            return TrainingData.objects.all()
-
-        if "Head of Division" in user_groups or "Team Leader" in user_groups:
-            if not hasattr(user, 'profile'):
-                return TrainingData.objects.none()
-            user_dept_id = user.profile.employee.division_id
-            return TrainingData.objects.filter(employee__division_id=user_dept_id)
-
-        if hasattr(user, 'profile'):
-            return TrainingData.objects.filter(employee=user.profile.employee)
-
-        return TrainingData.objects.none()
-
-    def check_permissions(self, request):
-        """
-        Override check_permissions untuk menerapkan pembatasan aksi
-        SEBELUM queryset dieksekusi.
-        """
-        super().check_permissions(request)
-
-        user = request.user
-        user_groups = list(user.groups.values_list('name', flat=True))
-
-        if user.is_superuser or "Administrator" in user_groups:
-            return
-
-        if self.action not in ['list', 'retrieve']:
-            raise exceptions.PermissionDenied(
-                "Anda hanya memiliki akses baca untuk data training."
-            )
-
-    def perform_create(self, serializer):
-        instance = serializer.save()
-        # integrasi ke n8n dan openAI
-        n8n_webhook_url = "https://n8n.yourdomain.com/webhook/tna-analyze"
-
-        payload = {
-            "id": instance.id,
-            "nik": instance.employee.nik if instance.employee else None,
-            "training_name": getattr(instance, 'training_name', ''),
-            "division": instance.employee.division.division_name if instance.employee and instance.employee.division else '',
-            "description": getattr(instance, 'description', '')
-        }
-
-        try:
-            requests.post(n8n_webhook_url, json=payload, timeout=1)
-        except requests.exceptions.RequestException:
-            pass
-
 
 # viewset super admin
 
@@ -258,7 +187,13 @@ class TnaParticipantViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         user_groups = list(user.groups.values_list('name', flat=True))
-        qs = TnaParticipant.objects.all().order_by('tna__course_category__category_name', 'tna__course__course_name')
+        qs = TnaParticipant.objects.all().select_related(
+            'tna__course_category', 'tna__course', 'nik__division'
+        ).prefetch_related(
+            'nik__eventparticipant_set__event__training',
+            'nik__eventparticipant_set__event__schedules',
+            'nik__tnaparticipant_set__tna__course'
+        ).order_by('tna__course_category__category_name', 'tna__course__course_name')
 
         # RBAC Logic
         if user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:

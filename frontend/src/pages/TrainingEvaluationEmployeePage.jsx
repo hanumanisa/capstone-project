@@ -355,8 +355,8 @@ export default function TrainingEvaluationEmployeePage() {
 
             {/* L1 MODAL */}
             {showL1Modal && selectedCard && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col animate-in zoom-in duration-300">
                         <div className="h-1.5 bg-gradient-to-r from-[#aac8e4] via-[#c8dff0] to-[#b8d0e8] flex-shrink-0"></div>
                         <div className="px-8 pt-6 pb-7 overflow-y-auto flex-1">
                             <div className="flex items-start justify-between mb-1">
@@ -441,15 +441,15 @@ export default function TrainingEvaluationEmployeePage() {
                                     </div>
 
                                     <div className="flex justify-end gap-3 mt-6">
-                                        <button onClick={() => setShowL1Modal(false)} className="px-5 py-2 rounded-lg text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Cancel</button>
-                                        <button onClick={() => submitResponse('L1')} className="px-7 py-2 rounded-lg text-sm font-semibold text-white bg-[#2174C3] hover:bg-[#1A5E9D] transition-colors shadow-sm">Submit</button>
+                                        <button onClick={() => setShowL1Modal(false)} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Cancel</button>
+                                        <button onClick={() => submitResponse('L1')} className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer">Submit</button>
                                     </div>
                                 </div>
                             )}
 
                             {(selectedCard.is_submitted || !selectedCard.hasQuestions) && (
                                 <div className="flex justify-end mt-5">
-                                    <button onClick={() => setShowL1Modal(false)} className="px-6 py-2 rounded-lg text-sm font-semibold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">Close</button>
+                                    <button onClick={() => setShowL1Modal(false)} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Close</button>
                                 </div>
                             )}
                         </div>
@@ -459,8 +459,8 @@ export default function TrainingEvaluationEmployeePage() {
 
             {/* L2 MODAL */}
             {showL2Modal && selectedCard && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col animate-in zoom-in duration-300">
                         <div className="h-1.5 bg-gradient-to-r from-[#6EE7B7] via-[#34D399] to-[#10B981] flex-shrink-0"></div>
                         <div className="px-8 pt-6 pb-7 overflow-y-auto flex-1">
                             <div className="flex items-start justify-between mb-1">
@@ -538,15 +538,15 @@ export default function TrainingEvaluationEmployeePage() {
                                     </div>
 
                                     <div className="flex justify-end gap-3 mt-5">
-                                        <button onClick={() => setShowL2Modal(false)} className="px-5 py-2 rounded-lg text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Cancel</button>
-                                        <button onClick={() => submitResponse('L2')} disabled={l2Progress < 1} className={`px-7 py-2 rounded-lg text-sm font-semibold text-white transition-colors shadow-sm ${l2Progress >= 1 ? 'bg-[#2174C3] hover:bg-[#1A5E9D]' : 'bg-gray-300 cursor-not-allowed'}`}>Submit</button>
+                                        <button onClick={() => setShowL2Modal(false)} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Cancel</button>
+                                        <button onClick={() => submitResponse('L2')} disabled={l2Progress < 1} className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer disabled:opacity-50 disabled:bg-gray-300">Submit</button>
                                     </div>
                                 </div>
                             )}
 
                             {(selectedCard.is_submitted || !selectedCard.hasQuestions) && (
                                 <div className="flex justify-end mt-5">
-                                    <button onClick={() => setShowL2Modal(false)} className="px-6 py-2 rounded-lg text-sm font-semibold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">Close</button>
+                                    <button onClick={() => setShowL2Modal(false)} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Close</button>
                                 </div>
                             )}
                         </div>

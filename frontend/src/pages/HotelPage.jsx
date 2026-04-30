@@ -224,8 +224,8 @@ const HotelPage = () => {
 
             {/* ─── Table ───────────────────────────────────────────────── */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-auto max-h-[60vh]">
-                <table className="w-full text-left text-[11px] font-semibold min-w-[800px]">
-                    <thead className="bg-[#5C85BB] text-white uppercase tracking-wider sticky top-0 z-10">
+                <table className="w-full text-left text-sm min-w-[800px]">
+                    <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
                         <tr>
                             <th className="px-4 py-3 text-center">Hotel ID</th>
                             <th className="px-4 py-3">City</th>

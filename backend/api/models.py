@@ -1,3 +1,4 @@
+from datetime import datetime, date
 from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_save
@@ -73,6 +74,89 @@ class Employee(models.Model):
 
     def __str__(self):
         return f"{self.nik} - {self.full_name}"
+
+    @property
+    def attended_events(self):
+        if hasattr(self, '_prefetched_events'):
+            return self._prefetched_events
+        events = list(self.eventparticipant_set.select_related('event', 'event__training').prefetch_related('event__schedules').all())
+        self._prefetched_events = events
+        return events
+
+    @property
+    def completed_events(self):
+        return [
+            ep for ep in self.attended_events
+            if ep.event.status.lower() != 'cancelled' and ep.attendance_status != 'Absent'
+        ]
+
+    @property
+    def training_stats(self):
+        if hasattr(self, '_training_stats'):
+            return self._training_stats
+        
+        stats = {
+            'inhouse_count': 0, 'public_count': 0, 'ks_count': 0, 'elearning_count': 0,
+            'inhouse_hours': 0, 'public_hours': 0, 'ks_hours': 0, 'elearning_hours': 0,
+            'total_hours': 0
+        }
+        
+        events = self.completed_events
+        for ep in events:
+            tt = (ep.event.training.training_type or '').strip()
+            
+            event_hours = 0
+            for sch in ep.event.schedules.all():
+                if sch.start_time and sch.end_time:
+                    dummy_date = date(2000, 1, 1)
+                    t1 = datetime.combine(dummy_date, sch.start_time)
+                    t2 = datetime.combine(dummy_date, sch.end_time)
+                    event_hours += (t2 - t1).total_seconds() / 3600
+            
+            if tt == 'Inhouse Training':
+                stats['inhouse_count'] += 1
+                stats['inhouse_hours'] += event_hours
+            elif tt == 'Public Training':
+                stats['public_count'] += 1
+                stats['public_hours'] += event_hours
+            elif tt == 'Knowledge Sharing':
+                stats['ks_count'] += 1
+                stats['ks_hours'] += event_hours
+            elif tt == 'E-Learning':
+                stats['elearning_count'] += 1
+                stats['elearning_hours'] += event_hours
+            
+            stats['total_hours'] += event_hours
+            
+        self._training_stats = stats
+        return stats
+
+    @property
+    def iht_plus_public(self):
+        stats = self.training_stats
+        return stats['inhouse_count'] + stats['public_count']
+
+    @property
+    def tna_fulfilled(self):
+        tna_list = self.tnaparticipant_set.all()
+        if not tna_list:
+            return 0
+            
+        events = self.completed_events
+        attended_course_ids = set(ep.event.training.course_id for ep in events)
+        fulfilled_count = 0
+        for tp in tna_list:
+            if tp.tna.course_id in attended_course_ids:
+                fulfilled_count += 1
+        return fulfilled_count
+
+    @property
+    def attendance(self):
+        return len(self.completed_events)
+
+    @property
+    def total_hours(self):
+        return round(self.training_stats['total_hours'], 2)
 
 
 class Profile(models.Model):
@@ -247,33 +331,7 @@ class TnaParticipant(models.Model):
         return f"{self.tna_participant_id} - Participant {self.nik_id} for {self.tna_id}"
 
 
-class TrainingData(models.Model):
-    employee = models.ForeignKey(
-        Employee,
-        on_delete=models.CASCADE,
-        related_name='training_records'
-    )
-    training_name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, default='')
-    training_date = models.DateField(null=True, blank=True)
-    status = models.CharField(
-        max_length=50,
-        choices=[
-            ('draft', 'Draft'),
-            ('completed', 'Completed'),
-            ('cancelled', 'Cancelled'),
-        ],
-        default='draft'
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        db_table = 'training_data'
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"{self.training_name} - {self.employee.full_name}"
 
 
 # ─── Signals Otomatisasi (Employee -> User & Profile) ────────────────────────

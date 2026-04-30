@@ -181,16 +181,18 @@ const EmployeePage = () => {
                     <select 
                         value={selectedDivision}
                         onChange={(e) => { setSelectedDivision(e.target.value); setCurrentPage(1); }}
-                        className="w-full appearance-none bg-gray-100 border-none rounded-lg pl-4 pr-10 py-2 text-gray-600 focus:ring-1 focus:ring-[#2174C3] outline-none text-sm font-medium cursor-pointer hover:bg-gray-200/50"
+                        className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                        style={{
+                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                            backgroundSize: '20px 20px',
+                            backgroundPosition: 'right 12px center'
+                        }}
                     >
                         <option>All Division</option>
                         {divisions.map(div => (
                             <option key={div.division_id} value={div.division_name}>{div.division_name}</option>
                         ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-400">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
                 </div>
                 
                 <div className="flex-1 flex justify-end gap-2">
@@ -213,11 +215,11 @@ const EmployeePage = () => {
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden flex flex-col">
                 <div className="overflow-x-auto overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-gray-200">
-                    <table className="w-full text-left text-[10px] font-semibold min-w-[2000px] border-collapse">
-                        <thead className="bg-[#5C85BB] text-white uppercase tracking-wider sticky top-0 z-20">
+                    <table className="w-full text-left text-sm min-w-[2000px] border-collapse">
+                        <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-20">
                             <tr>
-                                <th className="px-4 py-3 text-center sticky left-0 z-30 bg-[#5C85BB]">NIK</th>
-                                <th className="px-4 py-3 sticky left-[60px] z-30 bg-[#5C85BB] border-r border-white/20">Nama</th>
+                                <th className="px-4 py-3 text-center sticky left-0 z-30 bg-[#5C85BB] w-[100px]">NIK</th>
+                                <th className="px-4 py-3 sticky left-[100px] z-30 bg-[#5C85BB] border-r border-white/20">Nama</th>
                                 <th className="px-4 py-3">Division</th>
                                 <th className="px-4 py-3">Level</th>
                                 <th className="px-4 py-3">Position</th>
@@ -245,8 +247,8 @@ const EmployeePage = () => {
                             ) : (
                                 paginatedData.map((item) => (
                                     <tr key={item.nik} className="hover:bg-blue-50/30 transition-colors">
-                                        <td className="px-4 py-3 text-center font-bold text-gray-600 sticky left-0 z-10 bg-white group-hover:bg-blue-50/30">{item.nik}</td>
-                                        <td className="px-4 py-3 text-gray-600 font-bold sticky left-[60px] z-10 bg-white group-hover:bg-blue-50/30 border-r border-gray-100">{item.full_name}</td>
+                                        <td className="px-4 py-3 text-center font-bold text-gray-600 sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 w-[100px]">{item.nik}</td>
+                                        <td className="px-4 py-3 text-gray-600 font-bold sticky left-[100px] z-10 bg-white group-hover:bg-blue-50/30 border-r border-gray-100">{item.full_name}</td>
                                         <td className="px-4 py-3 text-gray-600">{item.division_name}</td>
                                         <td className="px-4 py-3 text-gray-600">{item.level}</td>
                                         <td className="px-4 py-3 text-gray-600">{item.position_name}</td>
@@ -315,16 +317,14 @@ const EmployeePage = () => {
 
             {/* Attendance Detail Modal */}
             {showAttendanceModal && selectedEmployee && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-down">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300">
+                        <div className="px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <div className="flex flex-col">
                                 <h3 className="font-bold text-gray-800 text-lg">Attendance Details</h3>
                                 <p className="text-sm text-[#2174C3] font-semibold">{selectedEmployee.full_name} ({selectedEmployee.nik})</p>
                             </div>
-                            <button onClick={() => setShowAttendanceModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
+
                         </div>
                         <div className="p-6 max-h-[60vh] overflow-y-auto">
                             {selectedEmployee.attendance_details?.length > 0 ? (
@@ -356,7 +356,7 @@ const EmployeePage = () => {
                             )}
                         </div>
                         <div className="px-6 py-4 border-t border-gray-100 flex justify-end bg-gray-50">
-                            <button onClick={() => setShowAttendanceModal(false)} className="px-8 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-bold hover:bg-gray-100 transition-all shadow-sm">
+                            <button onClick={() => setShowAttendanceModal(false)} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">
                                 Close
                             </button>
                         </div>

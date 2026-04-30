@@ -19,7 +19,7 @@ const TnaPage = () => {
     const [courseFilter, setCourseFilter] = useState('All Course');
     const [activeYear, setActiveYear] = useState(2026);
     const [currentPage, setCurrentPage] = useState(1);
-    
+
     // Modals state
     const [showPeriodModal, setShowPeriodModal] = useState(false);
     const [showTnaModal, setShowTnaModal] = useState(false);
@@ -36,7 +36,7 @@ const TnaPage = () => {
     useEffect(() => {
         const userData = getUserFromToken();
         if (userData) setUser(userData);
-        
+
         const fetchFilters = async () => {
             try {
                 const [resD, resC] = await Promise.all([
@@ -128,9 +128,9 @@ const TnaPage = () => {
                 {/* ─── Toolbar ─────────────────────────────────────────────── */}
                 <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-3 mb-10 transition-all hover:shadow-md">
                     <div className="relative w-full sm:w-1/3">
-                        <input 
-                            type="text" 
-                            placeholder="Search by name or NIK..." 
+                        <input
+                            type="text"
+                            placeholder="Search by name or NIK..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400"
@@ -143,57 +143,61 @@ const TnaPage = () => {
                     </div>
 
                     <div className="relative w-full sm:w-48">
-                        <select 
+                        <select
                             value={divisionFilter}
                             onChange={(e) => setDivisionFilter(e.target.value)}
-                            className="w-full appearance-none bg-gray-100 border-none rounded-lg pl-4 pr-10 py-2 text-gray-600 focus:ring-1 focus:ring-[#2174C3] outline-none text-sm font-medium cursor-pointer"
+                            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                                backgroundSize: '20px 20px',
+                                backgroundPosition: 'right 12px center'
+                            }}
                         >
                             <option>All Division</option>
                             {divisions.map(d => (
                                 <option key={d.division_id} value={d.division_name}>{d.division_name}</option>
                             ))}
                         </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-400">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
                     </div>
 
                     <div className="relative w-full sm:w-48">
-                        <select 
+                        <select
                             value={courseFilter}
                             onChange={(e) => setCourseFilter(e.target.value)}
-                            className="w-full appearance-none bg-gray-100 border-none rounded-lg pl-4 pr-10 py-2 text-gray-600 focus:ring-1 focus:ring-[#2174C3] outline-none text-sm font-medium cursor-pointer"
+                            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                                backgroundSize: '20px 20px',
+                                backgroundPosition: 'right 12px center'
+                            }}
                         >
                             <option>All Course</option>
                             {courses.map(c => (
                                 <option key={c.course_id} value={c.course_name}>{c.course_name}</option>
                             ))}
                         </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-400">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
                     </div>
 
                     <div className="flex-1 flex justify-end items-center space-x-6 shrink-0">
                         <div className="font-bold flex space-x-4 text-sm tracking-wide">
-                            <span 
+                            <span
                                 onClick={() => setActiveYear(2026)}
                                 className={`cursor-pointer transition-colors ${activeYear === 2026 ? 'text-[#2174C3]' : 'text-gray-300 hover:text-gray-400'}`}
                             >2026</span>
-                            <span 
+                            <span
                                 onClick={() => setActiveYear(2025)}
                                 className={`cursor-pointer transition-colors ${activeYear === 2025 ? 'text-[#2174C3]' : 'text-gray-300 hover:text-gray-400'}`}
                             >2025</span>
                         </div>
                         {isAdmin && (
                             <div className="flex gap-2">
-                                <button 
+                                <button
                                     onClick={() => { setSelectedPeriod(null); setShowPeriodModal(true); }}
                                     className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-1 rounded-lg font-medium flex items-center justify-center text-sm shadow-sm transition-all cursor-pointer"
                                 >
                                     <span className="mr-1 text-lg font-bold">+</span> Period
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => { setSelectedTna(null); setShowTnaModal(true); }}
                                     className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-1 rounded-lg font-medium flex items-center justify-center text-sm shadow-sm transition-all cursor-pointer"
                                 >
@@ -208,7 +212,7 @@ const TnaPage = () => {
                     <div>
                         <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Training Needs Analysis</h1>
                     </div>
-                    <button 
+                    <button
                         onClick={handleExport}
                         className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer"
                     >
@@ -249,22 +253,18 @@ const TnaPage = () => {
                                     paginatedParticipants.map((item) => (
                                         <tr key={item.tna_participant_id} className="hover:bg-blue-50/50 transition-all group">
                                             <td className="px-6 py-4 text-gray-600">{item.category_name}</td>
-                                            <td 
+                                            <td
                                                 className={`px-6 py-4 font-semibold text-[#2174C3] transition-colors ${isAdmin ? 'cursor-pointer hover:underline hover:text-[#1A5E9D]' : ''}`}
                                                 onClick={() => handleEditTna(item.tna)}
                                             >
                                                 {item.course_name}
                                             </td>
-                                            <td className="px-6 py-4 font-bold text-[#2174C3]">{item.nik}</td>
-                                            <td className="px-6 py-4 text-gray-700 font-medium">{item.employee_name}</td>
+                                            <td className="px-6 py-4 text-gray-600">{item.nik}</td>
+                                            <td className="px-6 py-4 text-gray-600">{item.employee_name}</td>
                                             <td className="px-6 py-4 text-gray-600">{item.division_name}</td>
                                             <td className="px-6 py-4 text-gray-600">{item.position_name}</td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className="font-bold">1</span>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className="font-bold">0</span>
-                                            </td>
+                                            <td className="px-6 py-4 text-center text-gray-600">{item.tna_fulfilled}</td>
+                                            <td className="px-6 py-4 text-center text-gray-600">{item.iht_plus_public}</td>
                                         </tr>
                                     ))
                                 )}
@@ -276,18 +276,18 @@ const TnaPage = () => {
                 {/* ─── Pagination ──────────────────────────────────────────── */}
                 {totalPages > 1 && (
                     <div className="flex justify-end items-center mt-8 space-x-1">
-                        <button 
+                        <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={currentPage === 1}
                         >Previous</button>
-                        
+
                         {(() => {
                             const pages = [];
                             const maxVisible = 5;
                             let start = Math.max(1, currentPage - 2);
                             let end = Math.min(totalPages, start + maxVisible - 1);
-                            
+
                             if (end - start + 1 < maxVisible) {
                                 start = Math.max(1, end - maxVisible + 1);
                             }
@@ -301,7 +301,7 @@ const TnaPage = () => {
 
                             for (let i = start; i <= end; i++) {
                                 pages.push(
-                                    <button 
+                                    <button
                                         key={i}
                                         onClick={() => setCurrentPage(i)}
                                         className={`px-4 py-2 rounded-md font-medium transition-all ${currentPage === i ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
@@ -319,14 +319,14 @@ const TnaPage = () => {
                             return pages;
                         })()}
 
-                        <button 
+                        <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={currentPage === totalPages}
                         >Next</button>
                     </div>
                 )}
-                
+
                 {filteredParticipants.length > 0 && (
                     <div className="flex justify-end mt-2 text-xs text-gray-500 font-medium italic">
                         Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredParticipants.length)} of {filteredParticipants.length} TNA
@@ -335,15 +335,15 @@ const TnaPage = () => {
             </div>
 
             {/* Modals */}
-            <TnaPeriodModal 
-                isOpen={showPeriodModal} 
+            <TnaPeriodModal
+                isOpen={showPeriodModal}
                 onClose={() => setShowPeriodModal(false)}
                 period={selectedPeriod}
                 onSave={fetchParticipants}
                 setToast={setToast}
             />
-            <TnaMasterModal 
-                isOpen={showTnaModal} 
+            <TnaMasterModal
+                isOpen={showTnaModal}
                 onClose={() => setShowTnaModal(false)}
                 tnaRecord={selectedTna}
                 onSave={fetchParticipants}

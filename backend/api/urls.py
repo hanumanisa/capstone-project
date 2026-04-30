@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
-    MyTokenObtainPairView, TrainingDataViewSet, UserViewSet,
+    MyTokenObtainPairView, UserViewSet,
     EmployeeViewSet, CourseCategoryViewSet, CourseViewSet,
     VendorViewSet, TnaPeriodViewSet, TnaMasterViewSet,
     TnaParticipantViewSet, HotelViewSet,
@@ -16,7 +16,7 @@ from .dashboard_admin_views import DashboardAdminAPIView
 
 # DRF Router
 router = DefaultRouter()
-router.register(r'training', TrainingDataViewSet, basename='training')
+
 router.register(r'users', UserViewSet, basename='users')
 router.register(r'employee', EmployeeViewSet, basename='employee')
 router.register(r'divisions', DivisionViewSet, basename='divisions')
