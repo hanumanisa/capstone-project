@@ -216,7 +216,23 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
             onClose();
         } catch (err) {
             console.error('Failed to save TNA:', err);
-            setToast({ message: 'TNA Added Unsuccesfully', type: 'error' });
+            let errorMsg = 'TNA Added Unsuccesfully';
+            if (err.response?.data) {
+                const data = err.response.data;
+                if (typeof data === 'string') errorMsg = data;
+                else if (data.non_field_errors) errorMsg = data.non_field_errors[0];
+                else if (data.detail) errorMsg = data.detail;
+                else if (Array.isArray(data)) errorMsg = data[0];
+                else {
+                    // Try to find the first error message in any field
+                    const firstKey = Object.keys(data)[0];
+                    if (firstKey) {
+                        const val = data[firstKey];
+                        errorMsg = Array.isArray(val) ? val[0] : val;
+                    }
+                }
+            }
+            setToast({ message: errorMsg, type: 'error' });
         } finally {
             setSaving(false);
         }
@@ -358,9 +374,19 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                             className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
                                         >
                                             <option value="">Select Employee</option>
-                                            {employees.map(e => (
-                                                <option key={e.nik} value={e.nik}>{e.nik} — {e.full_name}</option>
-                                            ))}
+                                            {employees.map(e => {
+                                                const isMandatory = ['Dean', 'Head of Division', 'Team Leader'].includes(e.role) || 
+                                                                    ['Kepala Divisi', 'Team Leader'].includes(e.position_name);
+                                                let label = `${e.nik} — ${e.full_name}`;
+                                                if (e.tna_count >= 3) label += " (Max TNA)";
+                                                else if (isMandatory) label += " (Leadership Req)";
+                                                
+                                                return (
+                                                    <option key={e.nik} value={e.nik}>
+                                                        {label}
+                                                    </option>
+                                                );
+                                            })}
                                         </select>
                                     </div>
                                     <div className="w-[40%] p-4 border-r border-gray-50">

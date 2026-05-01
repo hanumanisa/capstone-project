@@ -1199,8 +1199,8 @@ export default function TrainingMasterPage() {
                             <button type="button" onClick={() => setScheduleRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
                           </td>
                           <td className="p-2"><input type="date" value={row.date} onChange={(e) => { const a = [...scheduleRows]; a[idx].date = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded" /></td>
-                          <td className="p-2"><input type="time" value={row.start} onChange={(e) => { const a = [...scheduleRows]; a[idx].start = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded" /></td>
-                          <td className="p-2"><input type="time" value={row.end} onChange={(e) => { const a = [...scheduleRows]; a[idx].end = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded" /></td>
+                          <td className="p-2"><input type="text" placeholder="00:00" maxLength="5" value={row.start} onChange={(e) => { const a = [...scheduleRows]; a[idx].start = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded text-center font-mono" /></td>
+                          <td className="p-2"><input type="text" placeholder="00:00" maxLength="5" value={row.end} onChange={(e) => { const a = [...scheduleRows]; a[idx].end = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded text-center font-mono" /></td>
                           <td className="p-2"><input type="text" value={row.material} onChange={(e) => { const a = [...scheduleRows]; a[idx].material = e.target.value; setScheduleRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" placeholder="Enter material" /></td>
                           <td className="p-2"><input type="text" value={row.instructor} onChange={(e) => { const a = [...scheduleRows]; a[idx].instructor = e.target.value; setScheduleRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" placeholder="Enter instructor" /></td>
                         </tr>
@@ -1220,8 +1220,8 @@ export default function TrainingMasterPage() {
                         <th className="p-3 w-[50px]"></th>
                         <th className="p-3">Employee Name</th>
                         <th className="p-3 w-[200px]">Attendance Status</th>
-                        <th className="p-3">L1 Score</th>
-                        <th className="p-3">L2 Score</th>
+                        <th className="p-3 w-[120px]">L1 Score</th>
+                        <th className="p-3 w-[120px]">L2 Score</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">

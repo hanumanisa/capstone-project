@@ -306,6 +306,7 @@ class TnaParticipantSerializer(serializers.ModelSerializer):
         return obj.nik.tna_fulfilled
 
 
+
 class HotelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hotel
@@ -520,6 +521,9 @@ class EventLocationSerializer(serializers.ModelSerializer):
 
 
 class EventScheduleSerializer(serializers.ModelSerializer):
+    start_time = serializers.TimeField(format='%H:%M')
+    end_time = serializers.TimeField(format='%H:%M')
+
     class Meta:
         model = EventSchedule
         fields = '__all__'

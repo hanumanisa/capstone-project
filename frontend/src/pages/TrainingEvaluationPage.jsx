@@ -582,14 +582,6 @@ export default function TrainingEvaluationPage() {
                 {showTpl && (
                     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-10 relative">
-                            <button 
-                                onClick={() => { setShowTpl(false); setTplName(''); }}
-                                className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
 
                             <h2 className="text-4xl font-bold text-black mb-2">Templates Form</h2>
                             <p className="text-sm text-gray-400 mb-8">Create a new evaluation template header</p>
@@ -833,7 +825,6 @@ export default function TrainingEvaluationPage() {
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1400px] max-h-[95vh] p-10 relative flex flex-col">
                             <div className="flex items-center justify-between mb-2">
                                 <h2 className="text-4xl font-bold text-black">{isL2 ? 'Evaluation Builder L2' : 'Evaluation Builder L1'}</h2>
-                                <button onClick={() => setShowEval(false)} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors text-2xl">&times;</button>
                             </div>
                             <p className="text-sm text-gray-400 mb-6">{isL2 ? 'Construct multiple choice assessments' : 'Define feedback criteria and ratings'}</p>
                             <hr className="mb-8 border-gray-100" />
