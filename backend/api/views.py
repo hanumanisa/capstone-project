@@ -212,6 +212,8 @@ class TnaParticipantViewSet(viewsets.ModelViewSet):
         tna_id = self.request.query_params.get('tna_id', None)
         period_id = self.request.query_params.get('period', None)
         course_id = self.request.query_params.get('course', None)
+        course_name = self.request.query_params.get('course_name', None)
+        division = self.request.query_params.get('division', None)
         group_name = self.request.query_params.get('group_name', None)
 
         if tna_id:
@@ -220,6 +222,10 @@ class TnaParticipantViewSet(viewsets.ModelViewSet):
             qs = qs.filter(tna__tna_period_id=period_id)
         if course_id:
             qs = qs.filter(tna__course_id=course_id)
+        if course_name:
+            qs = qs.filter(tna__course__course_name=course_name)
+        if division:
+            qs = qs.filter(nik__division__division_name=division)
         if group_name:
             qs = qs.filter(tna__group_name=group_name)
         return qs
@@ -286,6 +292,46 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['training_code', 'training_title', 'course__course_name']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        if not user.is_authenticated:
+            return qs.none()
+            
+        user_groups = list(user.groups.values_list('name', flat=True))
+        
+        if user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
+            # Apply standard filters
+            division_filter = self.request.query_params.get('division')
+            month_filter = self.request.query_params.get('month')
+            
+            if division_filter:
+                qs = qs.filter(trainingevent__participants__nik__division_id=division_filter).distinct()
+            if month_filter:
+                try:
+                    m = int(month_filter)
+                    qs = qs.filter(trainingevent__start_date__month=m).distinct()
+                except (ValueError, TypeError):
+                    pass
+        elif "Head of Division" in user_groups:
+            if hasattr(user, 'profile') and user.profile.employee:
+                div_id = user.profile.employee.division_id
+                # Only show trainings that have at least one participant from their division
+                qs = qs.filter(trainingevent__participants__nik__division_id=div_id).distinct()
+            else:
+                qs = qs.none()
+        elif "Employee" in user_groups:
+            if hasattr(user, 'profile') and user.profile.employee:
+                emp = user.profile.employee
+                # Only show trainings that they participated in
+                qs = qs.filter(trainingevent__participants__nik=emp).distinct()
+            else:
+                qs = qs.none()
+        else:
+            qs = qs.none()
+            
+        return qs
 
 
 class TrainingEventViewSet(viewsets.ModelViewSet):
@@ -1262,7 +1308,10 @@ class ExportReportView(APIView):
         division_filter = request.query_params.get('division')
         type_filter = request.query_params.get('type', 'all')
 
-        # Base queryset
+        # Base queryset with RBAC
+        user = request.user
+        user_groups = list(user.groups.values_list('name', flat=True))
+
         qs = EventParticipant.objects.select_related(
             'event', 
             'event__training', 
@@ -1274,6 +1323,29 @@ class ExportReportView(APIView):
             'nik__division__directorate'
         ).prefetch_related('event__schedules').all()
 
+        # Apply RBAC Scoping
+        if user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
+            if employee_filter:
+                qs = qs.filter(nik_id=employee_filter)
+            if division_filter:
+                qs = qs.filter(nik__division__division_name=division_filter)
+        elif "Head of Division" in user_groups:
+            if hasattr(user, 'profile') and user.profile.employee:
+                qs = qs.filter(nik__division_id=user.profile.employee.division_id)
+            else:
+                qs = qs.none()
+        elif "Employee" in user_groups:
+            if hasattr(user, 'profile') and user.profile.employee:
+                qs = qs.filter(nik=user.profile.employee)
+            else:
+                qs = qs.none()
+        else:
+            qs = qs.none()
+
+        # Exclude Absent participants and Cancelled training events as requested
+        qs = qs.exclude(attendance_status='Absent')
+        qs = qs.exclude(event__status__iexact='cancelled')
+
         if start_date:
             qs = qs.filter(event__start_date__gte=start_date)
         if end_date:
@@ -1282,10 +1354,6 @@ class ExportReportView(APIView):
             qs = qs.filter(event__status__iexact=status_filter)
         if category_filter != 'all':
             qs = qs.filter(event__training__training_category=category_filter)
-        if employee_filter:
-            qs = qs.filter(nik_id=employee_filter)
-        if division_filter:
-            qs = qs.filter(nik__division__division_name=division_filter)
         if type_filter != 'all':
             qs = qs.filter(event__training__training_type=type_filter)
 

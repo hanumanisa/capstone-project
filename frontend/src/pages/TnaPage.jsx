@@ -58,8 +58,9 @@ const TnaPage = () => {
             const params = {
                 search: searchTerm,
             };
-            // Note: Server-side filtering by division/course is handled by query params if implemented
-            // For now, let's filter client-side or use params if backend supports it.
+            if (divisionFilter && divisionFilter !== 'All Division') params.division = divisionFilter;
+            if (courseFilter && courseFilter !== 'All Course') params.course_name = courseFilter;
+            
             const res = await api.get('/api/tna-participant/', { params });
             setParticipants(res.data);
         } catch (err) {
@@ -67,7 +68,7 @@ const TnaPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm]);
+    }, [searchTerm, divisionFilter, courseFilter]);
 
     useEffect(() => {
         fetchParticipants();
@@ -76,11 +77,7 @@ const TnaPage = () => {
     const isAdmin = user?.role === 'Super Administrator' || user?.role === 'Administrator';
 
     // ─── Filter Logic ─────────────────────────────────────────────────────
-    const filteredParticipants = participants.filter(p => {
-        const matchesDiv = divisionFilter === 'All Division' || p.division_name === divisionFilter;
-        const matchesCourse = courseFilter === 'All Course' || p.course_name === courseFilter;
-        return matchesDiv && matchesCourse;
-    });
+    const filteredParticipants = participants;
 
     // ─── Pagination ─────────────────────────────────────────────────────
     const totalPages = Math.ceil(filteredParticipants.length / ITEMS_PER_PAGE);
@@ -142,23 +139,25 @@ const TnaPage = () => {
                         </span>
                     </div>
 
-                    <div className="relative w-full sm:w-48">
-                        <select
-                            value={divisionFilter}
-                            onChange={(e) => setDivisionFilter(e.target.value)}
-                            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
-                            style={{
-                                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
-                                backgroundSize: '20px 20px',
-                                backgroundPosition: 'right 12px center'
-                            }}
-                        >
-                            <option>All Division</option>
-                            {divisions.map(d => (
-                                <option key={d.division_id} value={d.division_name}>{d.division_name}</option>
-                            ))}
-                        </select>
-                    </div>
+                    {user?.role !== 'Head of Division' && user?.role !== 'Employee' && (
+                        <div className="relative w-full sm:w-48">
+                            <select
+                                value={divisionFilter}
+                                onChange={(e) => setDivisionFilter(e.target.value)}
+                                className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                                style={{
+                                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                                    backgroundSize: '20px 20px',
+                                    backgroundPosition: 'right 12px center'
+                                }}
+                            >
+                                <option value="All Division">All Division</option>
+                                {divisions.map(d => (
+                                    <option key={d.division_id} value={d.division_name}>{d.division_name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="relative w-full sm:w-48">
                         <select
@@ -171,9 +170,11 @@ const TnaPage = () => {
                                 backgroundPosition: 'right 12px center'
                             }}
                         >
-                            <option>All Course</option>
-                            {courses.map(c => (
-                                <option key={c.course_id} value={c.course_name}>{c.course_name}</option>
+                            <option value="All Course">All Course</option>
+                            {Array.from(new Set(courses.map(c => c.course_name)))
+                              .sort()
+                              .map((name, i) => (
+                                <option key={i} value={name}>{name}</option>
                             ))}
                         </select>
                     </div>

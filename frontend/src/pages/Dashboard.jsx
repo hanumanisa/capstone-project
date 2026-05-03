@@ -352,23 +352,25 @@ const Dashboard = () => {
                     </span>
                 </div>
 
-                <div className="relative w-full sm:w-48">
-                    <select 
-                        value={division} 
-                        onChange={(e) => setDivision(e.target.value)}
-                        className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
-                        style={{
-                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
-                            backgroundSize: '20px 20px',
-                            backgroundPosition: 'right 12px center'
-                        }}
-                    >
-                        <option value="All Division">All Division</option>
-                        {divisionsList.map((d, i) => (
-                            <option key={i} value={d.division_name}>{d.division_name}</option>
-                        ))}
-                    </select>
-                </div>
+                {user?.role !== 'Head of Division' && user?.role !== 'Employee' && (
+                    <div className="relative w-full sm:w-48">
+                        <select 
+                            value={division} 
+                            onChange={(e) => setDivision(e.target.value)}
+                            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                                backgroundSize: '20px 20px',
+                                backgroundPosition: 'right 12px center'
+                            }}
+                        >
+                            <option value="All Division">All Division</option>
+                            {divisionsList.map((d, i) => (
+                                <option key={i} value={d.division_name}>{d.division_name}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
                 <div className="relative w-full sm:w-48">
                     <select 
@@ -382,8 +384,10 @@ const Dashboard = () => {
                         }}
                     >
                         <option value="All Course">All Course</option>
-                        {coursesList.map((c, i) => (
-                            <option key={i} value={c.course_name}>{c.course_name}</option>
+                        {Array.from(new Set(coursesList.map(c => c.course_name)))
+                          .sort()
+                          .map((name, i) => (
+                            <option key={i} value={name}>{name}</option>
                         ))}
                     </select>
                 </div>

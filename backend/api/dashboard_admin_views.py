@@ -27,12 +27,12 @@ class DashboardAdminAPIView(APIView):
             from django.db.models import Q
             events = events.filter(
                 Q(training__training_title__icontains=search) |
-                Q(training__course_name__icontains=search) |
+                Q(training__course__course_name__icontains=search) |
                 Q(training__vendor__vendor_name__icontains=search)
             )
             
         if course:
-            events = events.filter(training__course_name__icontains=course)
+            events = events.filter(training__course__course_name=course)
         
         event_ids = events.values_list('event_id', flat=True)
         

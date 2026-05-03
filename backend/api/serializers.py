@@ -344,6 +344,7 @@ class TrainingMasterSerializer(serializers.ModelSerializer):
     total_cost = serializers.SerializerMethodField()
 
     latest_event = serializers.SerializerMethodField()
+    division_participant_names = serializers.SerializerMethodField()
 
     class Meta:
         model = TrainingMaster
@@ -357,7 +358,7 @@ class TrainingMasterSerializer(serializers.ModelSerializer):
             'start_date', 'end_date', 'days', 'hours', 'location', 
             'l1_avg', 'l2_avg', 'tna_fulfillment',
             'training_cost', 'venue_cost', 'sppd_cost', 'total_cost',
-            'latest_event'
+            'latest_event', 'division_participant_names'
         ]
         read_only_fields = ['created_at', 'updated_at']
 
@@ -501,6 +502,32 @@ class TrainingMasterSerializer(serializers.ModelSerializer):
             )
             return totals['total'] or 0
         return 0
+
+    def get_division_participant_names(self, obj):
+        from .models import EventParticipant
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return ""
+        
+        user = request.user
+        user_groups = list(user.groups.values_list('name', flat=True))
+        
+        if hasattr(user, 'profile') and user.profile.employee:
+            emp = user.profile.employee
+            if "Head of Division" in user_groups:
+                div_id = emp.division_id
+                participants = EventParticipant.objects.filter(
+                    event__training=obj,
+                    nik__division_id=div_id
+                ).select_related('nik').order_by('nik__full_name')
+                
+                names = [p.nik.full_name for p in participants]
+                return ", ".join(sorted(list(set(names))))
+            elif "Employee" in user_groups:
+                # Check if this employee actually attended this training
+                if EventParticipant.objects.filter(event__training=obj, nik=emp).exists():
+                    return emp.full_name
+        return ""
 
 
 class TrainingEventSerializer(serializers.ModelSerializer):

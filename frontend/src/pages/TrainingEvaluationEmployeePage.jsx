@@ -338,10 +338,7 @@ export default function TrainingEvaluationEmployeePage() {
 
                 {/* Pagination */}
                 {filteredCards.length > 0 && (
-                    <div className="flex justify-between items-center mt-8">
-                        <span className="text-sm text-gray-400">
-                            Showing <span className="font-semibold text-gray-600">{Math.min((currentPage - 1) * itemsPerPage + 1, filteredCards.length)}</span>–<span className="font-semibold text-gray-600">{Math.min(currentPage * itemsPerPage, filteredCards.length)}</span> of <span className="font-semibold text-gray-600">{filteredCards.length}</span> evaluations
-                        </span>
+                    <div className="flex justify-end items-center mt-8">
                         <div className="flex items-center space-x-1">
                             <button onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${currentPage === 1 ? 'bg-[#E2E8F0] text-gray-400 cursor-not-allowed' : 'bg-[#E2E8F0] text-gray-600 hover:bg-gray-300'}`}>Previous</button>
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
@@ -349,6 +346,12 @@ export default function TrainingEvaluationEmployeePage() {
                             ))}
                             <button onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${currentPage === totalPages ? 'bg-white border border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>Next</button>
                         </div>
+                    </div>
+                )}
+
+                {filteredCards.length > 0 && (
+                    <div className="mt-3 text-right text-sm text-gray-400">
+                        Showing <span className="font-semibold text-gray-600">{Math.min((currentPage - 1) * itemsPerPage + 1, filteredCards.length)}</span>–<span className="font-semibold text-gray-600">{Math.min(currentPage * itemsPerPage, filteredCards.length)}</span> of <span className="font-semibold text-gray-600">{filteredCards.length}</span> evaluations
                     </div>
                 )}
             </div>

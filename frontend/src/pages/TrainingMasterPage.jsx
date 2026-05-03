@@ -80,9 +80,7 @@ export default function TrainingMasterPage() {
     { division: "", currency: "IDR", room: "", training: "", sppd: "", status: "Unpaid" },
   ]);
 
-  const [documentationRows, setDocumentationRows] = useState([
-    { type: "Invoice", file_name: "", file: "", url: "", submitted_by: "" },
-  ]);
+  const [documentationRows, setDocumentationRows] = useState([{ type: "Invoice", file_name: "", url: "https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing", submitted_by: "" }]);
   const [costAllocationType, setCostAllocationType] = useState("Estimate Cost");
 
   const getAbbreviation = (text) => {
@@ -286,7 +284,7 @@ export default function TrainingMasterPage() {
       setParticipantRows([{ employee: "", attendance: "Present", l1: "", l2: "" }]);
       setEvaluation({ courseAccess: false, feedback: false, evaluationStage: false });
       setCostRows([{ division: "", currency: "IDR", room: "", training: "", sppd: "", status: "Unpaid" }]);
-      setDocumentationRows([{ type: "Invoice", file_name: "", file: "", url: "", submitted_by: "" }]);
+      setDocumentationRows([{ type: "Invoice", file_name: "", url: "https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing", submitted_by: "" }]);
       setTrainingCode(data.training_code || "");
       setTrainingType(data.training_type || "Inhouse Training");
       setTrainingCategory(data.training_category || "Soft Skill");
@@ -357,10 +355,9 @@ export default function TrainingMasterPage() {
         setDocumentationRows(ev.documents?.length ? ev.documents.map(d => ({
           type: d.document_type,
           file_name: d.file_name,
-          file: "",
           url: d.file_url,
           submitted_by: d.uploaded_by
-        })) : [{ type: "Invoice", file_name: "", file: "", url: "", submitted_by: "" }]);
+        })) : [{ type: "Invoice", file_name: "", url: "https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing", submitted_by: "" }]);
       }
       
       setShowModal(true);
@@ -406,20 +403,25 @@ export default function TrainingMasterPage() {
     setParticipantRows([{ employee: "", attendance: "Present", l1: "", l2: "" }]);
     setEvaluation({ courseAccess: false, feedback: false, evaluationStage: false });
     setCostRows([{ division: "", currency: "IDR", room: "", training: "", sppd: "", status: "Unpaid" }]);
-    setDocumentationRows([{ type: "Invoice", file_name: "", file: "", url: "", submitted_by: "" }]);
+    setDocumentationRows([{ type: "Invoice", file_name: "", url: "https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing", submitted_by: "" }]);
     setCostAllocationType("Estimate Cost");
     setActiveTab("location");
 
     setShowModal(true);
   };
 
-  const handleExport = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const params = new URLSearchParams();
-    for (let [key, value] of formData.entries()) {
-      if (value) params.append(key, value);
+  const handleExport = async (e, reportTypeOverride = null) => {
+    if (e) e.preventDefault();
+    
+    let params = new URLSearchParams();
+    if (e) {
+      const formData = new FormData(e.target);
+      for (let [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+      }
     }
+
+    const reportType = reportTypeOverride || activeReportTab;
 
     try {
       setToast({ message: "Generating Report...", type: "success" });
@@ -427,12 +429,12 @@ export default function TrainingMasterPage() {
       const { realisasi_training, total_employees } = response.data;
 
       if (!realisasi_training || !realisasi_training.length) {
-        setToast({ message: "No data found for selected filters", type: "error" });
+        setToast({ message: "No data found", type: "error" });
         return;
       }
 
       // ─── Case 1: Division Report (Merged Cells) ───────────────────────
-      if (activeReportTab === "division") {
+      if (reportType === "division") {
         const divisionFilter = formData.get('division');
         let targetEmployees = employees;
         if (divisionFilter && divisionFilter !== "") {
@@ -493,38 +495,45 @@ export default function TrainingMasterPage() {
       }
 
       // ─── Case 3: Master Report (Full dump sorted by date) ────────────
-      if (activeReportTab === "master") {
+      if (reportType === "master") {
         const sortedData = [...realisasi_training].sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
 
-        const exportData = sortedData.map(item => ({
-          "Course Category": item.course_category,
-          "Course Name": item.course_name,
-          "Training Type": item.training_type,
-          "Training Title": item.training_title,
-          "Start Date": item.start_date,
-          "End Date": item.end_date,
-          "Days": item.duration_day,
-          "Hours": item.hours,
-          "Location": item.location,
-          "Vendor": item.vendor,
-          "Training Category": item.training_category,
-          "NIK": item.nik,
-          "Nama": item.nama,
-          "Divisi": item.divisi,
-          "Jabatan": item.jabatan,
-          "L1": item.l1,
-          "L2": item.l2,
-          "YearMonth": item.year_month,
-          "TNA Fulfillment": item.tna_fulfillment
-        }));
+        const exportData = sortedData.map(item => {
+          const row = {
+            "Course Category": item.course_category,
+            "Course Name": item.course_name,
+            "Training Type": item.training_type,
+            "Training Title": item.training_title,
+            "Start Date": item.start_date,
+            "End Date": item.end_date,
+            "Days": item.duration_day,
+            "Hours": item.hours,
+            "Location": item.location,
+            "Vendor": item.vendor,
+            "Training Category": item.training_category,
+            "NIK": item.nik,
+            "Nama": item.nama,
+            "Divisi": item.divisi,
+            "Jabatan": item.jabatan,
+          };
+          if (!(user?.role === 'Head of Division' || user?.role === 'Employee')) {
+            row["L1"] = item.l1;
+            row["L2"] = item.l2;
+            row["YearMonth"] = item.year_month;
+            row["TNA Fulfillment"] = item.tna_fulfillment;
+          }
+          return row;
+        });
 
         const ws = XLSX.utils.json_to_sheet(exportData);
         ws["!cols"] = [
           { wch: 20 }, { wch: 25 }, { wch: 18 }, { wch: 45 }, { wch: 12 }, 
           { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 20 }, { wch: 25 }, 
-          { wch: 18 }, { wch: 12 }, { wch: 30 }, { wch: 25 }, { wch: 25 },
-          { wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 15 }
+          { wch: 18 }, { wch: 12 }, { wch: 30 }, { wch: 25 }, { wch: 25 }
         ];
+        if (!(user?.role === 'Head of Division' || user?.role === 'Employee')) {
+          ws["!cols"].push({ wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 15 });
+        }
 
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Master Report");
@@ -535,7 +544,8 @@ export default function TrainingMasterPage() {
       }
 
       // ─── Case 2: Monthly Report (Existing 2-sheet logic) ───────────────
-      const slide1Data = realisasi_training.map(item => ({
+      if (reportType === "monthly") {
+        const slide1Data = realisasi_training.map(item => ({
         "Course Category": item.course_category,
         "Course Name": item.course_name,
         "Training Title": item.training_title,
@@ -599,7 +609,8 @@ export default function TrainingMasterPage() {
       XLSX.writeFile(wb, `Monthly_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
       setToast({ message: "Monthly Report exported successfully", type: "success" });
       setShowReportModal(false);
-    } catch (error) {
+    }
+  } catch (error) {
       console.error("Export failed:", error);
       setToast({ message: "Failed to generate report", type: "error" });
     }
@@ -626,23 +637,25 @@ export default function TrainingMasterPage() {
         </div>
 
         {/* Division Filter */}
-        <div className="relative w-full sm:w-48">
-          <select
-            value={division}
-            onChange={(e) => setDivision(e.target.value)}
-            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
-            style={{
-                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
-                backgroundSize: '20px 20px',
-                backgroundPosition: 'right 12px center'
-            }}
-          >
-            <option value="">All Division</option>
-            {divisions.map((d, i) => (
-              <option key={i} value={d.division_name}>{d.division_name}</option>
-            ))}
-          </select>
-        </div>
+        {user?.role !== 'Head of Division' && user?.role !== 'Employee' && (
+          <div className="relative w-full sm:w-48">
+            <select
+              value={division}
+              onChange={(e) => setDivision(e.target.value)}
+              className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+              style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                  backgroundSize: '20px 20px',
+                  backgroundPosition: 'right 12px center'
+              }}
+            >
+              <option value="">All Division</option>
+              {divisions.map((d, i) => (
+                <option key={i} value={d.division_name}>{d.division_name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Month Filter */}
         <div className="relative w-full sm:w-48">
@@ -682,7 +695,13 @@ export default function TrainingMasterPage() {
 
           <div className="flex gap-2">
             <button
-              onClick={() => setShowReportModal(true)}
+              onClick={() => {
+                if (user?.role === 'Head of Division' || user?.role === 'Employee') {
+                  handleExport(null, "master");
+                } else {
+                  setShowReportModal(true);
+                }
+              }}
               className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-2 rounded-lg font-medium text-sm transition-all shadow-sm cursor-pointer"
             >
               Report
@@ -706,7 +725,7 @@ export default function TrainingMasterPage() {
         <table className="w-full text-left text-sm min-w-[2800px]">
           <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
             <tr>
-              <th className="px-3 py-4 font-normal">Course Category</th>
+              <th className="px-3 py-4 font-bold">Course Category</th>
               <th className="px-3 py-4 font-bold">Course Name</th>
               <th className="px-3 py-4 font-bold">Training Type</th>
               <th className="px-3 py-4 font-bold">Training Title</th>
@@ -717,12 +736,19 @@ export default function TrainingMasterPage() {
               <th className="px-3 py-4 font-bold">Location</th>
               <th className="px-3 py-4 font-bold">Vendor</th>
               <th className="px-3 py-4 font-bold">Training Category</th>
-              <th className="px-3 py-4 font-normal text-center">L1</th>
-              <th className="px-3 py-4 font-normal text-center">L2</th>
-              <th className="px-3 py-4 font-normal text-right">Training Cost</th>
-              <th className="px-3 py-4 font-normal text-right">Venue Cost</th>
-              <th className="px-3 py-4 font-normal text-right">SPPD Cost</th>
-              <th className="px-3 py-4 font-bold text-right">Total Cost</th>
+              {(user?.role === 'Head of Division' || user?.role === 'Employee') && (
+                <th className="px-3 py-4 font-bold">Participants</th>
+              )}
+              {!(user?.role === 'Head of Division' || user?.role === 'Employee') && (
+                <>
+                  <th className="px-3 py-4 font-bold text-center">L1</th>
+                  <th className="px-3 py-4 font-bold text-center">L2</th>
+                  <th className="px-3 py-4 font-bold text-right">Training Cost</th>
+                  <th className="px-3 py-4 font-bold text-right">Venue Cost</th>
+                  <th className="px-3 py-4 font-bold text-right">SPPD Cost</th>
+                  <th className="px-3 py-4 font-bold text-right">Total Cost</th>
+                </>
+              )}
             </tr>
           </thead>
 
@@ -744,49 +770,79 @@ export default function TrainingMasterPage() {
                 <td colSpan="22" className="px-6 py-12 text-center text-gray-400">No data available</td>
               </tr>
             ) : (
-              trainings.map((t, i) => (
-                <tr key={i} className="hover:bg-blue-50/30 transition-colors cursor-pointer group border-b border-gray-50">
-                  <td className="px-3 py-3 font-normal text-gray-700">{t.category_name}</td>
-                  <td className="px-3 py-3 text-gray-700">{t.course_name}</td>
-                  <td className="px-3 py-3 text-gray-500">{t.training_type}</td>
-                  <td className="px-3 py-3 text-[#2174C3] font-medium hover:underline cursor-pointer" onClick={() => handleEdit(t.training_id)}>{t.training_title}</td>
-                  <td className="px-3 py-3 text-gray-600">{t.start_date || "-"}</td>
-                  <td className="px-3 py-3 text-gray-600">{t.end_date || "-"}</td>
-                  <td className="px-3 py-3 text-center text-gray-600">{t.days}</td>
-                  <td className="px-3 py-3 text-center text-gray-600 font-bold">{t.hours}</td>
-                  <td className="px-3 py-3 text-gray-600">{t.location}</td>
-                  <td className="px-3 py-3 text-gray-600">{t.vendor_name}</td>
-                  <td className="px-3 py-3 text-gray-600">
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${t.training_category === 'ESG' ? 'bg-green-100 text-green-700' :
-                      t.training_category === 'Hard Skill' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                      {t.training_category}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    <span className="font-normal text-gray-700">
+              trainings.flatMap((t, i) => {
+                const isRestricted = user?.role === 'Head of Division' || user?.role === 'Employee';
+                const pNames = (t.division_participant_names || "").split(", ").filter(n => n);
+                
+                if (isRestricted) {
+                  // If restricted but somehow no names found (should not happen with backend filter)
+                  if (pNames.length === 0) return [];
+                  
+                  return pNames.map((name, pIdx) => (
+                    <tr key={`${i}-${pIdx}`} className="hover:bg-blue-50/30 transition-colors cursor-pointer group border-b border-gray-50">
+                      <td className="px-3 py-3 font-normal text-gray-700">{t.category_name}</td>
+                      <td className="px-3 py-3 font-normal text-gray-700">{t.course_name}</td>
+                      <td className="px-3 py-3 font-normal text-gray-700">{t.training_type}</td>
+                      <td className="px-3 py-3 text-[#2174C3] font-normal hover:underline cursor-pointer" onClick={() => handleEdit(t.training_id)}>{t.training_title}</td>
+                      <td className="px-3 py-3 font-normal text-gray-700">{t.start_date || "-"}</td>
+                      <td className="px-3 py-3 font-normal text-gray-700">{t.end_date || "-"}</td>
+                      <td className="px-3 py-3 text-center font-normal text-gray-700">{t.days}</td>
+                      <td className="px-3 py-3 text-center font-normal text-gray-700">{t.hours}</td>
+                      <td className="px-3 py-3 font-normal text-gray-700">{t.location}</td>
+                      <td className="px-3 py-3 font-normal text-gray-700">{t.vendor_name}</td>
+                      <td className="px-3 py-3 font-normal text-gray-700">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${t.training_category === 'ESG' ? 'bg-green-100 text-green-700' :
+                          t.training_category === 'Hard Skill' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                          {t.training_category}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 font-normal text-gray-700 italic">{name}</td>
+                    </tr>
+                  ));
+                }
+
+                // Administrator / Full View
+                return (
+                  <tr key={i} className="hover:bg-blue-50/30 transition-colors cursor-pointer group border-b border-gray-50">
+                    <td className="px-3 py-3 font-normal text-gray-700">{t.category_name}</td>
+                    <td className="px-3 py-3 font-normal text-gray-700">{t.course_name}</td>
+                    <td className="px-3 py-3 font-normal text-gray-700">{t.training_type}</td>
+                    <td className="px-3 py-3 text-[#2174C3] font-normal hover:underline cursor-pointer" onClick={() => handleEdit(t.training_id)}>{t.training_title}</td>
+                    <td className="px-3 py-3 font-normal text-gray-700">{t.start_date || "-"}</td>
+                    <td className="px-3 py-3 font-normal text-gray-700">{t.end_date || "-"}</td>
+                    <td className="px-3 py-3 text-center font-normal text-gray-700">{t.days}</td>
+                    <td className="px-3 py-3 text-center font-normal text-gray-700">{t.hours}</td>
+                    <td className="px-3 py-3 font-normal text-gray-700">{t.location}</td>
+                    <td className="px-3 py-3 font-normal text-gray-700">{t.vendor_name}</td>
+                    <td className="px-3 py-3 font-normal text-gray-700">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${t.training_category === 'ESG' ? 'bg-green-100 text-green-700' :
+                        t.training_category === 'Hard Skill' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                        }`}>
+                        {t.training_category}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-center font-normal text-gray-700">
                       {t.l1_avg ? Number(t.l1_avg).toFixed(2) : "0.00"}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    <span className="font-normal text-gray-700">
+                    </td>
+                    <td className="px-3 py-3 text-center font-normal text-gray-700">
                       {t.l2_avg ? Number(t.l2_avg).toFixed(2) : "0.00"}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 text-right text-gray-700 font-normal">
-                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.training_cost)}
-                  </td>
-                  <td className="px-3 py-3 text-right text-gray-700 font-normal">
-                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.venue_cost)}
-                  </td>
-                  <td className="px-3 py-3 text-right text-gray-700 font-normal">
-                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.sppd_cost)}
-                  </td>
-                  <td className="px-3 py-3 text-right font-black text-gray-800 bg-gray-50/50">
-                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.total_cost)}
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td className="px-3 py-3 text-right font-normal text-gray-700">
+                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.training_cost)}
+                    </td>
+                    <td className="px-3 py-3 text-right font-normal text-gray-700">
+                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.venue_cost)}
+                    </td>
+                    <td className="px-3 py-3 text-right font-normal text-gray-700">
+                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.sppd_cost)}
+                    </td>
+                    <td className="px-3 py-3 text-right font-bold text-gray-800 bg-gray-50/50">
+                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.total_cost)}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -879,8 +935,6 @@ export default function TrainingMasterPage() {
                       <option value="all">All Status</option>
                       <option value="Draft">Draft</option>
                       <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
-                      
                     </select>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
@@ -912,7 +966,6 @@ export default function TrainingMasterPage() {
                       <option value="all">All Status</option>
                       <option value="Draft">Draft</option>
                       <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
                     </select>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
@@ -944,7 +997,6 @@ export default function TrainingMasterPage() {
                       <option value="all">All Status</option>
                       <option value="Draft">Draft</option>
                       <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
                     </select>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
@@ -1444,8 +1496,8 @@ export default function TrainingMasterPage() {
                           <td className="p-2 text-center">
                             <button
                               type="button"
-                              onClick={() => { if (row.url) window.open(row.url, '_blank'); }}
-                              className={`p-2 rounded-lg transition-all ${row.url ? 'bg-[#2174C3] text-white hover:bg-[#1A5E9D]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                              onClick={() => window.open('https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing', '_blank')}
+                              className="p-2 rounded-lg transition-all bg-[#2174C3] text-white hover:bg-[#1A5E9D]"
                               title="Open in Google Drive"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1478,7 +1530,7 @@ export default function TrainingMasterPage() {
                       ))}
                     </tbody>
                   </table>
-                  <button type="button" onClick={() => setDocumentationRows([...documentationRows, { type: "Invoice", file_name: "", file: "", url: "", submitted_by: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Documentation</button>
+                  <button type="button" onClick={() => setDocumentationRows([...documentationRows, { type: "Invoice", file_name: "", url: "https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing", submitted_by: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Documentation</button>
                 </div>
               )}
             </div>
