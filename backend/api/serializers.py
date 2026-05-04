@@ -9,8 +9,16 @@ from .models import (
     EventParticipant, EventCost, EventDocument, Division,
     EvaluationForm, EvaluationQuestion, EvaluationQuestionOption,
     EvaluationAnswer, EvaluationResult,
-    AiAdminConfig, AiFaq, AiChatSession, AiChatLog, AiUnauthorizedAttempt
+    AiAdminConfig, AiFaq, AiChatSession, AiChatLog, AiUnauthorizedAttempt,
+    Budget
 )
+
+
+class BudgetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Budget
+        fields = '__all__'
+
 
 
 class DivisionSerializer(serializers.ModelSerializer):
@@ -380,7 +388,7 @@ class TrainingMasterSerializer(serializers.ModelSerializer):
         if not event:
             return None
         
-        # We need full details for the edit form
+        # full details for the edit form
         return {
             'event_id': event.event_id,
             'topic': event.training_topic,
@@ -524,7 +532,7 @@ class TrainingMasterSerializer(serializers.ModelSerializer):
                 names = [p.nik.full_name for p in participants]
                 return ", ".join(sorted(list(set(names))))
             elif "Employee" in user_groups:
-                # Check if this employee actually attended this training
+                # Check if employee actually attended training
                 if EventParticipant.objects.filter(event__training=obj, nik=emp).exists():
                     return emp.full_name
         return ""
@@ -616,7 +624,7 @@ class EvaluationResultSerializer(serializers.ModelSerializer):
         model = EvaluationResult
         fields = '__all__'
 
-# ─── AI Serializers ──────────────────────────────────────────────────────────
+# AI Serializers
 
 class AiAdminConfigSerializer(serializers.ModelSerializer):
     class Meta:

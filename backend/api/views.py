@@ -19,7 +19,8 @@ from .models import (
     EventParticipant, EventCost, EventDocument, Division,
     EvaluationForm, EvaluationQuestion, EvaluationQuestionOption,
     EvaluationAnswer, EvaluationResult,
-    AiAdminConfig, AiFaq, AiChatSession, AiChatLog, AiUnauthorizedAttempt
+    AiAdminConfig, AiFaq, AiChatSession, AiChatLog, AiUnauthorizedAttempt,
+    Budget
 )
 from .serializers import (
     UserSerializer, MyTokenObtainPairSerializer,
@@ -32,14 +33,16 @@ from .serializers import (
     EvaluationQuestionOptionSerializer, EvaluationAnswerSerializer,
     EvaluationResultSerializer,
     AiAdminConfigSerializer, AiFaqSerializer, AiChatSessionSerializer, 
-    AiChatLogSerializer, AiUnauthorizedAttemptSerializer
+    AiChatLogSerializer, AiUnauthorizedAttemptSerializer,
+    BudgetSerializer
 )
+
 
 
 # Custom Permission
 class IsSuperAdmin(permissions.BasePermission):
     """
-    Hanya mengizinkan Super Administrator (is_superuser=True) untuk endopint autentikasi
+    Hanya mengizinkan Super Administrator untuk endopint autentikasi
     """
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_superuser)
@@ -63,6 +66,12 @@ class IsAdminOrReadOnly(permissions.BasePermission):
             return True
         user_groups = list(request.user.groups.values_list('name', flat=True))
         return 'Administrator' in user_groups
+
+
+class BudgetViewSet(viewsets.ModelViewSet):
+    queryset = Budget.objects.all().order_by('-start_date_budget')
+    serializer_class = BudgetSerializer
+    permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
 
 
 # Jwt login view
@@ -505,7 +514,7 @@ class AddTrainingView(APIView):
             tm.estimated_cost = data.get('estimated_cost', tm.estimated_cost)
             tm.save()
 
-            # For simplicity, we update the LATEST event or create one if none exists
+            # For simplicity, update the LATEST event or create one if none exists
             event = tm.trainingevent_set.order_by('-start_date').first()
             if not event:
                 # This shouldn't happen if created via this flow, but handles legacy
@@ -612,7 +621,7 @@ class AddTrainingView(APIView):
         except TrainingMaster.DoesNotExist:
             return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
-# ─── Evaluation ViewSets ─────────────────────────────────────────────────────
+# Evaluation ViewSets 
 
 class EvaluationFormViewSet(viewsets.ModelViewSet):
     queryset = EvaluationForm.objects.prefetch_related('questions', 'questions__options').all().order_by('-created_at')
@@ -731,7 +740,7 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
             return Response([], status=status.HTTP_200_OK)
             
         # Find all events where this employee is a participant
-        # We need to filter based on event flags: enable_course_access must be True
+        # need to filter based on event flags: enable_course_access must be True
         participants = EventParticipant.objects.filter(
             nik=employee, 
             event__enable_course_access=True
@@ -747,7 +756,7 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
             ).prefetch_related('questions', 'questions__options')
             
             for form in forms:
-                # Type is typically marked in form_name like '[L1] ...'
+                # Type is '[L1] ...'
                 # Prioritize form_type from DB, fallback to name check
                 form_type = form.form_type if form.form_type else ('L2' if '[L2]' in (form.form_name or '') else 'L1')
                 
@@ -961,7 +970,7 @@ class EvaluationResultViewSet(viewsets.ModelViewSet):
     serializer_class = EvaluationResultSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# ─── AI Assistant ViewSets ──────────────────────────────────────────────────
+# AI Assistant ViewSets 
 
 class IsAdminOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -1342,7 +1351,7 @@ class ExportReportView(APIView):
         else:
             qs = qs.none()
 
-        # Exclude Absent participants and Cancelled training events as requested
+        # Exclude Absent participants and Cancelled training events 
         qs = qs.exclude(attendance_status='Absent')
         qs = qs.exclude(event__status__iexact='cancelled')
 
@@ -1379,7 +1388,7 @@ class ExportReportView(APIView):
             
             days = (event.end_date - event.start_date).days + 1 if event.start_date and event.end_date else 0
             
-            # YearMonth calculation (e.g., 20264 for April 2026)
+            # YearMonth calculation 
             year_month = ""
             if event.start_date:
                 year_month = f"{event.start_date.year}{event.start_date.month}"

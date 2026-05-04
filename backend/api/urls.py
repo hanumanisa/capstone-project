@@ -9,14 +9,14 @@ from .views import (
     TnaParticipantViewSet, HotelViewSet,
     TrainingMasterViewSet, TrainingEventViewSet, EventLocationViewSet,
     EventScheduleViewSet, EventParticipantViewSet, EventCostViewSet,
-    EventDocumentViewSet, AddTrainingView, DivisionViewSet, ExportReportView
+    EventDocumentViewSet, AddTrainingView, DivisionViewSet, ExportReportView,
+    BudgetViewSet
 )
 from .dashboard_views import DashboardCardsAPIView
 from .dashboard_admin_views import DashboardAdminAPIView
 
-# DRF Router
 router = DefaultRouter()
-
+router.register(r'budgets', BudgetViewSet, basename='budgets')
 router.register(r'users', UserViewSet, basename='users')
 router.register(r'employee', EmployeeViewSet, basename='employee')
 router.register(r'divisions', DivisionViewSet, basename='divisions')

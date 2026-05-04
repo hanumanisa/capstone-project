@@ -115,7 +115,7 @@ class Command(BaseCommand):
 
         self.stdout.write('\nSeeding Employees...')
 
-        # Position mapping
+        # Position 
         POSITION_MAP = {
             'KD221': 'Kepala Divisi',
             'TL222': 'Team Leader',
@@ -554,7 +554,7 @@ class Command(BaseCommand):
         ]
 
 
-        # NIK mapping
+        # NIK 
         ADMINISTRATOR_NIKS = {200335, 200331, 200329}
         HEAD_OF_DIVISION_NIKS = {
             200001, 200022, 200033, 200053, 200068, 200094, 200106, 200118,
@@ -574,7 +574,7 @@ class Command(BaseCommand):
         DEAN_NIKS = {200319}
 
         def get_group_name(nik):
-            """Determine the authentication group for a given NIK."""
+
             if nik in ADMINISTRATOR_NIKS:
                 return 'Administrator'
             if nik in HEAD_OF_DIVISION_NIKS:
@@ -585,7 +585,7 @@ class Command(BaseCommand):
                 return 'Team Leader'
             return 'Employee'
 
-        # Pre-fetch groups
+        # Pre-fetch group
         groups_cache = {}
         for gn in group_names:
             try:
@@ -593,7 +593,7 @@ class Command(BaseCommand):
             except Group.DoesNotExist:
                 pass
 
-        # Phase 1: Create all employees without self-referencing supervisor first
+        #all employees without self-referencing supervisor 
         created_count = 0
         skipped_count = 0
 
@@ -630,7 +630,7 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f'  [OK] Created {created_count} employees, skipped {skipped_count}'))
 
-        # Phase 2: Link supervisors
+        # Link supervisors
         self.stdout.write('  Linking supervisors...')
         for emp_data in employees_data:
             nik = emp_data[0]
@@ -855,9 +855,6 @@ class Command(BaseCommand):
             else:
                 c_skipped += 1
         self.stdout.write(self.style.SUCCESS(f'  [OK] Created {c_created} courses, skipped {c_skipped}'))
-
-       
-        # Hotel seeding removed from here and moved earlier.
 
        
         self.stdout.write('\nSeeding Vendors...')
@@ -1270,7 +1267,7 @@ class Command(BaseCommand):
                 'training_category': 'ESG',
                 'training_title': 'Introduction to ESG Fundamentals',
                 'training_description': 'Core concepts of ESG for corporate management.',
-                'pic_id': 200335, # Admin Hanum
+                'pic_id': 200335, 
                 'vendor_id': 'PWC',
                 'estimated_cost': 5000000.00
             },
@@ -1346,7 +1343,7 @@ class Command(BaseCommand):
                     instructor_name='Ananda Dewi'
                 )
 
-                # Add some test participants
+                # Add test participants
                 for i, nik in enumerate([200335, 200331, 200329], 1):
                     EventParticipant.objects.create(
                         event=event,
@@ -1356,7 +1353,7 @@ class Command(BaseCommand):
                         l2_score=90.00 - i
                     )
 
-                # Add some test costs
+                # Add test costs
                 EventCost.objects.create(
                     event=event,
                     cost_center="CC-TDP-2026",
@@ -1368,7 +1365,7 @@ class Command(BaseCommand):
                     status_cost="Proposed"
                 )
 
-                # Add some test documents
+                # Add test documents
                 for i, (nik, d_type) in enumerate([
                     (200335, "Invoice"),
                     (200331, "Form IHT"),

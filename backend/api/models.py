@@ -783,3 +783,21 @@ class AiUnauthorizedAttempt(models.Model):
 
     def __str__(self):
         return f"Attempt {self.attempt_id} by user {self.user_id}"
+
+
+class Budget(models.Model):
+    budget_id = models.AutoField(primary_key=True)
+    budget_name = models.CharField(max_length=150)
+    start_date_budget = models.DateField()
+    end_date_budget = models.DateField()
+    total_budget = models.DecimalField(max_digits=15, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'budgets'
+
+    def __str__(self):
+        return f"{self.budget_name} ({self.start_date_budget} - {self.end_date_budget})"
+
+    def __str__(self):
+        return f"Attempt {self.attempt_id} by user {self.user_id}"

@@ -13,7 +13,7 @@ class DashboardCardsAPIView(APIView):
             profile = user.profile
             employee = profile.employee
         except Exception:
-            # If user has no employee profile, return empty or zero stats
+            # If user has no employee profile, return 0 stats
             return Response({
                 "total_training": 0,
                 "total_hours": "0",
@@ -23,8 +23,8 @@ class DashboardCardsAPIView(APIView):
                 "tna_coverage": "0%"
             })
 
-        # Calculate Total Training
-        participations = EventParticipant.objects.filter(nik=employee)
+        # Calculate Total Training (exclude Absent and Cancelled)
+        participations = EventParticipant.objects.filter(nik=employee).exclude(attendance_status='Absent').exclude(event__status='cancelled')
         total_training = participations.count()
 
         # Calculate Total Hours
@@ -61,6 +61,7 @@ class DashboardCardsAPIView(APIView):
         if total_tna > 0:
             attended_courses = set(
                 TrainingEvent.objects.filter(event_id__in=attended_event_ids)
+                .exclude(status='cancelled')
                 .values_list('training__course_id', flat=True)
             )
             for tp in tna_parts:

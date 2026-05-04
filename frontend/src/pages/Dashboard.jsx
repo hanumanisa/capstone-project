@@ -14,6 +14,25 @@ import {
     ArcElement
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
+import { 
+    BookOpen, 
+    Clock, 
+    Users, 
+    User, 
+    Hourglass, 
+    CircleDollarSign, 
+    Layout, 
+    TrendingUp, 
+    BarChart3, 
+    MonitorPlay, 
+    Brain, 
+    Settings, 
+    Leaf, 
+    Star, 
+    UserCheck, 
+    ClipboardCheck,
+    HelpCircle
+} from 'lucide-react';
 
 // Register ChartJS modules
 ChartJS.register(
@@ -67,7 +86,10 @@ const Dashboard = () => {
             navigate('/login');
         } else {
             setUser(userData);
-            if (['Head of Division', 'Team Leader', 'Employee', 'Dean'].includes(userData.role)) {
+            // Administrator, Super Administrator, and Dean see the full dashboard
+            const isAdminDashboardRole = ['Administrator', 'Super Administrator', 'Dean'].includes(userData.role);
+            
+            if (!isAdminDashboardRole) {
                 api.get('/api/dashboard/cards/')
                    .then(res => {
                        if(res.data) setCardData(res.data);
@@ -87,43 +109,43 @@ const Dashboard = () => {
         }
     }, [navigate, search, division, course, year]);
 
-    const isRestrictedRole = user && ['Head of Division', 'Team Leader', 'Employee', 'Dean'].includes(user.role);
+    const isRestrictedRole = user && !['Administrator', 'Super Administrator', 'Dean'].includes(user.role);
 
     const stats = isRestrictedRole ? [
-        { title: 'Total Training', val: cardData.total_training, icon: '📖', bgIcon: '#FEF3C7' },
-        { title: 'Total Hours', val: cardData.total_hours, icon: '🕒', bgIcon: '#DCFCE7' },
-        { title: 'Average Hours', val: cardData.average_hours, icon: '⌛', bgIcon: '#F9EAFF' },
-        { title: 'Training Evaluation L1', val: cardData.l1_score, icon: '⭐', bgIcon: '#FEF3C7' },
-        { title: 'Training Evaluation L2', val: cardData.l2_score, icon: '⭐', bgIcon: '#FEF3C7' },
-        { title: 'TNA Program Coverage', val: cardData.tna_coverage, icon: '📋', bgIcon: '#E0E7FF' }
+        { title: 'Total Training', val: cardData.total_training, icon: BookOpen, bgIcon: '#F59E0B' },
+        { title: 'Total Hours', val: cardData.total_hours, icon: Clock, bgIcon: '#10B981' },
+        { title: 'Average Hours', val: cardData.average_hours, icon: Hourglass, bgIcon: '#8B5CF6' },
+        { title: 'Training Evaluation L1', val: cardData.l1_score, icon: Star, bgIcon: '#FBBF24' },
+        { title: 'Training Evaluation L2', val: cardData.l2_score, icon: Star, bgIcon: '#FBBF24' },
+        { title: 'TNA Program Coverage', val: cardData.tna_coverage, icon: ClipboardCheck, bgIcon: '#3B82F6' }
     ] : adminData ? [
         // Column 1
-        { title: 'Total Training', val: adminData.stats.total_training, change: '16%', up: true, icon: '📖', bgIcon: '#FEF3C7' },
-        { title: 'Online Training', val: adminData.stats.online_training, icon: '📉', bgIcon: '#E0E7FF' },
+        { title: 'Total Training', val: adminData.stats.total_training, change: '16%', up: true, icon: BookOpen, bgIcon: '#F59E0B' },
+        { title: 'E-Learning', val: adminData.stats.e_learning, icon: MonitorPlay, bgIcon: '#8B5CF6' },
         // Column 2
-        { title: 'Total Hours', val: adminData.stats.total_hours, change: '16%', up: false, icon: '🕒', bgIcon: '#DCFCE7' },
-        { title: 'Soft Skill', val: adminData.stats.soft_skill, icon: '🧠', bgIcon: '#FCE7F3' },
+        { title: 'Total Hours', val: adminData.stats.total_hours, change: '16%', up: false, icon: Clock, bgIcon: '#10B981' },
+        { title: 'Soft Skill', val: adminData.stats.soft_skill, icon: Brain, bgIcon: '#EC4899' },
         // Column 3
-        { title: 'Total Learners', val: adminData.stats.total_learners, change: '16%', up: true, icon: '👥', bgIcon: '#FFFBEB' },
-        { title: 'Hard Skill', val: adminData.stats.hard_skill, icon: '⚙️', bgIcon: '#E0F2FE' },
+        { title: 'Total Learners', val: adminData.stats.total_learners, change: '16%', up: true, icon: Users, bgIcon: '#FBBF24' },
+        { title: 'Hard Skill', val: adminData.stats.hard_skill, icon: Settings, bgIcon: '#06B6D4' },
         // Column 4
-        { title: 'Total Employee', val: adminData.stats.total_employee, change: '16%', up: false, icon: '👤', bgIcon: '#ECFEFF' },
-        { title: 'ESG', val: adminData.stats.esg, icon: '🌱', bgIcon: '#DCFCE7' },
+        { title: 'Total Employee', val: adminData.stats.total_employee, change: '16%', up: false, icon: Users, bgIcon: '#06B6D4' },
+        { title: 'ESG', val: adminData.stats.esg, icon: Leaf, bgIcon: '#10B981' },
         // Column 5
-        { title: 'Average Hours', val: adminData.stats.average_hours, change: '16%', up: true, icon: '⌛', bgIcon: '#F9EAFF' },
-        { title: 'Training Evaluation L1', val: adminData.stats.l1_score, icon: '⭐', bgIcon: '#FEF3C7' },
+        { title: 'Average Hours', val: adminData.stats.average_hours, change: '16%', up: true, icon: Hourglass, bgIcon: '#8B5CF6' },
+        { title: 'Training Evaluation L1', val: adminData.stats.l1_score, icon: Star, bgIcon: '#FBBF24' },
         // Column 6
-        { title: 'Budget Used', val: adminData.stats.budget_used, sub: `${adminData.stats.budget_remaining} Remaining`, icon: '💰', bgIcon: '#FEE2E2' },
-        { title: 'Training Evaluation L2', val: adminData.stats.l2_score, icon: '⭐', bgIcon: '#FEF3C7' },
+        { title: 'Budget Used', val: adminData.stats.budget_used, sub: `${adminData.stats.budget_remaining} Remaining`, icon: CircleDollarSign, bgIcon: '#EF4444' },
+        { title: 'Training Evaluation L2', val: adminData.stats.l2_score, icon: Star, bgIcon: '#FBBF24' },
         // Column 7
-        { title: 'Inhouse Training', val: adminData.stats.inhouse_training, icon: '💻', bgIcon: '#E0F2FE' },
-        { title: 'TNA Learners Coverage', val: adminData.stats.tna_learners_coverage, icon: '👥', bgIcon: '#E0F2FE' },
+        { title: 'Inhouse Training', val: adminData.stats.inhouse_training, icon: Layout, bgIcon: '#3B82F6' },
+        { title: 'TNA Learners Coverage', val: adminData.stats.tna_learners_coverage, icon: UserCheck, bgIcon: '#3B82F6' },
         // Column 8
-        { title: 'Knowledge Sharing', val: adminData.stats.knowledge_sharing, icon: '📈', bgIcon: '#FFEDD5' },
-        { title: 'TNA Program Coverage', val: adminData.stats.tna_program_coverage, icon: '📋', bgIcon: '#E0E7FF' },
+        { title: 'Knowledge Sharing', val: adminData.stats.knowledge_sharing, icon: BarChart3, bgIcon: '#F97316' },
+        { title: 'TNA Program Coverage', val: adminData.stats.tna_program_coverage, icon: ClipboardCheck, bgIcon: '#3B82F6' },
         // Column 9
-        { title: 'Public Training', val: adminData.stats.public_training, icon: '📊', bgIcon: '#DCFCE7' },
-        { title: 'Coming Soon', val: '-', icon: '⏳', bgIcon: '#F3F4F6' }
+        { title: 'Public Training', val: adminData.stats.public_training, icon: TrendingUp, bgIcon: '#10B981' },
+        { title: 'Coming Soon', val: '-', icon: HelpCircle, bgIcon: '#D1D5DB' }
     ] : [];
 
     const chartLabels = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -276,59 +298,16 @@ const Dashboard = () => {
                 { label: 'Inhouse Training', data: adminData.charts.totalTrainingType['Inhouse Training'], backgroundColor: '#3498DB' },
                 { label: 'Knowledge Sharing', data: adminData.charts.totalTrainingType['Knowledge Sharing'], backgroundColor: '#E67E22' },
                 { label: 'Public Training', data: adminData.charts.totalTrainingType['Public Training'], backgroundColor: '#2ECC71' },
-                { label: 'Online Training', data: adminData.charts.totalTrainingType['Online Training'], backgroundColor: '#BD509E' }
+                { label: 'E-Learning', data: adminData.charts.totalTrainingType['E-Learning'], backgroundColor: '#BD509E' }
             ]
         }
     } : {
-        averageHours: {
-            labels: chartLabels,
-            datasets: [{
-                data: [55, 68, 22, 63, 48, 66, 84, 84, 66, 66, 48, 84],
-                backgroundColor: '#BD509E',
-                barPercentage: 0.5
-            }]
-        },
-        budgetUsed: {
-            labels: chartLabels,
-            datasets: [{
-                data: [560, 680, 230, 630, 480, 660, 840, 840, 660, 660, 480, 840],
-                backgroundColor: '#E67E22',
-                barPercentage: 0.5
-            }]
-        },
-        totalTrainingCategory: {
-            labels: chartLabels,
-            datasets: [
-                { label: 'Hard Skill', data: [28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28], backgroundColor: '#3498DB' },
-                { label: 'Soft Skill', data: [25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25], backgroundColor: '#BD509E' },
-                { label: 'ESG', data: [20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20], backgroundColor: '#2ECC71' }
-            ]
-        },
-        trainingCategoryHours: {
-            labels: chartLabels,
-            datasets: [
-                { label: 'Hard Skill', data: [28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28], backgroundColor: '#3498DB' },
-                { label: 'Soft Skill', data: [25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25], backgroundColor: '#BD509E' },
-                { label: 'ESG', data: [20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20], backgroundColor: '#2ECC71' }
-            ]
-        },
-        presentaseKaryawan: {
-            labels: ['Direktur', 'Kepala Divisi', 'Team Leader', 'Staff'],
-            datasets: [{
-                data: [45, 12, 13, 30],
-                backgroundColor: ['#1E3A5F', '#D4AF37', '#2ECC71', '#A64D79'],
-                borderWidth: 0
-            }]
-        },
-        totalTrainingType: {
-            labels: chartLabels,
-            datasets: [
-                { label: 'Inhouse Training', data: [28, 32, 28, 28, 38, 22, 28, 38, 34, 34, 38, 48], backgroundColor: '#3498DB' },
-                { label: 'Knowledge Sharing', data: [20, 22, 20, 20, 28, 18, 22, 28, 25, 25, 28, 34], backgroundColor: '#E67E22' },
-                { label: 'Public Training', data: [25, 25, 25, 25, 30, 24, 28, 30, 28, 28, 30, 38], backgroundColor: '#2ECC71' },
-                { label: 'Online Training', data: [23, 28, 23, 23, 34, 25, 25, 34, 30, 30, 34, 42], backgroundColor: '#BD509E' }
-            ]
-        }
+        averageHours: { labels: chartLabels, datasets: [{ data: Array(12).fill(0), backgroundColor: '#BD509E' }] },
+        budgetUsed: { labels: chartLabels, datasets: [{ data: Array(12).fill(0), backgroundColor: '#E67E22' }] },
+        totalTrainingCategory: { labels: chartLabels, datasets: [] },
+        trainingCategoryHours: { labels: chartLabels, datasets: [] },
+        presentaseKaryawan: { labels: [], datasets: [] },
+        totalTrainingType: { labels: chartLabels, datasets: [] }
     };
 
     if (!user) return null;
@@ -352,7 +331,7 @@ const Dashboard = () => {
                     </span>
                 </div>
 
-                {user?.role !== 'Head of Division' && user?.role !== 'Employee' && (
+                {!isRestrictedRole && (
                     <div className="relative w-full sm:w-48">
                         <select 
                             value={division} 
@@ -394,18 +373,15 @@ const Dashboard = () => {
                 
                 <div className="flex-1 flex justify-end items-center space-x-6">
                     <div className="font-bold flex space-x-4 text-sm tracking-wide">
-                        <span 
-                            onClick={() => setYear('2026')}
-                            className={`cursor-pointer transition-colors ${year === '2026' ? 'text-[#2174C3]' : 'text-gray-300 hover:text-gray-400'}`}
-                        >
-                            2026
-                        </span>
-                        <span 
-                            onClick={() => setYear('2025')}
-                            className={`cursor-pointer transition-colors ${year === '2025' ? 'text-[#2174C3]' : 'text-gray-300 hover:text-gray-400'}`}
-                        >
-                            2025
-                        </span>
+                        {['2026', '2025'].map(y => (
+                            <span 
+                                key={y}
+                                onClick={() => setYear(y)}
+                                className={`cursor-pointer transition-colors ${year === y ? 'text-[#2174C3]' : 'text-gray-300 hover:text-gray-400'}`}
+                            >
+                                {y}
+                            </span>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -431,13 +407,24 @@ const Dashboard = () => {
                             <div className="flex justify-between items-start relative z-10">
                                 <h3 className="text-gray-400 text-[10px] font-extrabold uppercase leading-tight tracking-[0.1em]">{item.title}</h3>
                                 <div 
-                                    className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-xl shadow-sm backdrop-blur-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+                                    className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center shadow-sm relative transition-all duration-300 group-hover:scale-110 overflow-hidden"
                                     style={{ 
-                                        backgroundColor: `${item.bgIcon}80`, // Adding transparency for glass effect
-                                        border: `1px solid ${item.bgIcon}`
+                                        backgroundColor: `${item.bgIcon}15`, 
                                     }}
                                 >
-                                    {item.icon}
+                                    {/* Inner Glow Effect */}
+                                    <div 
+                                        className="absolute inset-0 opacity-40"
+                                        style={{ 
+                                            background: `radial-gradient(circle at center, ${item.bgIcon} 0%, transparent 70%)` 
+                                        }}
+                                    />
+                                    <item.icon 
+                                        size={22} 
+                                        className="relative z-10 transition-transform duration-500 group-hover:rotate-12" 
+                                        style={{ color: item.bgIcon }} 
+                                        strokeWidth={2.5}
+                                    />
                                 </div>
                             </div>
 
@@ -470,227 +457,111 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Dashboard Grid Section */}
+            {/* Charts Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                {/* 1. Average Hours */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Average Hours</h3>
-                    <div className="flex-1 w-full min-h-0">
-                        <Bar options={commonBarOptions} data={datasets.averageHours} />
+                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Average Hours</h3>
+                    <div className="flex-1 w-full min-h-0"><Bar options={commonBarOptions} data={datasets.averageHours} /></div>
+                </div>
+
+                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Budget Used</h3>
+                    <div className="flex-1 w-full min-h-0"><Bar options={budgetOptions} data={datasets.budgetUsed} /></div>
+                </div>
+
+                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Total Training Category</h3>
+                    <div className="flex-1 w-full min-h-0"><Bar options={groupedBarOptions} data={datasets.totalTrainingCategory} /></div>
+                </div>
+
+                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Training Category Hours</h3>
+                    <div className="flex-1 w-full min-h-0"><Bar options={groupedBarOptions} data={datasets.trainingCategoryHours} /></div>
+                </div>
+
+                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Presentase Karyawan</h3>
+                    <div className="flex-1 w-full min-h-0 relative">
+                        <Doughnut options={doughnutOptions} data={datasets.presentaseKaryawan} />
                     </div>
                 </div>
 
-                {/* 2. Budget Used */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Budget Used</h3>
-                    <div className="flex-1 w-full min-h-0">
-                        <Bar options={budgetOptions} data={datasets.budgetUsed} />
+                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Total Training Type</h3>
+                    <div className="flex-1 w-full min-h-0"><Bar options={groupedBarOptions} data={datasets.totalTrainingType} /></div>
+                </div>
+            </div>
+
+            {/* Tables Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                {/* 10. Cost Table */}
+                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col overflow-hidden">
+                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Cost</h3>
+                    <div className="flex-1 overflow-auto pr-2 custom-scrollbar">
+                        <table className="w-full text-xs text-left border-separate border-spacing-y-1">
+                            <thead className="text-gray-400 font-medium sticky top-0 bg-white z-10">
+                                <tr>
+                                    <th className="pb-4 pr-2 font-semibold">Month</th>
+                                    <th className="pb-4 pr-2 text-right font-semibold">Paid</th>
+                                    <th className="pb-4 pr-2 text-right font-semibold">Unpaid</th>
+                                    <th className="pb-4 pr-2 text-right font-semibold">Total Realisation</th>
+                                    <th className="pb-4 pr-2 text-right font-semibold">Remaining Budget</th>
+                                    <th className="pb-4 text-right font-semibold">Utilization%</th>
+                                </tr>
+                            </thead>
+                            <tbody className="text-[#1E2B4D]">
+                                {adminData?.tables?.cost?.map((c, i) => (
+                                    <tr key={i} className={i % 2 === 0 ? "bg-[#F8F9FD]" : "bg-white"}>
+                                        <td className="py-3 px-4 rounded-l-xl font-medium">{c.month}</td>
+                                        <td className="py-3 px-2 text-right">{c.paid.toLocaleString()}</td>
+                                        <td className="py-3 px-2 text-right">{c.unpaid.toLocaleString()}</td>
+                                        <td className="py-3 px-2 text-right">{c.realisation.toLocaleString()}</td>
+                                        <td className="py-3 px-2 text-right">{c.remaining.toLocaleString()}</td>
+                                        <td className="py-3 px-4 text-right font-bold rounded-r-xl">{c.utilization}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                {/* 3. Total Training Category */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Total Training Category</h3>
-                    <div className="flex-1 w-full min-h-0">
-                        <Bar options={groupedBarOptions} data={datasets.totalTrainingCategory} />
-                    </div>
-                </div>
-
-                {/* 4. Training Category Hours */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Training Category Hours</h3>
-                    <div className="flex-1 w-full min-h-0">
-                        <Bar options={groupedBarOptions} data={datasets.trainingCategoryHours} />
-                    </div>
-                </div>
-
-                {/* 5. Presentase Karyawan */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Presentase Karyawan</h3>
-                    <div className="flex-1 w-full min-h-0 flex items-center justify-center relative">
-                        <div className="w-full h-full relative">
-                            <Doughnut options={doughnutOptions} data={datasets.presentaseKaryawan} />
-                            {/* Inner label for doughnut */}
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none pl-[100px]">
-                                <div className="text-center">
-                                    <div className="text-2xl font-black text-[#1E2B4D]">100%</div>
-                                </div>
-                            </div>
+                {/* Table Factory for repeated patterns */}
+                {[
+                    { id: 'course_category', title: 'Course Category', field: 'category' },
+                    { id: 'course', title: 'Course', field: 'course' },
+                    { id: 'training_type', title: 'Training Type', field: 'type' },
+                    { id: 'training_category', title: 'Training Category', field: 'category' },
+                    { id: 'location', title: 'Location', field: 'location' },
+                    { id: 'vendors', title: 'Training Vendors', field: 'vendor' },
+                    { id: 'division', title: 'Division', field: 'division' },
+                    { id: 'position', title: 'Position', field: 'position' }
+                ].map(table => (
+                    <div key={table.id} className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col overflow-hidden">
+                        <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">{table.title}</h3>
+                        <div className="flex-1 overflow-auto pr-2 custom-scrollbar">
+                            <table className="w-full text-xs text-left border-separate border-spacing-y-1">
+                                <thead className="text-gray-400 font-medium sticky top-0 bg-white z-10">
+                                    <tr>
+                                        <th className="pb-4 pr-4 font-semibold">{table.title}</th>
+                                        <th className="pb-4 pr-4 text-center font-semibold">Learners</th>
+                                        <th className="pb-4 pr-4 text-center font-semibold">Hours</th>
+                                        <th className="pb-4 text-center font-semibold">Training Title</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-[#1E2B4D]">
+                                    {adminData?.tables?.[table.id]?.map((row, i) => (
+                                        <tr key={i} className={i % 2 === 0 ? "bg-[#F8F9FD]" : "bg-white"}>
+                                            <td className="py-3 px-4 rounded-l-xl font-medium">{row[table.field]}</td>
+                                            <td className="py-3 px-2 text-center">{row.learners}</td>
+                                            <td className="py-3 px-2 text-center">{row.hours}</td>
+                                            <td className="py-3 px-4 text-center rounded-r-xl">{row.title_count}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                </div>
-
-                {/* 6. Total Training Type */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Total Training Type</h3>
-                    <div className="flex-1 w-full min-h-0">
-                        <Bar options={groupedBarOptions} data={datasets.totalTrainingType} />
-                    </div>
-                </div>
-
-                {/* Row 4: Category, Location, Vendors */}
-                {/* 10. Training Category Table */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col overflow-hidden">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Training Category</h3>
-                    <div className="flex-1 overflow-auto">
-                        <table className="w-full text-xs text-left">
-                            <thead className="text-gray-400 font-bold">
-                                <tr>
-                                    <th className="pb-3 pr-2">Training Category</th>
-                                    <th className="pb-3 pr-2">Learners</th>
-                                    <th className="pb-3 pr-2">Hours</th>
-                                    <th className="pb-3">Training Title</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-[#1E2B4D]">
-                                {adminData && adminData.tables && adminData.tables.category ? adminData.tables.category.map((cat, i) => (
-                                    <tr key={i} className="bg-gray-50/50">
-                                        <td className="py-3 px-2 rounded-l-lg border-b border-white">{cat.category}</td>
-                                        <td className="py-3 px-2 border-b border-white">{cat.learners}</td>
-                                        <td className="py-3 px-2 border-b border-white">{cat.hours}</td>
-                                        <td className="py-3 px-2 rounded-r-lg border-b border-white">{cat.title_count}</td>
-                                    </tr>
-                                )) : null}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* 11. Training Location Table */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col overflow-hidden">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Training Location</h3>
-                    <div className="flex-1 overflow-auto">
-                        <table className="w-full text-xs text-left">
-                            <thead className="text-gray-400 font-bold">
-                                <tr>
-                                    <th className="pb-3 pr-2">Training Location</th>
-                                    <th className="pb-3 pr-2">Learners</th>
-                                    <th className="pb-3 pr-2">Hours</th>
-                                    <th className="pb-3">Training Title</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-[#1E2B4D]">
-                                {adminData && adminData.tables && adminData.tables.location ? adminData.tables.location.map((loc, i) => (
-                                    <tr key={i} className="bg-gray-50/50">
-                                        <td className="py-3 px-2 rounded-l-lg border-b border-white">{loc.location}</td>
-                                        <td className="py-3 px-2 border-b border-white">{loc.learners}</td>
-                                        <td className="py-3 px-2 border-b border-white">{loc.hours}</td>
-                                        <td className="py-3 px-2 rounded-r-lg border-b border-white">{loc.title_count}</td>
-                                    </tr>
-                                )) : null}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* 12. Training Vendors Table */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col overflow-hidden">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Training Vendors</h3>
-                    <div className="flex-1 overflow-auto">
-                        <table className="w-full text-xs text-left">
-                            <thead className="text-gray-400 font-bold">
-                                <tr>
-                                    <th className="pb-3 pr-2">Training Vendors</th>
-                                    <th className="pb-3 pr-2">Learners</th>
-                                    <th className="pb-3 pr-2">Hours</th>
-                                    <th className="pb-3">Training Title</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-[#1E2B4D]">
-                                {adminData && adminData.tables && adminData.tables.vendors ? adminData.tables.vendors.map((vendor, i) => (
-                                    <tr key={i} className="bg-gray-50/50">
-                                        <td className="py-3 px-2 rounded-l-lg border-b border-white">{vendor.vendor}</td>
-                                        <td className="py-3 px-2 border-b border-white">{vendor.learners}</td>
-                                        <td className="py-3 px-2 border-b border-white">{vendor.hours}</td>
-                                        <td className="py-3 px-2 rounded-r-lg border-b border-white">{vendor.title_count}</td>
-                                    </tr>
-                                )) : null}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* Row 5: Division, Position, Cost */}
-                {/* 13. Training Division Table */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col overflow-hidden">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Training Division</h3>
-                    <div className="flex-1 overflow-auto">
-                        <table className="w-full text-xs text-left">
-                            <thead className="text-gray-400 font-bold">
-                                <tr>
-                                    <th className="pb-3 pr-2">Training Division</th>
-                                    <th className="pb-3 pr-2">Employee</th>
-                                    <th className="pb-3 pr-2">Learners</th>
-                                    <th className="pb-3">Hours</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-[#1E2B4D]">
-                                {adminData && adminData.tables && adminData.tables.division ? adminData.tables.division.map((div, i) => (
-                                    <tr key={i} className="bg-gray-50/50">
-                                        <td className="py-3 px-2 rounded-l-lg border-b border-white">{div.division}</td>
-                                        <td className="py-3 px-2 border-b border-white">{div.employee}</td>
-                                        <td className="py-3 px-2 border-b border-white">{div.learners}</td>
-                                        <td className="py-3 px-2 rounded-r-lg border-b border-white">{div.hours}</td>
-                                    </tr>
-                                )) : null}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* 14. Training Position Table */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col overflow-hidden">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Training Position</h3>
-                    <div className="flex-1 overflow-auto">
-                        <table className="w-full text-xs text-left">
-                            <thead className="text-gray-400 font-bold">
-                                <tr>
-                                    <th className="pb-3 pr-2">Training Position</th>
-                                    <th className="pb-3 pr-2">Employee</th>
-                                    <th className="pb-3 pr-2">Learners</th>
-                                    <th className="pb-3">Hours</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-[#1E2B4D]">
-                                {adminData && adminData.tables && adminData.tables.position ? adminData.tables.position.map((pos, i) => (
-                                    <tr key={i} className="bg-gray-50/50">
-                                        <td className="py-3 px-2 rounded-l-lg border-b border-white">{pos.position}</td>
-                                        <td className="py-3 px-2 border-b border-white">{pos.employee}</td>
-                                        <td className="py-3 px-2 border-b border-white">{pos.learners}</td>
-                                        <td className="py-3 px-2 rounded-r-lg border-b border-white">{pos.hours}</td>
-                                    </tr>
-                                )) : null}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* 15. Training Cost Table */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 h-[380px] flex flex-col overflow-hidden">
-                    <h3 className="text-[#1E2B4D] font-extrabold mb-6 text-lg">Training Cost</h3>
-                    <div className="flex-1 overflow-auto">
-                        <table className="w-full text-xs text-left">
-                            <thead className="text-gray-400 font-bold">
-                                <tr>
-                                    <th className="pb-3 pr-2">Month</th>
-                                    <th className="pb-3 pr-2">Realisation</th>
-                                    <th className="pb-3 pr-2">Remaining</th>
-                                    <th className="pb-3">Percentage</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-[#1E2B4D]">
-                                {adminData && adminData.tables && adminData.tables.cost ? adminData.tables.cost.map((c, i) => (
-                                    <tr key={i} className="bg-gray-50/50">
-                                        <td className="py-3 px-2 rounded-l-lg border-b border-white">{c.month}</td>
-                                        <td className="py-3 px-2 border-b border-white">{c.realisation.toLocaleString()}</td>
-                                        <td className="py-3 px-2 border-b border-white">{c.remaining.toLocaleString()}</td>
-                                        <td className="py-3 px-2 rounded-r-lg border-b border-white">{c.percentage}</td>
-                                    </tr>
-                                )) : null}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                ))}
             </div>
         </MainLayout>
     );

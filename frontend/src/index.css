@@ -80,3 +80,27 @@ textarea::placeholder {
 .animate-fade-in        { animation: fadeIn 0.25s ease forwards; }
 .animate-fade-in-down   { animation: fadeInDown 0.3s ease forwards; }
 .animate-scale-up       { animation: scaleUp 0.25s ease forwards; }
+
+/* ── Custom Scrollbar ── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #D1D5DB;
+}
+
+/* ── Table Border Separate Utilities ── */
+.border-separate {
+  border-collapse: separate;
+}
+.border-spacing-y-1 {
+  border-spacing: 0 4px;
+}

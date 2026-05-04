@@ -36,6 +36,13 @@ export default function TrainingMasterPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  // Budget Modal State
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [budgetName, setBudgetName] = useState("");
+  const [budgetStartDate, setBudgetStartDate] = useState("");
+  const [budgetEndDate, setBudgetEndDate] = useState("");
+  const [totalBudget, setTotalBudget] = useState("");
+
   // ─── UI State ───────────────────────────────────────────────────────
   const [toast, setToast] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -410,6 +417,32 @@ export default function TrainingMasterPage() {
     setShowModal(true);
   };
 
+  const handleSaveBudget = async () => {
+    try {
+      if (!budgetName || !budgetStartDate || !budgetEndDate || !totalBudget) {
+        setToast({ message: "Please fill all fields", type: "error" });
+        return;
+      }
+      
+      await api.post('/api/budgets/', {
+        budget_name: budgetName,
+        start_date_budget: budgetStartDate,
+        end_date_budget: budgetEndDate,
+        total_budget: totalBudget
+      });
+      
+      setToast({ message: "Budget saved successfully", type: "success" });
+      setShowBudgetModal(false);
+      setBudgetName("");
+      setBudgetStartDate("");
+      setBudgetEndDate("");
+      setTotalBudget("");
+    } catch (err) {
+      console.error("Failed to save budget", err);
+      setToast({ message: "Failed to save budget", type: "error" });
+    }
+  };
+
   const handleExport = async (e, reportTypeOverride = null) => {
     if (e) e.preventDefault();
     
@@ -718,7 +751,17 @@ export default function TrainingMasterPage() {
         </div>
       </div>
 
-      <h1 className="text-4xl font-bold text-gray-800 tracking-tight mb-8">Training Master</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Training Master</h1>
+        {isAdmin && (
+          <button
+            onClick={() => setShowBudgetModal(true)}
+            className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-1 rounded-lg font-medium flex items-center justify-center text-sm shadow-sm transition-all cursor-pointer"
+          >
+            <span className="mr-1 text-lg font-bold">+</span> Budget
+          </button>
+        )}
+      </div>
 
       {/* ─── Table ───────────────────────────────────────────────── */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-auto max-h-[60vh]">
@@ -1562,6 +1605,81 @@ export default function TrainingMasterPage() {
         title="Confirm Delete"
         message="Are you sure want to delete this Training?"
       />
+
+      {/* Budget Modal */}
+      {showBudgetModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-10 relative animate-in fade-in zoom-in duration-200">
+            <h2 className="text-4xl font-bold text-black mb-6">Set Training Budget</h2>
+            <p className="text-sm text-gray-400 mb-6">Define budget allocation for training programs</p>
+            <hr className="mb-8 border-gray-200" />
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <label className="text-black font-semibold">Budget Name</label>
+                <input 
+                  type="text" 
+                  value={budgetName} 
+                  onChange={(e) => setBudgetName(e.target.value)}
+                  className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black"
+                  placeholder="e.g. Annual Training Budget 2026"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <label className="text-black font-semibold">Start Date</label>
+                <input 
+                  type="date" 
+                  value={budgetStartDate} 
+                  onChange={(e) => setBudgetStartDate(e.target.value)}
+                  className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <label className="text-black font-semibold">End Date</label>
+                <input 
+                  type="date" 
+                  value={budgetEndDate} 
+                  onChange={(e) => setBudgetEndDate(e.target.value)}
+                  className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <label className="text-black font-semibold">Total Budget</label>
+                <div className="sm:col-span-2 relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">IDR</span>
+                  <input 
+                    type="number" 
+                    value={totalBudget} 
+                    onChange={(e) => setTotalBudget(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2 mt-10">
+              <button 
+                type="button"
+                onClick={() => setShowBudgetModal(false)}
+                className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                onClick={handleSaveBudget}
+                className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 }
