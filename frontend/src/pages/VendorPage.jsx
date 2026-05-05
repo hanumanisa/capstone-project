@@ -231,64 +231,66 @@ const VendorPage = () => {
             <h1 className="text-4xl font-bold text-gray-800 tracking-tight mb-6">Vendor</h1>
 
             {/* ─── Table ───────────────────────────────────────────────── */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-auto max-h-[60vh]">
-                <table className="w-full text-left text-sm min-w-[1500px]">
-                    <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
-                        <tr>
-                            <th className="px-3 py-3">Vendor Code</th>
-                            <th className="px-3 py-3">Vendor Name</th>
-                            <th className="px-3 py-3">Vendor Type</th>
-                            <th className="px-3 py-3">PIC</th>
-                            <th className="px-3 py-3">Speciality</th>
-                            <th className="px-3 py-3">Address</th>
-                            <th className="px-3 py-3">City</th>
-                            <th className="px-3 py-3">State / Province</th>
-                            <th className="px-3 py-3">Country</th>
-                            <th className="px-3 py-3">Postal Code</th>
-                            <th className="px-3 py-3">Phone</th>
-                            <th className="px-3 py-3">FAX</th>
-                            <th className="px-3 py-3">Email</th>
-                            <th className="px-3 py-3 text-right pr-4">Web Address</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {loading ? (
-                            <tr><td colSpan="14" className="px-6 py-12 text-center text-gray-400">Loading...</td></tr>
-                        ) : paginatedData.length === 0 ? (
-                            <tr><td colSpan="14" className="px-6 py-12 text-center text-gray-400">No vendors found.</td></tr>
-                        ) : (
-                            paginatedData.map((item) => (
-                                <tr key={item.vendor_id} className="hover:bg-blue-50/30 transition-colors align-top">
-                                    <td className="px-3 py-4">
-                                        {isAdmin ? (
-                                            <button 
-                                                onClick={() => openEdit(item)}
-                                                className="text-[#2174C3] font-bold hover:underline cursor-pointer text-left"
-                                            >
-                                                {item.vendor_id}
-                                            </button>
-                                        ) : (
-                                            <span className="text-gray-600 font-bold">{item.vendor_id}</span>
-                                        )}
-                                    </td>
-                                    <td className="px-3 py-4 text-gray-800">{item.vendor_name}</td>
-                                    <td className="px-3 py-4 text-gray-600">{item.provider_type}</td>
-                                    <td className="px-3 py-4 text-gray-600">{item.pic_name}</td>
-                                    <td className="px-3 py-4 text-gray-600 truncate max-w-[150px]" title={item.speciality}>{item.speciality}</td>
-                                    <td className="px-3 py-4 text-gray-600 truncate max-w-[200px]" title={item.address}>{item.address}</td>
-                                    <td className="px-3 py-4 text-gray-600">{item.city}</td>
-                                    <td className="px-3 py-4 text-gray-600">{item.province}</td>
-                                    <td className="px-3 py-4 text-gray-600">{item.country}</td>
-                                    <td className="px-3 py-4 text-gray-600">{item.postcode}</td>
-                                    <td className="px-3 py-4 text-gray-600 text-nowrap">{item.phone}</td>
-                                    <td className="px-3 py-4 text-gray-600 text-nowrap">{item.fax}</td>
-                                    <td className="px-3 py-4 text-blue-600">{item.email}</td>
-                                    <td className="px-3 py-4 text-blue-600 text-right pr-4">{item.web_address}</td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden transition-all h-[calc(100vh-350px)] flex flex-col">
+                <div className="custom-scrollbar overflow-auto flex-1">
+                    <table className="w-full text-left text-sm min-w-[1500px]">
+                        <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
+                            <tr>
+                                <th className="px-3 py-3">Vendor Code</th>
+                                <th className="px-3 py-3">Vendor Name</th>
+                                <th className="px-3 py-3">Vendor Type</th>
+                                <th className="px-3 py-3">PIC</th>
+                                <th className="px-3 py-3">Speciality</th>
+                                <th className="px-3 py-3">Address</th>
+                                <th className="px-3 py-3">City</th>
+                                <th className="px-3 py-3">State / Province</th>
+                                <th className="px-3 py-3">Country</th>
+                                <th className="px-3 py-3">Postal Code</th>
+                                <th className="px-3 py-3">Phone</th>
+                                <th className="px-3 py-3">FAX</th>
+                                <th className="px-3 py-3">Email</th>
+                                <th className="px-3 py-3 text-right pr-4">Web Address</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {loading ? (
+                                <tr><td colSpan="14" className="px-6 py-12 text-center text-gray-400">Loading...</td></tr>
+                            ) : paginatedData.length === 0 ? (
+                                <tr><td colSpan="14" className="px-6 py-12 text-center text-gray-400">No vendors found.</td></tr>
+                            ) : (
+                                paginatedData.map((item) => (
+                                    <tr key={item.vendor_id} className="hover:bg-blue-50/30 transition-colors align-top">
+                                        <td className="px-3 py-4">
+                                            {isAdmin ? (
+                                                <button 
+                                                    onClick={() => openEdit(item)}
+                                                    className="text-[#2174C3] font-bold hover:underline cursor-pointer text-left"
+                                                >
+                                                    {item.vendor_id}
+                                                </button>
+                                            ) : (
+                                                <span className="text-gray-600 font-bold">{item.vendor_id}</span>
+                                            )}
+                                        </td>
+                                        <td className="px-3 py-4 text-gray-800">{item.vendor_name}</td>
+                                        <td className="px-3 py-4 text-gray-600">{item.provider_type}</td>
+                                        <td className="px-4 py-4 text-gray-600">{item.pic_name}</td>
+                                        <td className="px-3 py-4 text-gray-600 truncate max-w-[150px]" title={item.speciality}>{item.speciality}</td>
+                                        <td className="px-3 py-4 text-gray-600 truncate max-w-[200px]" title={item.address}>{item.address}</td>
+                                        <td className="px-3 py-4 text-gray-600">{item.city}</td>
+                                        <td className="px-3 py-4 text-gray-600">{item.province}</td>
+                                        <td className="px-3 py-4 text-gray-600">{item.country}</td>
+                                        <td className="px-3 py-4 text-gray-600">{item.postcode}</td>
+                                        <td className="px-3 py-4 text-gray-600 text-nowrap">{item.phone}</td>
+                                        <td className="px-3 py-4 text-gray-600 text-nowrap">{item.fax}</td>
+                                        <td className="px-3 py-4 text-blue-600">{item.email}</td>
+                                        <td className="px-3 py-4 text-blue-600 text-right pr-4">{item.web_address}</td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* ─── Pagination ──────────────────────────────────────────── */}
@@ -329,7 +331,7 @@ const VendorPage = () => {
             {/* ─── Add / Edit Modal ────────────────────────────────────── */}
             {showModal && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-y-auto max-h-[90vh] p-8">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-y-auto custom-scrollbar max-h-[90vh] p-8">
                         <h2 className="text-3xl font-bold text-black mb-2">
                             {isEdit ? 'Edit Vendor' : 'Add Vendor'}
                         </h2>

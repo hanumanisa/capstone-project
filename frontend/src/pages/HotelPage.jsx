@@ -223,56 +223,58 @@ const HotelPage = () => {
             <h1 className="text-4xl font-bold text-gray-800 tracking-tight mb-6">Hotels</h1>
 
             {/* ─── Table ───────────────────────────────────────────────── */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-auto max-h-[60vh]">
-                <table className="w-full text-left text-sm min-w-[800px]">
-                    <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
-                        <tr>
-                            <th className="px-4 py-3 text-center">Hotel ID</th>
-                            <th className="px-4 py-3">City</th>
-                            <th className="px-4 py-3">Hotel Name</th>
-                            <th className="px-4 py-3">Phone Number</th>
-                            <th className="px-4 py-3">Estimated Price per Night</th>
-                            <th className="px-4 py-3 text-center">Hotel Star</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {loading ? (
-                            <tr><td colSpan="6" className="px-6 py-12 text-center text-gray-400">Loading...</td></tr>
-                        ) : paginatedData.length === 0 ? (
-                            <tr><td colSpan="6" className="px-6 py-12 text-center text-gray-400">No hotels found.</td></tr>
-                        ) : (
-                            paginatedData.map((item) => (
-                                <tr key={item.hotel_id} className="hover:bg-blue-50/30 transition-colors">
-                                    <td className="px-4 py-4 text-center">
-                                        {isAdmin ? (
-                                            <button 
-                                                onClick={() => openEdit(item)}
-                                                className="text-[#2174C3] font-bold hover:underline cursor-pointer"
-                                            >
-                                                {item.hotel_id}
-                                            </button>
-                                        ) : (
-                                            <span className="text-gray-600">{item.hotel_id}</span>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-4 text-gray-600">{item.hotel_city}</td>
-                                    <td className="px-4 py-4 text-gray-800">{item.hotel_name}</td>
-                                    <td className="px-4 py-4 text-gray-600">{item.hotel_phone}</td>
-                                    <td className="px-4 py-4 text-gray-600">{formatCurrency(item.price_estimation)}</td>
-                                    <td className="px-4 py-4 text-center">
-                                        <div className="flex justify-center space-x-0.5">
-                                            {[...Array(parseInt(item.hotel_star || 0))].map((_, i) => (
-                                                <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                </svg>
-                                            ))}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden transition-all h-[calc(100vh-350px)] flex flex-col">
+                <div className="custom-scrollbar overflow-auto flex-1">
+                    <table className="w-full text-left text-sm min-w-[800px]">
+                        <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
+                            <tr>
+                                <th className="px-4 py-3 text-center">Hotel ID</th>
+                                <th className="px-4 py-3">City</th>
+                                <th className="px-4 py-3">Hotel Name</th>
+                                <th className="px-4 py-3">Phone Number</th>
+                                <th className="px-4 py-3">Estimated Price per Night</th>
+                                <th className="px-4 py-3 text-center">Hotel Star</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {loading ? (
+                                <tr><td colSpan="6" className="px-6 py-12 text-center text-gray-400">Loading...</td></tr>
+                            ) : paginatedData.length === 0 ? (
+                                <tr><td colSpan="6" className="px-6 py-12 text-center text-gray-400">No hotels found.</td></tr>
+                            ) : (
+                                paginatedData.map((item) => (
+                                    <tr key={item.hotel_id} className="hover:bg-blue-50/30 transition-colors">
+                                        <td className="px-4 py-4 text-center">
+                                            {isAdmin ? (
+                                                <button 
+                                                    onClick={() => openEdit(item)}
+                                                    className="text-[#2174C3] font-bold hover:underline cursor-pointer"
+                                                >
+                                                    {item.hotel_id}
+                                                </button>
+                                            ) : (
+                                                <span className="text-gray-600">{item.hotel_id}</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-4 text-gray-600">{item.hotel_city}</td>
+                                        <td className="px-4 py-4 text-gray-800">{item.hotel_name}</td>
+                                        <td className="px-4 py-4 text-gray-600">{item.hotel_phone}</td>
+                                        <td className="px-4 py-4 text-gray-600">{formatCurrency(item.price_estimation)}</td>
+                                        <td className="px-4 py-4 text-center">
+                                            <div className="flex justify-center space-x-0.5">
+                                                {[...Array(parseInt(item.hotel_star || 0))].map((_, i) => (
+                                                    <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                    </svg>
+                                                ))}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* ─── Pagination ──────────────────────────────────────────── */}

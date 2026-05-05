@@ -202,6 +202,29 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return obj.tna_fulfilled
 
 
+class EmployeeMinimalSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+    tna_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Employee
+        fields = ['nik', 'full_name', 'role', 'position_name', 'tna_count']
+
+    def get_role(self, obj):
+        try:
+            user = obj.profile_set.first().user
+            if user.is_superuser:
+                return "Super Administrator"
+            elif user.groups.exists():
+                return user.groups.first().name
+        except Exception:
+            pass
+        return "Employee"
+
+    def get_tna_count(self, obj):
+        return obj.tnaparticipant_set.count()
+
+
 class CourseCategorySerializer(serializers.ModelSerializer):
     course_count = serializers.SerializerMethodField()
 

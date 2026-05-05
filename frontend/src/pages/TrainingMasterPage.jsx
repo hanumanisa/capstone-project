@@ -764,65 +764,91 @@ export default function TrainingMasterPage() {
       </div>
 
       {/* ─── Table ───────────────────────────────────────────────── */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-auto max-h-[60vh]">
-        <table className="w-full text-left text-sm min-w-[2800px]">
-          <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
-            <tr>
-              <th className="px-3 py-4 font-bold">Course Category</th>
-              <th className="px-3 py-4 font-bold">Course Name</th>
-              <th className="px-3 py-4 font-bold">Training Type</th>
-              <th className="px-3 py-4 font-bold">Training Title</th>
-              <th className="px-3 py-4 font-bold">Start Date</th>
-              <th className="px-3 py-4 font-bold">End Date</th>
-              <th className="px-3 py-4 font-bold text-center">Days</th>
-              <th className="px-3 py-4 font-bold text-center">Hours</th>
-              <th className="px-3 py-4 font-bold">Location</th>
-              <th className="px-3 py-4 font-bold">Vendor</th>
-              <th className="px-3 py-4 font-bold">Training Category</th>
-              {(user?.role === 'Head of Division' || user?.role === 'Employee') && (
-                <th className="px-3 py-4 font-bold">Participants</th>
-              )}
-              {!(user?.role === 'Head of Division' || user?.role === 'Employee') && (
-                <>
-                  <th className="px-3 py-4 font-bold text-center">L1</th>
-                  <th className="px-3 py-4 font-bold text-center">L2</th>
-                  <th className="px-3 py-4 font-bold text-right">Training Cost</th>
-                  <th className="px-3 py-4 font-bold text-right">Venue Cost</th>
-                  <th className="px-3 py-4 font-bold text-right">SPPD Cost</th>
-                  <th className="px-3 py-4 font-bold text-right">Total Cost</th>
-                </>
-              )}
-            </tr>
-          </thead>
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden transition-all h-[calc(100vh-350px)] flex flex-col">
+        <div className="custom-scrollbar overflow-auto flex-1">
+          <table className="w-full text-left text-sm min-w-[2800px]">
+            <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
+              <tr>
+                <th className="px-3 py-4 font-bold">Course Category</th>
+                <th className="px-3 py-4 font-bold">Course Name</th>
+                <th className="px-3 py-4 font-bold">Training Type</th>
+                <th className="px-3 py-4 font-bold">Training Title</th>
+                <th className="px-3 py-4 font-bold">Start Date</th>
+                <th className="px-3 py-4 font-bold">End Date</th>
+                <th className="px-3 py-4 font-bold text-center">Days</th>
+                <th className="px-3 py-4 font-bold text-center">Hours</th>
+                <th className="px-3 py-4 font-bold">Location</th>
+                <th className="px-3 py-4 font-bold">Vendor</th>
+                <th className="px-3 py-4 font-bold">Training Category</th>
+                {(user?.role === 'Head of Division' || user?.role === 'Employee') && (
+                  <th className="px-3 py-4 font-bold">Participants</th>
+                )}
+                {!(user?.role === 'Head of Division' || user?.role === 'Employee') && (
+                  <>
+                    <th className="px-3 py-4 font-bold text-center">L1</th>
+                    <th className="px-3 py-4 font-bold text-center">L2</th>
+                    <th className="px-3 py-4 font-bold text-right">Training Cost</th>
+                    <th className="px-3 py-4 font-bold text-right">Venue Cost</th>
+                    <th className="px-3 py-4 font-bold text-right">SPPD Cost</th>
+                    <th className="px-3 py-4 font-bold text-right">Total Cost</th>
+                  </>
+                )}
+              </tr>
+            </thead>
 
-          <tbody className="divide-y divide-gray-100">
-            {loading ? (
-              <tr>
-                <td colSpan="22" className="px-6 py-12 text-center text-gray-400">
-                  <div className="flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Loading...
-                  </div>
-                </td>
-              </tr>
-            ) : trainings.length === 0 ? (
-              <tr>
-                <td colSpan="22" className="px-6 py-12 text-center text-gray-400">No data available</td>
-              </tr>
-            ) : (
-              trainings.flatMap((t, i) => {
-                const isRestricted = user?.role === 'Head of Division' || user?.role === 'Employee';
-                const pNames = (t.division_participant_names || "").split(", ").filter(n => n);
-                
-                if (isRestricted) {
-                  // If restricted but somehow no names found (should not happen with backend filter)
-                  if (pNames.length === 0) return [];
+            <tbody className="divide-y divide-gray-100">
+              {loading ? (
+                <tr>
+                  <td colSpan="22" className="px-6 py-12 text-center text-gray-400">
+                    <div className="flex items-center justify-center gap-2">
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Loading...
+                    </div>
+                  </td>
+                </tr>
+              ) : trainings.length === 0 ? (
+                <tr>
+                  <td colSpan="22" className="px-6 py-12 text-center text-gray-400">No data available</td>
+                </tr>
+              ) : (
+                trainings.flatMap((t, i) => {
+                  const isRestricted = user?.role === 'Head of Division' || user?.role === 'Employee';
+                  const pNames = (t.division_participant_names || "").split(", ").filter(n => n);
                   
-                  return pNames.map((name, pIdx) => (
-                    <tr key={`${i}-${pIdx}`} className="hover:bg-blue-50/30 transition-colors cursor-pointer group border-b border-gray-50">
+                  if (isRestricted) {
+                    // If restricted but somehow no names found (should not happen with backend filter)
+                    if (pNames.length === 0) return [];
+                    
+                    return pNames.map((name, pIdx) => (
+                      <tr key={`${i}-${pIdx}`} className="hover:bg-blue-50/30 transition-colors cursor-pointer group border-b border-gray-50">
+                        <td className="px-3 py-3 font-normal text-gray-700">{t.category_name}</td>
+                        <td className="px-3 py-3 font-normal text-gray-700">{t.course_name}</td>
+                        <td className="px-3 py-3 font-normal text-gray-700">{t.training_type}</td>
+                        <td className="px-3 py-3 text-[#2174C3] font-normal hover:underline cursor-pointer" onClick={() => handleEdit(t.training_id)}>{t.training_title}</td>
+                        <td className="px-3 py-3 font-normal text-gray-700">{t.start_date || "-"}</td>
+                        <td className="px-3 py-3 font-normal text-gray-700">{t.end_date || "-"}</td>
+                        <td className="px-3 py-3 text-center font-normal text-gray-700">{t.days}</td>
+                        <td className="px-3 py-3 text-center font-normal text-gray-700">{t.hours}</td>
+                        <td className="px-3 py-3 font-normal text-gray-700">{t.location}</td>
+                        <td className="px-3 py-3 font-normal text-gray-700">{t.vendor_name}</td>
+                        <td className="px-3 py-3 font-normal text-gray-700">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${t.training_category === 'ESG' ? 'bg-green-100 text-green-700' :
+                            t.training_category === 'Hard Skill' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                            }`}>
+                            {t.training_category}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 font-normal text-gray-700 italic">{name}</td>
+                      </tr>
+                    ));
+                  }
+
+                  // Administrator / Full View
+                  return (
+                    <tr key={i} className="hover:bg-blue-50/30 transition-colors cursor-pointer group border-b border-gray-50">
                       <td className="px-3 py-3 font-normal text-gray-700">{t.category_name}</td>
                       <td className="px-3 py-3 font-normal text-gray-700">{t.course_name}</td>
                       <td className="px-3 py-3 font-normal text-gray-700">{t.training_type}</td>
@@ -840,55 +866,31 @@ export default function TrainingMasterPage() {
                           {t.training_category}
                         </span>
                       </td>
-                      <td className="px-3 py-3 font-normal text-gray-700 italic">{name}</td>
+                      <td className="px-3 py-3 text-center font-normal text-gray-700">
+                        {t.l1_avg ? Number(t.l1_avg).toFixed(2) : "0.00"}
+                      </td>
+                      <td className="px-3 py-3 text-center font-normal text-gray-700">
+                        {t.l2_avg ? Number(t.l2_avg).toFixed(2) : "0.00"}
+                      </td>
+                      <td className="px-3 py-3 text-right font-normal text-gray-700">
+                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.training_cost)}
+                      </td>
+                      <td className="px-3 py-3 text-right font-normal text-gray-700">
+                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.venue_cost)}
+                      </td>
+                      <td className="px-3 py-3 text-right font-normal text-gray-700">
+                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.sppd_cost)}
+                      </td>
+                      <td className="px-3 py-3 text-right font-bold text-gray-800 bg-gray-50/50">
+                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.total_cost)}
+                      </td>
                     </tr>
-                  ));
-                }
-
-                // Administrator / Full View
-                return (
-                  <tr key={i} className="hover:bg-blue-50/30 transition-colors cursor-pointer group border-b border-gray-50">
-                    <td className="px-3 py-3 font-normal text-gray-700">{t.category_name}</td>
-                    <td className="px-3 py-3 font-normal text-gray-700">{t.course_name}</td>
-                    <td className="px-3 py-3 font-normal text-gray-700">{t.training_type}</td>
-                    <td className="px-3 py-3 text-[#2174C3] font-normal hover:underline cursor-pointer" onClick={() => handleEdit(t.training_id)}>{t.training_title}</td>
-                    <td className="px-3 py-3 font-normal text-gray-700">{t.start_date || "-"}</td>
-                    <td className="px-3 py-3 font-normal text-gray-700">{t.end_date || "-"}</td>
-                    <td className="px-3 py-3 text-center font-normal text-gray-700">{t.days}</td>
-                    <td className="px-3 py-3 text-center font-normal text-gray-700">{t.hours}</td>
-                    <td className="px-3 py-3 font-normal text-gray-700">{t.location}</td>
-                    <td className="px-3 py-3 font-normal text-gray-700">{t.vendor_name}</td>
-                    <td className="px-3 py-3 font-normal text-gray-700">
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${t.training_category === 'ESG' ? 'bg-green-100 text-green-700' :
-                        t.training_category === 'Hard Skill' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
-                        }`}>
-                        {t.training_category}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-center font-normal text-gray-700">
-                      {t.l1_avg ? Number(t.l1_avg).toFixed(2) : "0.00"}
-                    </td>
-                    <td className="px-3 py-3 text-center font-normal text-gray-700">
-                      {t.l2_avg ? Number(t.l2_avg).toFixed(2) : "0.00"}
-                    </td>
-                    <td className="px-3 py-3 text-right font-normal text-gray-700">
-                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.training_cost)}
-                    </td>
-                    <td className="px-3 py-3 text-right font-normal text-gray-700">
-                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.venue_cost)}
-                    </td>
-                    <td className="px-3 py-3 text-right font-normal text-gray-700">
-                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.sppd_cost)}
-                    </td>
-                    <td className="px-3 py-3 text-right font-bold text-gray-800 bg-gray-50/50">
-                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.total_cost)}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       
       
@@ -1087,7 +1089,7 @@ export default function TrainingMasterPage() {
       {/* ========================= MODAL ADD TRAINING (STEP 1) ========================= */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-[100] p-4">
-          <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl p-8 relative">
+          <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar rounded-xl shadow-2xl p-8 relative">
             <h2 className="text-3xl font-bold text-black mb-2">{isEditMode ? "Edit Training" : "Add Training"}</h2>
             <p className="text-sm text-gray-400 mb-6">Step 1: Training Information</p>
             <hr className="mb-8 border-gray-200" />
@@ -1192,7 +1194,7 @@ export default function TrainingMasterPage() {
       {/* ========================= MODAL TRAINING EVENT (STEP 2) ========================= */}
       {showEventModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-[110] p-4">
-          <div className="bg-white w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-xl shadow-2xl p-10 relative">
+          <div className="bg-white w-full max-w-4xl max-h-[95vh] overflow-y-auto custom-scrollbar rounded-xl shadow-2xl p-10 relative">
             <h2 className="text-4xl font-bold text-black mb-6">{isEditMode ? "Edit Event Training" : "Event Training"}</h2>
             <p className="text-sm text-gray-400 mb-6">Step 2: Training Event Information</p>
             <hr className="mb-8 border-gray-200" />
@@ -1276,32 +1278,34 @@ export default function TrainingMasterPage() {
               {activeTab === "schedule" && (
                 <div className="space-y-4">
                   <h3 className="text-[#2174C3] font-bold text-lg mb-4">Schedule</h3>
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
-                      <tr>
-                        <th className="p-3 w-[50px]"></th>
-                        <th className="p-3">Date</th>
-                        <th className="p-3">Start Time</th>
-                        <th className="p-3">End Time</th>
-                        <th className="p-3">Material</th>
-                        <th className="p-3">Instructor</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {scheduleRows.map((row, idx) => (
-                        <tr key={idx}>
-                          <td className="p-2">
-                            <button type="button" onClick={() => setScheduleRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
-                          </td>
-                          <td className="p-2"><input type="date" value={row.date} onChange={(e) => { const a = [...scheduleRows]; a[idx].date = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded" /></td>
-                          <td className="p-2"><input type="text" placeholder="00:00" maxLength="5" value={row.start} onChange={(e) => { const a = [...scheduleRows]; a[idx].start = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded text-center font-mono" /></td>
-                          <td className="p-2"><input type="text" placeholder="00:00" maxLength="5" value={row.end} onChange={(e) => { const a = [...scheduleRows]; a[idx].end = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded text-center font-mono" /></td>
-                          <td className="p-2"><input type="text" value={row.material} onChange={(e) => { const a = [...scheduleRows]; a[idx].material = e.target.value; setScheduleRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" placeholder="Enter material" /></td>
-                          <td className="p-2"><input type="text" value={row.instructor} onChange={(e) => { const a = [...scheduleRows]; a[idx].instructor = e.target.value; setScheduleRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" placeholder="Enter instructor" /></td>
+                  <div className="custom-scrollbar overflow-auto border border-gray-100 rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
+                        <tr>
+                          <th className="p-3 w-[50px]"></th>
+                          <th className="p-3">Date</th>
+                          <th className="p-3">Start Time</th>
+                          <th className="p-3">End Time</th>
+                          <th className="p-3">Material</th>
+                          <th className="p-3">Instructor</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {scheduleRows.map((row, idx) => (
+                          <tr key={idx}>
+                            <td className="p-2">
+                              <button type="button" onClick={() => setScheduleRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
+                            </td>
+                            <td className="p-2"><input type="date" value={row.date} onChange={(e) => { const a = [...scheduleRows]; a[idx].date = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded" /></td>
+                            <td className="p-2"><input type="text" placeholder="00:00" maxLength="5" value={row.start} onChange={(e) => { const a = [...scheduleRows]; a[idx].start = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded text-center font-mono" /></td>
+                            <td className="p-2"><input type="text" placeholder="00:00" maxLength="5" value={row.end} onChange={(e) => { const a = [...scheduleRows]; a[idx].end = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded text-center font-mono" /></td>
+                            <td className="p-2"><input type="text" value={row.material} onChange={(e) => { const a = [...scheduleRows]; a[idx].material = e.target.value; setScheduleRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" placeholder="Enter material" /></td>
+                            <td className="p-2"><input type="text" value={row.instructor} onChange={(e) => { const a = [...scheduleRows]; a[idx].instructor = e.target.value; setScheduleRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" placeholder="Enter instructor" /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <button type="button" onClick={() => setScheduleRows([...scheduleRows, { date: "", start: "", end: "", material: "", instructor: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Schedule</button>
                 </div>
               )}
@@ -1309,50 +1313,52 @@ export default function TrainingMasterPage() {
               {activeTab === "participant" && (
                 <div className="space-y-4">
                   <h3 className="text-[#2174C3] font-bold text-lg mb-4">Participant</h3>
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
-                      <tr>
-                        <th className="p-3 w-[50px]"></th>
-                        <th className="p-3">Employee Name</th>
-                        <th className="p-3 w-[200px]">Attendance Status</th>
-                        <th className="p-3 w-[120px]">L1 Score</th>
-                        <th className="p-3 w-[120px]">L2 Score</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {participantRows.map((row, idx) => (
-                        <tr key={idx}>
-                          <td className="p-2">
-                            <button type="button" onClick={() => setParticipantRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
-                          </td>
-                          <td className="p-2">
-                            <select 
-                              value={row.employee} 
-                              onChange={(e) => { const a = [...participantRows]; a[idx].employee = e.target.value; setParticipantRows(a); }} 
-                              className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                            >
-                              <option value="" style={{ color: '#000' }}>Select Employee</option>
-                              {employees.map(emp => (
-                                <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>{emp.full_name} ({emp.nik})</option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="p-2">
-                            <select 
-                              value={row.attendance} 
-                              onChange={(e) => { const a = [...participantRows]; a[idx].attendance = e.target.value; setParticipantRows(a); }} 
-                              className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                            >
-                              <option value="Present">Present</option>
-                              <option value="Absent">Absent</option>
-                            </select>
-                          </td>
-                          <td className="p-2"><input type="number" step="0.1" value={row.l1} onChange={(e) => { const a = [...participantRows]; a[idx].l1 = e.target.value; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                          <td className="p-2"><input type="number" step="0.01" min="1" max="4" placeholder="1-4" value={row.l2} onChange={(e) => { const a = [...participantRows]; a[idx].l2 = e.target.value; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                  <div className="custom-scrollbar overflow-auto border border-gray-100 rounded-lg">
+                    <table className="w-full text-sm min-w-[600px]">
+                      <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
+                        <tr>
+                          <th className="p-3 w-[50px]"></th>
+                          <th className="p-3">Employee Name</th>
+                          <th className="p-3 w-[200px]">Attendance Status</th>
+                          <th className="p-3 w-[120px]">L1 Score</th>
+                          <th className="p-3 w-[120px]">L2 Score</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {participantRows.map((row, idx) => (
+                          <tr key={idx}>
+                            <td className="p-2">
+                              <button type="button" onClick={() => setParticipantRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
+                            </td>
+                            <td className="p-2">
+                              <select 
+                                value={row.employee} 
+                                onChange={(e) => { const a = [...participantRows]; a[idx].employee = e.target.value; setParticipantRows(a); }} 
+                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                              >
+                                <option value="" style={{ color: '#000' }}>Select Employee</option>
+                                {employees.map(emp => (
+                                  <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>{emp.full_name} ({emp.nik})</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="p-2">
+                              <select 
+                                value={row.attendance} 
+                                onChange={(e) => { const a = [...participantRows]; a[idx].attendance = e.target.value; setParticipantRows(a); }} 
+                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                              >
+                                <option value="Present">Present</option>
+                                <option value="Absent">Absent</option>
+                              </select>
+                            </td>
+                            <td className="p-2"><input type="number" step="0.1" value={row.l1} onChange={(e) => { const a = [...participantRows]; a[idx].l1 = e.target.value; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                            <td className="p-2"><input type="number" step="0.01" min="1" max="4" placeholder="1-4" value={row.l2} onChange={(e) => { const a = [...participantRows]; a[idx].l2 = e.target.value; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <button type="button" onClick={() => setParticipantRows([...participantRows, { employee: "", attendance: "Present", l1: "", l2: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Participant</button>
                 </div>
               )}
@@ -1427,70 +1433,72 @@ export default function TrainingMasterPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
-                        <tr>
-                          <th className="p-3 w-[50px]"></th>
-                          <th className="p-3">Cost Center</th>
-                          <th className="p-3 w-[100px]">Currency</th>
-                          <th className="p-3">Training Cost</th>
-                          <th className="p-3">Room Cost</th>
-                          <th className="p-3">SPPD Cost</th>
-                          <th className="p-3 w-[120px]">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {costRows.map((row, idx) => {
-                          const selectedDivObj = divisions.find(d => parseInt(d.division_id) === parseInt(row.division));
-                          const abbr = selectedDivObj ? getAbbreviation(selectedDivObj.division_name) : "";
-                          
-                          return (
-                            <tr key={idx}>
-                              <td className="p-2">
-                                <button type="button" onClick={() => setCostRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
-                              </td>
-                              <td className="p-2">
-                                <div className="space-y-1">
+                    <div className="custom-scrollbar overflow-auto border border-gray-100 rounded-lg">
+                      <table className="w-full text-sm min-w-[800px]">
+                        <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
+                          <tr>
+                            <th className="p-3 w-[50px]"></th>
+                            <th className="p-3">Cost Center</th>
+                            <th className="p-3 w-[100px]">Currency</th>
+                            <th className="p-3">Training Cost</th>
+                            <th className="p-3">Room Cost</th>
+                            <th className="p-3">SPPD Cost</th>
+                            <th className="p-3 w-[120px]">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {costRows.map((row, idx) => {
+                            const selectedDivObj = divisions.find(d => parseInt(d.division_id) === parseInt(row.division));
+                            const abbr = selectedDivObj ? getAbbreviation(selectedDivObj.division_name) : "";
+                            
+                            return (
+                              <tr key={idx}>
+                                <td className="p-2">
+                                  <button type="button" onClick={() => setCostRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
+                                </td>
+                                <td className="p-2">
+                                  <div className="space-y-1">
+                                    <select 
+                                      value={row.division} 
+                                      onChange={(e) => { const a = [...costRows]; a[idx].division = e.target.value; setCostRows(a); }} 
+                                      className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                    >
+                                      <option value="">Select Division</option>
+                                      {divisions.map(div => (
+                                        <option key={div.division_id} value={div.division_id}>{div.division_name}</option>
+                                      ))}
+                                    </select>
+                                    {abbr && <span className="text-[10px] text-gray-500 font-bold ml-2">Code: {abbr}</span>}
+                                  </div>
+                                </td>
+                                <td className="p-2">
                                   <select 
-                                    value={row.division} 
-                                    onChange={(e) => { const a = [...costRows]; a[idx].division = e.target.value; setCostRows(a); }} 
+                                    value={row.currency} 
+                                    onChange={(e) => { const a = [...costRows]; a[idx].currency = e.target.value; setCostRows(a); }} 
                                     className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
                                   >
-                                    <option value="">Select Division</option>
-                                    {divisions.map(div => (
-                                      <option key={div.division_id} value={div.division_id}>{div.division_name}</option>
-                                    ))}
+                                    <option value="IDR">IDR</option>
                                   </select>
-                                  {abbr && <span className="text-[10px] text-gray-500 font-bold ml-2">Code: {abbr}</span>}
-                                </div>
-                              </td>
-                              <td className="p-2">
-                                <select 
-                                  value={row.currency} 
-                                  onChange={(e) => { const a = [...costRows]; a[idx].currency = e.target.value; setCostRows(a); }} 
-                                  className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                                >
-                                  <option value="IDR">IDR</option>
-                                </select>
-                              </td>
-                              <td className="p-2"><input type="number" value={row.training} onChange={(e) => { const a = [...costRows]; a[idx].training = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                              <td className="p-2"><input type="number" value={row.room} onChange={(e) => { const a = [...costRows]; a[idx].room = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                              <td className="p-2"><input type="number" value={row.sppd} onChange={(e) => { const a = [...costRows]; a[idx].sppd = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                              <td className="p-2">
-                                <select 
-                                  value={row.status} 
-                                  onChange={(e) => { const a = [...costRows]; a[idx].status = e.target.value; setCostRows(a); }} 
-                                  className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                                >
-                                  <option value="Unpaid">Unpaid</option>
-                                  <option value="Paid">Paid</option>
-                                </select>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                                </td>
+                                <td className="p-2"><input type="number" value={row.training} onChange={(e) => { const a = [...costRows]; a[idx].training = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                                <td className="p-2"><input type="number" value={row.room} onChange={(e) => { const a = [...costRows]; a[idx].room = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                                <td className="p-2"><input type="number" value={row.sppd} onChange={(e) => { const a = [...costRows]; a[idx].sppd = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                                <td className="p-2">
+                                  <select 
+                                    value={row.status} 
+                                    onChange={(e) => { const a = [...costRows]; a[idx].status = e.target.value; setCostRows(a); }} 
+                                    className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                  >
+                                    <option value="Unpaid">Unpaid</option>
+                                    <option value="Paid">Paid</option>
+                                  </select>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                     <button type="button" onClick={() => setCostRows([...costRows, { division: "", currency: "IDR", room: "", training: "", sppd: "", status: "Unpaid" }])} className="text-[#2174C3] font-bold text-sm">+ Add Cost Center Allocation</button>
                   </div>
                 </div>
@@ -1499,80 +1507,82 @@ export default function TrainingMasterPage() {
               {activeTab === "doc" && (
                 <div className="space-y-4">
                   <h3 className="text-[#2174C3] font-bold text-lg mb-4">Documentation</h3>
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
-                      <tr>
-                        <th className="p-3 w-[50px]"></th>
-                        <th className="p-3">Document Type</th>
-                        <th className="p-3">File Name</th>
-                        <th className="p-3 w-[80px]">Drive</th>
-                        <th className="p-3">File Link (URL)</th>
-                        <th className="p-3">Uploader</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {documentationRows.map((row, idx) => (
-                        <tr key={idx}>
-                          <td className="p-2">
-                            <button type="button" onClick={() => setDocumentationRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
-                          </td>
-                          <td className="p-2">
-                            <select 
-                              value={row.type} 
-                              onChange={(e) => { const a = [...documentationRows]; a[idx].type = e.target.value; setDocumentationRows(a); }} 
-                              className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                            >
-                              <option value="Invoice">Invoice</option>
-                              <option value="Form IHT">Form IHT</option>
-                              <option value="All Document">All Document</option>
-                            </select>
-                          </td>
-                          <td className="p-2">
-                            <input 
-                              type="text" 
-                              value={row.file_name} 
-                              onChange={(e) => { const a = [...documentationRows]; a[idx].file_name = e.target.value; setDocumentationRows(a); }} 
-                              className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" 
-                              placeholder="Enter file name" 
-                            />
-                          </td>
-                          <td className="p-2 text-center">
-                            <button
-                              type="button"
-                              onClick={() => window.open('https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing', '_blank')}
-                              className="p-2 rounded-lg transition-all bg-[#2174C3] text-white hover:bg-[#1A5E9D]"
-                              title="Open in Google Drive"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                              </svg>
-                            </button>
-                          </td>
-                          <td className="p-2">
-                            <input 
-                              type="text" 
-                              value={row.url} 
-                              onChange={(e) => { const a = [...documentationRows]; a[idx].url = e.target.value; setDocumentationRows(a); }} 
-                              className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" 
-                              placeholder="https://drive.google.com/..." 
-                            />
-                          </td>
-                          <td className="p-2">
-                            <select 
-                              value={row.submitted_by} 
-                              onChange={(e) => { const a = [...documentationRows]; a[idx].submitted_by = e.target.value; setDocumentationRows(a); }} 
-                              className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                            >
-                              <option value="" style={{ color: '#000' }}>Select PIC</option>
-                              {employees.filter(emp => [200335, 200331, 200329].includes(parseInt(emp.nik))).map(emp => (
-                                <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>{emp.full_name} ({emp.nik})</option>
-                              ))}
-                            </select>
-                          </td>
+                  <div className="custom-scrollbar overflow-auto border border-gray-100 rounded-lg">
+                    <table className="w-full text-sm min-w-[1000px]">
+                      <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
+                        <tr>
+                          <th className="p-3 w-[50px]"></th>
+                          <th className="p-3">Document Type</th>
+                          <th className="p-3">File Name</th>
+                          <th className="p-3 w-[80px]">Drive</th>
+                          <th className="p-3">File Link (URL)</th>
+                          <th className="p-3">Uploader</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {documentationRows.map((row, idx) => (
+                          <tr key={idx}>
+                            <td className="p-2">
+                              <button type="button" onClick={() => setDocumentationRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
+                            </td>
+                            <td className="p-2">
+                              <select 
+                                value={row.type} 
+                                onChange={(e) => { const a = [...documentationRows]; a[idx].type = e.target.value; setDocumentationRows(a); }} 
+                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                              >
+                                <option value="Invoice">Invoice</option>
+                                <option value="Form IHT">Form IHT</option>
+                                <option value="All Document">All Document</option>
+                              </select>
+                            </td>
+                            <td className="p-2">
+                              <input 
+                                type="text" 
+                                value={row.file_name} 
+                                onChange={(e) => { const a = [...documentationRows]; a[idx].file_name = e.target.value; setDocumentationRows(a); }} 
+                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" 
+                                placeholder="Enter file name" 
+                              />
+                            </td>
+                            <td className="p-2 text-center">
+                              <button
+                                type="button"
+                                onClick={() => window.open('https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing', '_blank')}
+                                className="p-2 rounded-lg transition-all bg-[#2174C3] text-white hover:bg-[#1A5E9D]"
+                                title="Open in Google Drive"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </button>
+                            </td>
+                            <td className="p-2">
+                              <input 
+                                type="text" 
+                                value={row.url} 
+                                onChange={(e) => { const a = [...documentationRows]; a[idx].url = e.target.value; setDocumentationRows(a); }} 
+                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" 
+                                placeholder="https://drive.google.com/..." 
+                              />
+                            </td>
+                            <td className="p-2">
+                              <select 
+                                value={row.submitted_by} 
+                                onChange={(e) => { const a = [...documentationRows]; a[idx].submitted_by = e.target.value; setDocumentationRows(a); }} 
+                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                              >
+                                <option value="" style={{ color: '#000' }}>Select PIC</option>
+                                {employees.filter(emp => [200335, 200331, 200329].includes(parseInt(emp.nik))).map(emp => (
+                                  <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>{emp.full_name} ({emp.nik})</option>
+                                ))}
+                              </select>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <button type="button" onClick={() => setDocumentationRows([...documentationRows, { type: "Invoice", file_name: "", url: "https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing", submitted_by: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Documentation</button>
                 </div>
               )}
@@ -1609,9 +1619,8 @@ export default function TrainingMasterPage() {
       {/* Budget Modal */}
       {showBudgetModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-10 relative animate-in fade-in zoom-in duration-200">
-            <h2 className="text-4xl font-bold text-black mb-6">Set Training Budget</h2>
-            <p className="text-sm text-gray-400 mb-6">Define budget allocation for training programs</p>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-10 relative animate-in fade-in zoom-in duration-200 overflow-y-auto custom-scrollbar max-h-[90vh]">
+            <h2 className="text-4xl font-bold text-black mb-2">Set Training Budget</h2>
             <hr className="mb-8 border-gray-200" />
             
             <div className="space-y-6">

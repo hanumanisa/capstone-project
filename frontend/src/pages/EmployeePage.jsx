@@ -213,8 +213,8 @@ const EmployeePage = () => {
 
             <h1 className="text-4xl font-bold text-gray-800 tracking-tight mb-6">Employees</h1>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                <div className="overflow-x-auto overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-gray-200">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden transition-all h-[calc(100vh-350px)] flex flex-col">
+                <div className="custom-scrollbar overflow-auto flex-1">
                     <table className="w-full text-left text-sm min-w-[2000px] border-collapse">
                         <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-20">
                             <tr>

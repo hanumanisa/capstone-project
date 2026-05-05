@@ -24,7 +24,7 @@ from .models import (
 )
 from .serializers import (
     UserSerializer, MyTokenObtainPairSerializer,
-    EmployeeSerializer, CourseCategorySerializer, CourseSerializer,
+    EmployeeSerializer, EmployeeMinimalSerializer, CourseCategorySerializer, CourseSerializer,
     VendorSerializer, TnaPeriodSerializer, TnaMasterSerializer,
     TnaParticipantSerializer, HotelSerializer,
     TrainingMasterSerializer, TrainingEventSerializer, EventLocationSerializer,
@@ -273,6 +273,11 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             return None
         return super().paginate_queryset(queryset)
     
+    def get_serializer_class(self):
+        if self.request.query_params.get('nopage') == 'true':
+            return EmployeeMinimalSerializer
+        return EmployeeSerializer
+
     serializer_class = EmployeeSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = StandardResultsSetPagination

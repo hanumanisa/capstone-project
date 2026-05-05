@@ -584,7 +584,6 @@ export default function TrainingEvaluationPage() {
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-10 relative">
 
                             <h2 className="text-4xl font-bold text-black mb-2">Templates Form</h2>
-                            <p className="text-sm text-gray-400 mb-8">Create a new evaluation template header</p>
                             <hr className="mb-10 border-gray-100" />
                             
                             <div className="space-y-6">
@@ -823,14 +822,13 @@ export default function TrainingEvaluationPage() {
                 {showEval && (
                     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1400px] max-h-[95vh] p-10 relative flex flex-col">
-                            <div className="flex items-center justify-between mb-2">
-                                <h2 className="text-4xl font-bold text-black">{isL2 ? 'Evaluation Builder L2' : 'Evaluation Builder L1'}</h2>
-                            </div>
-                            <p className="text-sm text-gray-400 mb-6">{isL2 ? 'Construct multiple choice assessments' : 'Define feedback criteria and ratings'}</p>
-                            <hr className="mb-8 border-gray-100" />
-
-                            <div>
-                                <div className="flex items-end gap-4 mb-5">
+                            <div className="shrink-0">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h2 className="text-4xl font-bold text-black">{isL2 ? 'Evaluation Builder L2' : 'Evaluation Builder L1'}</h2>
+                                </div>
+                                <hr className="mb-6 border-gray-100" />
+                                
+                                <div className="flex items-end gap-4 mb-6">
                                     <div className="flex flex-col gap-1.5">
                                         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Template</label>
                                         <select value={selectedTemplate} onChange={onTemplateChange} className="w-48 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#2174C3] focus:border-transparent outline-none transition">
@@ -871,7 +869,9 @@ export default function TrainingEvaluationPage() {
                                         <span>{isL2 ? l2Rows.length + ' questions' : evalRows.length + ' questions'}</span>
                                     </div>
                                 </div>
+                            </div>
 
+                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                                 {!isL2 ? (
                                     <>
                                         <div style={{ display: 'grid', gridTemplateColumns: '36px 1fr 140px 90px 36px', gap: '6px', padding: '0 2px', marginBottom: '0' }}>
@@ -881,7 +881,7 @@ export default function TrainingEvaluationPage() {
                                             <div className="bg-[#D1D5DB] text-[#4B5563] text-[11px] font-bold py-1.5 px-2 rounded-t-md text-center">Is Active</div>
                                             <div></div>
                                         </div>
-                                        <div className="rows-scroll max-h-[52vh] overflow-y-auto pr-1 flex flex-col gap-2">
+                                        <div className="flex flex-col gap-2">
                                             {evalRows.map((row, index) => (
                                                 <div key={index} className="l2-row-card" style={{ borderRadius: '0 0 10px 10px', marginBottom: '8px' }}>
                                                     <div style={{ display: 'grid', gridTemplateColumns: '36px 1fr 140px 90px 36px', gap: '6px', alignItems: 'center' }}>
@@ -919,7 +919,7 @@ export default function TrainingEvaluationPage() {
                                             <div className="bg-[#D1D5DB] text-[#4B5563] text-[11px] font-bold py-1.5 px-2 rounded-t-md text-center">Score</div>
                                             <div className="bg-[#D1D5DB] text-[#4B5563] text-[11px] font-bold py-1.5 px-2 rounded-t-md text-center">Is Active</div>
                                         </div>
-                                        <div className="rows-scroll max-h-[52vh] overflow-y-auto pr-1 flex flex-col gap-2">
+                                        <div className="flex flex-col gap-2">
                                             {l2Rows.map((row, index) => (
                                                 <div key={index} className="l2-row-card" style={{ borderRadius: '0 0 10px 10px', marginBottom: '10px' }}>
                                                     <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr 110px 1fr 80px 60px 60px', gap: '6px', alignItems: 'start' }}>
@@ -970,7 +970,8 @@ export default function TrainingEvaluationPage() {
                                     </>
                                 )}
                             </div>
-                             <div className="flex justify-end space-x-2 mt-8 pt-5 border-t border-gray-100">
+
+                            <div className="flex justify-end space-x-2 mt-8 pt-5 border-t border-gray-100 shrink-0">
                                 <button onClick={() => setShowEval(false)} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Cancel</button>
                                 <button onClick={saveEvaluation} disabled={isSaving} className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer disabled:opacity-50 disabled:bg-gray-400">
                                     {isSaving ? (

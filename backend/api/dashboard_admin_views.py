@@ -195,7 +195,15 @@ class DashboardAdminAPIView(APIView):
 
         averageHours = [0] * 12
         budgetUsed = [0] * 12
-        category_hours = {"Hard Skill": [0]*12, "Soft Skill": [0]*12, "ESG": [0]*12}
+        type_hours = {
+            "Inhouse Training": [0]*12, 
+            "Knowledge Sharing": [0]*12, 
+            "Public Training": [0]*12, 
+            "E-Learning": [0]*12
+        }
+        totalTrainingMonthly = [0] * 12
+        totalHoursMonthly = [0] * 12
+        totalLearnersMonthly = [0] * 12
 
         for m in months:
             m_events = events_by_month.filter(month=m)
@@ -210,26 +218,37 @@ class DashboardAdminAPIView(APIView):
                     if duration > 0: 
                         m_hours += duration * part_counts_dict.get(sched.event_id, 0)
             
-            m_employee_count = participants.filter(event_id__in=m_event_ids).values('nik').distinct().count()
+            m_participants = participants.filter(event_id__in=m_event_ids)
+            m_employee_count = m_participants.values('nik').distinct().count()
             averageHours[m-1] = m_hours / m_employee_count if m_employee_count > 0 else 0
+            
+            # Monthly Totals
+            totalTrainingMonthly[m-1] = m_events.count()
+            totalHoursMonthly[m-1] = round(m_hours, 1)
+            totalLearnersMonthly[m-1] = m_participants.count()
             
             # Monthly Budget Used (Paid)
             m_costs_paid = costs.filter(event_id__in=m_event_ids, cost_type='Actual Cost', status_cost__in=['Paid', 'Settled'])
             budgetUsed[m-1] = sum_costs(m_costs_paid) / 1000000.0 # in Millions
             
-            # Monthly Category Hours
-            for cat in category_hours.keys():
-                cat_m_events = m_events.filter(training__training_category=cat)
-                cat_m_ids = cat_m_events.values_list('event_id', flat=True)
-                cat_m_scheds = EventSchedule.objects.filter(event_id__in=cat_m_ids)
-                cat_h = 0
-                for sch in cat_m_scheds:
+            # Monthly Type Hours
+            for t_type in type_hours.keys():
+                type_m_events = m_events.filter(training__training_type=t_type)
+                type_m_ids = type_m_events.values_list('event_id', flat=True)
+                type_m_scheds = EventSchedule.objects.filter(event_id__in=type_m_ids)
+                type_h = 0
+                for sch in type_m_scheds:
                     if sch.start_time and sch.end_time:
                         dur = (sch.end_time.hour - sch.start_time.hour) + (sch.end_time.minute - sch.start_time.minute) / 60.0
-                        cat_h += dur * part_counts_dict.get(sch.event_id, 0)
-                category_hours[cat][m-1] = cat_h
+                        type_h += dur * part_counts_dict.get(sch.event_id, 0)
+                type_hours[t_type][m-1] = type_h
 
         charts = {
+            "summaryCombined": {
+                "Total Training": totalTrainingMonthly,
+                "Total Hours": totalHoursMonthly,
+                "Total Learners": totalLearnersMonthly
+            },
             "averageHours": averageHours,
             "budgetUsed": budgetUsed,
             "totalTrainingCategory": {
@@ -237,7 +256,7 @@ class DashboardAdminAPIView(APIView):
                 "Soft Skill": get_monthly_counts(events_by_month.filter(training__training_category='Soft Skill')),
                 "ESG": get_monthly_counts(events_by_month.filter(training__training_category='ESG'))
             },
-            "trainingCategoryHours": category_hours,
+            "trainingTypeHours": type_hours,
             "presentaseKaryawan": {
                 "Direktur": participants.filter(nik__position_name__icontains='Direktur').values('nik').distinct().count(),
                 "Kepala Divisi": participants.filter(nik__position_name__icontains='Kepala Divisi').values('nik').distinct().count(),
@@ -304,7 +323,7 @@ class DashboardAdminAPIView(APIView):
                     g_scheds = EventSchedule.objects.filter(event_id__in=g_event_ids)
                 else:
                     # For events grouping
-                    g_learners = EventParticipant.objects.filter(event__in=g_events).values('nik').distinct().count()
+                    g_learners = EventParticipant.objects.filter(event__in=g_events).exclude(attendance_status='Absent').values('nik').distinct().count()
                     g_title_count = g_events.count()
                     g_scheds = EventSchedule.objects.filter(event__in=g_events)
                 

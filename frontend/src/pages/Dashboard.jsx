@@ -48,12 +48,15 @@ ChartJS.register(
 const Dashboard = () => {
     const [user, setUser] = useState(null);
     const [cardData, setCardData] = useState({
-        total_training: 0,
-        total_hours: 0,
-        average_hours: 0,
-        l1_score: "0.00",
-        l2_score: "0.00",
-        tna_coverage: "0%"
+        stats: {
+            total_training: 0,
+            total_hours: "0",
+            average_hours: "0",
+            l1_score: "0.00",
+            l2_score: "0.00",
+            tna_coverage: "0%"
+        },
+        charts: null
     });
     const [adminData, setAdminData] = useState(null);
     const [search, setSearch] = useState("");
@@ -90,7 +93,9 @@ const Dashboard = () => {
             const isAdminDashboardRole = ['Administrator', 'Super Administrator', 'Dean'].includes(userData.role);
             
             if (!isAdminDashboardRole) {
-                api.get('/api/dashboard/cards/')
+                const params = new URLSearchParams();
+                params.append('year', year);
+                api.get(`/api/dashboard/cards/?${params.toString()}`)
                    .then(res => {
                        if(res.data) setCardData(res.data);
                    })
@@ -111,14 +116,14 @@ const Dashboard = () => {
 
     const isRestrictedRole = user && !['Administrator', 'Super Administrator', 'Dean'].includes(user.role);
 
-    const stats = isRestrictedRole ? [
-        { title: 'Total Training', val: cardData.total_training, icon: BookOpen, bgIcon: '#F59E0B' },
-        { title: 'Total Hours', val: cardData.total_hours, icon: Clock, bgIcon: '#10B981' },
-        { title: 'Average Hours', val: cardData.average_hours, icon: Hourglass, bgIcon: '#8B5CF6' },
-        { title: 'Training Evaluation L1', val: cardData.l1_score, icon: Star, bgIcon: '#FBBF24' },
-        { title: 'Training Evaluation L2', val: cardData.l2_score, icon: Star, bgIcon: '#FBBF24' },
-        { title: 'TNA Program Coverage', val: cardData.tna_coverage, icon: ClipboardCheck, bgIcon: '#3B82F6' }
-    ] : adminData ? [
+    const stats = isRestrictedRole ? (cardData?.stats ? [
+        { title: 'Total Training', val: cardData.stats.total_training, icon: BookOpen, bgIcon: '#F59E0B' },
+        { title: 'Total Hours', val: cardData.stats.total_hours, icon: Clock, bgIcon: '#10B981' },
+        { title: 'Average Hours', val: cardData.stats.average_hours, icon: Hourglass, bgIcon: '#8B5CF6' },
+        { title: 'Training Evaluation L1', val: cardData.stats.l1_score, icon: Star, bgIcon: '#FBBF24' },
+        { title: 'Training Evaluation L2', val: cardData.stats.l2_score, icon: Star, bgIcon: '#FBBF24' },
+        { title: 'TNA Program Coverage', val: cardData.stats.tna_coverage, icon: ClipboardCheck, bgIcon: '#3B82F6' }
+    ] : []) : adminData ? [
         // Column 1
         { title: 'Total Training', val: adminData.stats.total_training, change: '16%', up: true, icon: BookOpen, bgIcon: '#F59E0B' },
         { title: 'E-Learning', val: adminData.stats.e_learning, icon: MonitorPlay, bgIcon: '#8B5CF6' },
@@ -246,48 +251,75 @@ const Dashboard = () => {
         }
     };
 
-    const datasets = adminData ? {
+    const dashboardData = isRestrictedRole ? cardData : adminData;
+
+    const datasets = (dashboardData && dashboardData.charts) ? {
+        totalTraining: {
+            labels: chartLabels,
+            datasets: [{
+                data: dashboardData.charts.summaryCombined['Total Training'],
+                backgroundColor: '#F59E0B',
+                barPercentage: 0.5
+            }]
+        },
+        totalHours: {
+            labels: chartLabels,
+            datasets: [{
+                data: dashboardData.charts.summaryCombined['Total Hours'],
+                backgroundColor: '#10B981',
+                barPercentage: 0.5
+            }]
+        },
+        totalLearners: {
+            labels: chartLabels,
+            datasets: [{
+                data: dashboardData.charts.summaryCombined['Total Learners'],
+                backgroundColor: '#FBBF24',
+                barPercentage: 0.5
+            }]
+        },
         averageHours: {
             labels: chartLabels,
             datasets: [{
-                data: adminData.charts.averageHours,
-                backgroundColor: '#BD509E',
+                data: dashboardData.charts.averageHours,
+                backgroundColor: '#8B5CF6',
                 barPercentage: 0.5
             }]
         },
         budgetUsed: {
             labels: chartLabels,
             datasets: [{
-                data: adminData.charts.budgetUsed,
-                backgroundColor: '#E67E22',
+                data: dashboardData.charts.budgetUsed || Array(12).fill(0),
+                backgroundColor: '#EF4444',
                 barPercentage: 0.5
             }]
         },
         totalTrainingCategory: {
             labels: chartLabels,
             datasets: [
-                { label: 'Hard Skill', data: adminData.charts.totalTrainingCategory['Hard Skill'], backgroundColor: '#3498DB' },
-                { label: 'Soft Skill', data: adminData.charts.totalTrainingCategory['Soft Skill'], backgroundColor: '#BD509E' },
-                { label: 'ESG', data: adminData.charts.totalTrainingCategory['ESG'], backgroundColor: '#2ECC71' }
+                { label: 'Hard Skill', data: dashboardData.charts.totalTrainingCategory['Hard Skill'], backgroundColor: '#3498DB' },
+                { label: 'Soft Skill', data: dashboardData.charts.totalTrainingCategory['Soft Skill'], backgroundColor: '#BD509E' },
+                { label: 'ESG', data: dashboardData.charts.totalTrainingCategory['ESG'], backgroundColor: '#2ECC71' }
             ]
         },
-        trainingCategoryHours: {
+        trainingTypeHours: {
             labels: chartLabels,
             datasets: [
-                { label: 'Hard Skill', data: adminData.charts.trainingCategoryHours['Hard Skill'], backgroundColor: '#3498DB' },
-                { label: 'Soft Skill', data: adminData.charts.trainingCategoryHours['Soft Skill'], backgroundColor: '#BD509E' },
-                { label: 'ESG', data: adminData.charts.trainingCategoryHours['ESG'], backgroundColor: '#2ECC71' }
+                { label: 'Inhouse Training', data: dashboardData.charts.trainingTypeHours['Inhouse Training'], backgroundColor: '#3498DB' },
+                { label: 'Knowledge Sharing', data: dashboardData.charts.trainingTypeHours['Knowledge Sharing'], backgroundColor: '#E67E22' },
+                { label: 'Public Training', data: dashboardData.charts.trainingTypeHours['Public Training'], backgroundColor: '#2ECC71' },
+                { label: 'E-Learning', data: dashboardData.charts.trainingTypeHours['E-Learning'], backgroundColor: '#8B5CF6' }
             ]
         },
         presentaseKaryawan: {
             labels: ['Direktur', 'Kepala Divisi', 'Team Leader', 'Staff'],
             datasets: [{
-                data: [
-                    adminData.charts.presentaseKaryawan['Direktur'] || 0,
-                    adminData.charts.presentaseKaryawan['Kepala Divisi'] || 0,
-                    adminData.charts.presentaseKaryawan['Team Leader'] || 0,
-                    adminData.charts.presentaseKaryawan['Staff'] || 0
-                ],
+                data: dashboardData.charts.presentaseKaryawan ? [
+                    dashboardData.charts.presentaseKaryawan['Direktur'] || 0,
+                    dashboardData.charts.presentaseKaryawan['Kepala Divisi'] || 0,
+                    dashboardData.charts.presentaseKaryawan['Team Leader'] || 0,
+                    dashboardData.charts.presentaseKaryawan['Staff'] || 0
+                ] : [0, 0, 0, 0],
                 backgroundColor: ['#1E3A5F', '#D4AF37', '#2ECC71', '#A64D79'],
                 borderWidth: 0
             }]
@@ -295,17 +327,20 @@ const Dashboard = () => {
         totalTrainingType: {
             labels: chartLabels,
             datasets: [
-                { label: 'Inhouse Training', data: adminData.charts.totalTrainingType['Inhouse Training'], backgroundColor: '#3498DB' },
-                { label: 'Knowledge Sharing', data: adminData.charts.totalTrainingType['Knowledge Sharing'], backgroundColor: '#E67E22' },
-                { label: 'Public Training', data: adminData.charts.totalTrainingType['Public Training'], backgroundColor: '#2ECC71' },
-                { label: 'E-Learning', data: adminData.charts.totalTrainingType['E-Learning'], backgroundColor: '#BD509E' }
+                { label: 'Inhouse Training', data: dashboardData.charts.totalTrainingType['Inhouse Training'], backgroundColor: '#3498DB' },
+                { label: 'Knowledge Sharing', data: dashboardData.charts.totalTrainingType['Knowledge Sharing'], backgroundColor: '#E67E22' },
+                { label: 'Public Training', data: dashboardData.charts.totalTrainingType['Public Training'], backgroundColor: '#2ECC71' },
+                { label: 'E-Learning', data: dashboardData.charts.totalTrainingType['E-Learning'], backgroundColor: '#8B5CF6' }
             ]
         }
     } : {
+        totalTraining: { labels: chartLabels, datasets: [] },
+        totalHours: { labels: chartLabels, datasets: [] },
+        totalLearners: { labels: chartLabels, datasets: [] },
         averageHours: { labels: chartLabels, datasets: [{ data: Array(12).fill(0), backgroundColor: '#BD509E' }] },
         budgetUsed: { labels: chartLabels, datasets: [{ data: Array(12).fill(0), backgroundColor: '#E67E22' }] },
         totalTrainingCategory: { labels: chartLabels, datasets: [] },
-        trainingCategoryHours: { labels: chartLabels, datasets: [] },
+        trainingTypeHours: { labels: chartLabels, datasets: [] },
         presentaseKaryawan: { labels: [], datasets: [] },
         totalTrainingType: { labels: chartLabels, datasets: [] }
     };
@@ -458,44 +493,77 @@ const Dashboard = () => {
             </div>
 
             {/* Charts Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
-                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Average Hours</h3>
-                    <div className="flex-1 w-full min-h-0"><Bar options={commonBarOptions} data={datasets.averageHours} /></div>
-                </div>
+            {dashboardData && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                        <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Total Training</h3>
+                        <div className="flex-1 w-full min-h-0"><Bar options={commonBarOptions} data={datasets.totalTraining} /></div>
+                    </div>
 
-                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
-                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Budget Used</h3>
-                    <div className="flex-1 w-full min-h-0"><Bar options={budgetOptions} data={datasets.budgetUsed} /></div>
+                    <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                        <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Total Hours</h3>
+                        <div className="flex-1 w-full min-h-0"><Bar options={commonBarOptions} data={datasets.totalHours} /></div>
+                    </div>
+
+                    {isRestrictedRole ? (
+                        <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                            <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Average Hours</h3>
+                            <div className="flex-1 w-full min-h-0"><Bar options={commonBarOptions} data={datasets.averageHours} /></div>
+                        </div>
+                    ) : (
+                        <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                            <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Total Learners</h3>
+                            <div className="flex-1 w-full min-h-0"><Bar options={commonBarOptions} data={datasets.totalLearners} /></div>
+                        </div>
+                    )}
                 </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                {!isRestrictedRole && (
+                    <>
+                        <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                            <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Average Hours</h3>
+                            <div className="flex-1 w-full min-h-0"><Bar options={commonBarOptions} data={datasets.averageHours} /></div>
+                        </div>
+
+                        <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                            <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Budget Used</h3>
+                            <div className="flex-1 w-full min-h-0"><Bar options={budgetOptions} data={datasets.budgetUsed} /></div>
+                        </div>
+                    </>
+                )}
 
                 <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
                     <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Total Training Category</h3>
                     <div className="flex-1 w-full min-h-0"><Bar options={groupedBarOptions} data={datasets.totalTrainingCategory} /></div>
                 </div>
 
-                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
-                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Training Category Hours</h3>
-                    <div className="flex-1 w-full min-h-0"><Bar options={groupedBarOptions} data={datasets.trainingCategoryHours} /></div>
-                </div>
-
-                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
-                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Presentase Karyawan</h3>
-                    <div className="flex-1 w-full min-h-0 relative">
-                        <Doughnut options={doughnutOptions} data={datasets.presentaseKaryawan} />
+                {!isRestrictedRole && (
+                    <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                        <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Presentase Karyawan</h3>
+                        <div className="flex-1 w-full min-h-0 relative">
+                            <Doughnut options={doughnutOptions} data={datasets.presentaseKaryawan} />
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
                     <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Total Training Type</h3>
                     <div className="flex-1 w-full min-h-0"><Bar options={groupedBarOptions} data={datasets.totalTrainingType} /></div>
                 </div>
+
+                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col">
+                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Training Type Hours</h3>
+                    <div className="flex-1 w-full min-h-0"><Bar options={groupedBarOptions} data={datasets.trainingTypeHours} /></div>
+                </div>
             </div>
 
             {/* Tables Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {!isRestrictedRole && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                 {/* 10. Cost Table */}
-                <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col overflow-hidden">
+                <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 h-[450px] flex flex-col overflow-hidden">
                     <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Cost</h3>
                     <div className="flex-1 overflow-auto pr-2 custom-scrollbar">
                         <table className="w-full text-xs text-left border-separate border-spacing-y-1">
@@ -536,7 +604,7 @@ const Dashboard = () => {
                     { id: 'division', title: 'Division', field: 'division' },
                     { id: 'position', title: 'Position', field: 'position' }
                 ].map(table => (
-                    <div key={table.id} className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 h-[450px] flex flex-col overflow-hidden">
+                    <div key={table.id} className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 h-[450px] flex flex-col overflow-hidden">
                         <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">{table.title}</h3>
                         <div className="flex-1 overflow-auto pr-2 custom-scrollbar">
                             <table className="w-full text-xs text-left border-separate border-spacing-y-1">
@@ -562,7 +630,8 @@ const Dashboard = () => {
                         </div>
                     </div>
                 ))}
-            </div>
+                </div>
+            )}
         </MainLayout>
     );
 };

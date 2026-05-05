@@ -261,23 +261,16 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
     return (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] shadow-2xl p-0 overflow-hidden relative flex flex-col animate-in zoom-in duration-300">
-                <button 
-                    onClick={onClose}
-                    className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors z-20"
-                >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+
 
                 <div className="p-10 pb-6 shrink-0">
                     <h2 className="text-4xl font-bold text-black mb-2 tracking-tight">
                         Training Needs Analysis
                     </h2>
-                    <p className="text-sm text-gray-400">Map courses to specific employees and time periods</p>
                 </div>
 
                 <div className="px-10 pb-10 overflow-y-auto flex-1 custom-scrollbar">
+                    <hr className="mb-10 border-gray-100" />
                     <div className="border border-gray-100 rounded-2xl overflow-hidden mb-8 shadow-sm">
                         <div className="bg-gray-50 flex text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200">
                             <div className="w-[20%] p-4 border-r border-gray-200">Tna Period</div>

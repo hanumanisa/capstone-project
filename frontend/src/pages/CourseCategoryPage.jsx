@@ -249,69 +249,71 @@ const CourseCategoryPage = () => {
             </div>
 
             {/* ─── Table ───────────────────────────────────────────────── */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-auto max-h-[60vh]">
-                <table className="w-full text-left text-sm min-w-[700px]">
-                    <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
-                        <tr>
-                            <th className="px-6 py-4 font-bold">Category Code</th>
-                            <th className="px-6 py-4 font-bold">Category Name</th>
-                            <th className="px-6 py-4 font-bold">Description</th>
-                            <th className="px-6 py-4 text-center font-bold">Courses</th>
-                            <th className="px-6 py-4 text-right font-bold">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {loading ? (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden transition-all h-[calc(100vh-350px)] flex flex-col">
+                <div className="custom-scrollbar overflow-auto flex-1">
+                    <table className="w-full text-left text-sm min-w-[700px]">
+                        <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
                             <tr>
-                                <td colSpan="5" className="px-6 py-12 text-center text-gray-400">
-                                    <div className="flex items-center justify-center gap-2">
-                                        <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                        </svg>
-                                        Loading...
-                                    </div>
-                                </td>
+                                <th className="px-6 py-4 font-bold">Category Code</th>
+                                <th className="px-6 py-4 font-bold">Category Name</th>
+                                <th className="px-6 py-4 font-bold">Description</th>
+                                <th className="px-6 py-4 text-center font-bold">Courses</th>
+                                <th className="px-6 py-4 text-right font-bold">Status</th>
                             </tr>
-                        ) : paginatedData.length === 0 ? (
-                            <tr>
-                                <td colSpan="5" className="px-6 py-12 text-center text-gray-400">
-                                    No categories found.
-                                </td>
-                            </tr>
-                        ) : (
-                            paginatedData.map((item) => (
-                                <tr key={item.course_category_id} className="hover:bg-blue-50/30 transition-colors">
-                                    <td className="px-6 py-4">
-                                        {isAdmin ? (
-                                            <button
-                                                onClick={() => openEdit(item)}
-                                                className="text-[#2174C3] font-bold hover:underline cursor-pointer"
-                                            >
-                                                {item.course_category_id}
-                                            </button>
-                                        ) : (
-                                            <span className="text-gray-700 font-bold">{item.course_category_id}</span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-700">{item.category_name}</td>
-                                    <td className="px-6 py-4 text-gray-700 max-w-md truncate">{item.description}</td>
-                                    <td className="px-6 py-4 text-center text-gray-500 font-medium">{item.course_count}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <span
-                                            className={`px-3 py-1 rounded-full text-xs font-bold ${item.is_active
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-red-100 text-red-700'
-                                                }`}
-                                        >
-                                            {item.is_active ? 'Active' : 'Inactive'}
-                                        </span>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-12 text-center text-gray-400">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                            Loading...
+                                        </div>
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : paginatedData.length === 0 ? (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-12 text-center text-gray-400">
+                                        No categories found.
+                                    </td>
+                                </tr>
+                            ) : (
+                                paginatedData.map((item) => (
+                                    <tr key={item.course_category_id} className="hover:bg-blue-50/30 transition-colors">
+                                        <td className="px-6 py-4">
+                                            {isAdmin ? (
+                                                <button
+                                                    onClick={() => openEdit(item)}
+                                                    className="text-[#2174C3] font-bold hover:underline cursor-pointer"
+                                                >
+                                                    {item.course_category_id}
+                                                </button>
+                                            ) : (
+                                                <span className="text-gray-700 font-bold">{item.course_category_id}</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-700">{item.category_name}</td>
+                                        <td className="px-6 py-4 text-gray-700 max-w-md truncate">{item.description}</td>
+                                        <td className="px-6 py-4 text-center text-gray-500 font-medium">{item.course_count}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <span
+                                                className={`px-3 py-1 rounded-full text-xs font-bold ${item.is_active
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-red-100 text-red-700'
+                                                    }`}
+                                            >
+                                                {item.is_active ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* ─── Pagination ──────────────────────────────────────────── */}

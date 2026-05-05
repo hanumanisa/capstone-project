@@ -121,9 +121,9 @@ const TnaPage = () => {
 
     return (
         <MainLayout>
-            <div className="p-8 max-w-[1400px] mx-auto animate-in fade-in duration-500">
+            <div className="animate-in fade-in duration-500">
                 {/* ─── Toolbar ─────────────────────────────────────────────── */}
-                <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-3 mb-10 transition-all hover:shadow-md">
+                <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-3 mb-8 transition-all hover:shadow-md">
                     <div className="relative w-full sm:w-1/3">
                         <input
                             type="text"
