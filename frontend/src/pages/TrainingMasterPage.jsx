@@ -83,11 +83,8 @@ export default function TrainingMasterPage() {
     evaluationStage: false,
   });
 
-  const [costRows, setCostRows] = useState([
-    { division: "", currency: "IDR", room: "", training: "", sppd: "", status: "Unpaid" },
-  ]);
-
-  const [documentationRows, setDocumentationRows] = useState([{ type: "Invoice", file_name: "", url: "https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing", submitted_by: "" }]);
+  const [costRows, setCostRows] = useState([]);
+  const [documentationRows, setDocumentationRows] = useState([]);
   const [costAllocationType, setCostAllocationType] = useState("Estimate Cost");
 
   const getAbbreviation = (text) => {
@@ -130,7 +127,9 @@ export default function TrainingMasterPage() {
       ]);
 
       setDivisions(divs.data);
-      setEmployees(Array.isArray(emps.data) ? emps.data : (emps.data.results || []));
+      const sortedEmps = (Array.isArray(emps.data) ? emps.data : (emps.data.results || []))
+        .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+      setEmployees(sortedEmps);
       setCourseCategories(cats.data);
       setVendors(vends.data);
     } catch (e) {
@@ -409,8 +408,8 @@ export default function TrainingMasterPage() {
     setScheduleRows([{ date: "", start: "", end: "", material: "", instructor: "" }]);
     setParticipantRows([{ employee: "", attendance: "Present", l1: "", l2: "" }]);
     setEvaluation({ courseAccess: false, feedback: false, evaluationStage: false });
-    setCostRows([{ division: "", currency: "IDR", room: "", training: "", sppd: "", status: "Unpaid" }]);
-    setDocumentationRows([{ type: "Invoice", file_name: "", url: "https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing", submitted_by: "" }]);
+    setCostRows([]);
+    setDocumentationRows([]);
     setCostAllocationType("Estimate Cost");
     setActiveTab("location");
 
@@ -1195,8 +1194,8 @@ export default function TrainingMasterPage() {
       {showEventModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-[110] p-4">
           <div className="bg-white w-full max-w-4xl max-h-[95vh] overflow-y-auto custom-scrollbar rounded-xl shadow-2xl p-10 relative">
-            <h2 className="text-4xl font-bold text-black mb-6">{isEditMode ? "Edit Event Training" : "Event Training"}</h2>
-            <p className="text-sm text-gray-400 mb-6">Step 2: Training Event Information</p>
+            <h2 className="text-3xl font-bold text-black mb-2">{isEditMode ? "Edit Event Training" : "Event Training"}</h2>
+            <p className="text-sm text-gray-400 mb-6">Step 2: Event Training Information</p>
             <hr className="mb-8 border-gray-200" />
 
             <div className="space-y-6 mb-10">
@@ -1338,7 +1337,7 @@ export default function TrainingMasterPage() {
                               >
                                 <option value="" style={{ color: '#000' }}>Select Employee</option>
                                 {employees.map(emp => (
-                                  <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>{emp.full_name} ({emp.nik})</option>
+                                  <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>({emp.nik}) {emp.full_name}</option>
                                 ))}
                               </select>
                             </td>
@@ -1573,7 +1572,12 @@ export default function TrainingMasterPage() {
                                 className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
                               >
                                 <option value="" style={{ color: '#000' }}>Select PIC</option>
-                                {employees.filter(emp => [200335, 200331, 200329].includes(parseInt(emp.nik))).map(emp => (
+                                {employees.filter(emp => 
+                                  emp.role === 'Administrator' || 
+                                  emp.role === 'Super Administrator' || 
+                                  [200335, 200331, 200329].includes(parseInt(emp.nik)) || 
+                                  parseInt(emp.nik) === parseInt(user?.nik)
+                                ).map(emp => (
                                   <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>{emp.full_name} ({emp.nik})</option>
                                 ))}
                               </select>

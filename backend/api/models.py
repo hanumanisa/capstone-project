@@ -584,10 +584,6 @@ class EventDocument(models.Model):
                 condition=models.Q(file_url__contains='drive.google.com'),
                 name='check_google_drive_link'
             ),
-            models.CheckConstraint(
-                condition=models.Q(uploaded_by__in=[200335, 200331, 200329]),
-                name='check_authorized_uploader'
-            ),
         ]
 
 

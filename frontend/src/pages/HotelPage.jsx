@@ -316,7 +316,7 @@ const HotelPage = () => {
             {showModal && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden p-10">
-                        <h2 className="text-3xl font-bold text-[#212529] mb-4">
+                        <h2 className="text-3xl font-bold text-[#212529] mb-2">
                             {isEdit ? 'Edit Hotel' : 'Add Hotel'}
                         </h2>
                         <hr className="mb-8 border-gray-200" />

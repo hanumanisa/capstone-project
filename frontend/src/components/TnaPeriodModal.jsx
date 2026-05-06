@@ -84,14 +84,14 @@ const TnaPeriodModal = ({ isOpen, onClose, period, onSave, setToast }) => {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden relative flex flex-col animate-in zoom-in duration-300">
 
 
-                <div className="p-10 pb-6 shrink-0">
-                    <h2 className="text-4xl font-bold text-black mb-2">
+                <div className="p-10 pb-0 shrink-0">
+                    <h2 className="text-3xl font-bold text-black mb-2">
                         {period ? 'Edit Period' : 'Add Period'}
                     </h2>
+                    <hr className="mb-8 border-gray-100" />
                 </div>
                 
                 <div className="px-10 pb-10 overflow-y-auto flex-1 custom-scrollbar">
-                    <hr className="mb-10 border-gray-100" />
 
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">

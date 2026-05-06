@@ -583,8 +583,8 @@ export default function TrainingEvaluationPage() {
                     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-10 relative">
 
-                            <h2 className="text-4xl font-bold text-black mb-2">Templates Form</h2>
-                            <hr className="mb-10 border-gray-100" />
+                            <h2 className="text-3xl font-bold text-black mb-2">Templates Form</h2>
+                            <hr className="mb-8 border-gray-100" />
                             
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
@@ -685,8 +685,7 @@ export default function TrainingEvaluationPage() {
                                     </svg>
                                 </button>
 
-                                <h2 className="text-4xl font-bold text-black mb-1">Response</h2>
-                                <p className="text-sm text-gray-400 mb-6">{selectedCard?.title}</p>
+                                <h2 className="text-3xl font-bold text-black mb-2">Response</h2>
                                 
                                 <hr className="mb-8 border-gray-100" />
 
@@ -823,12 +822,10 @@ export default function TrainingEvaluationPage() {
                     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1400px] max-h-[95vh] p-10 relative flex flex-col">
                             <div className="shrink-0">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h2 className="text-4xl font-bold text-black">{isL2 ? 'Evaluation Builder L2' : 'Evaluation Builder L1'}</h2>
-                                </div>
-                                <hr className="mb-6 border-gray-100" />
+                                <h2 className="text-3xl font-bold text-black mb-2">{isL2 ? 'Evaluation Builder L2' : 'Evaluation Builder L1'}</h2>
+                                <hr className="mb-8 border-gray-100" />
                                 
-                                <div className="flex items-end gap-4 mb-6">
+                                <div className="flex items-end gap-4 mb-8">
                                     <div className="flex flex-col gap-1.5">
                                         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Template</label>
                                         <select value={selectedTemplate} onChange={onTemplateChange} className="w-48 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#2174C3] focus:border-transparent outline-none transition">

@@ -45,7 +45,9 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                 setPeriods(resP.data);
                 setCategories(resC.data);
                 setCourses(resCo.data);
-                setEmployees(Array.isArray(resE.data) ? resE.data : (resE.data.results || []));
+                const sortedEmps = (Array.isArray(resE.data) ? resE.data : (resE.data.results || []))
+                    .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+                setEmployees(sortedEmps);
             } catch (err) {
                 console.error('Failed to fetch modal data:', err);
             } finally {
@@ -263,14 +265,14 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
             <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] shadow-2xl p-0 overflow-hidden relative flex flex-col animate-in zoom-in duration-300">
 
 
-                <div className="p-10 pb-6 shrink-0">
-                    <h2 className="text-4xl font-bold text-black mb-2 tracking-tight">
+                <div className="p-10 pb-0 shrink-0">
+                    <h2 className="text-3xl font-bold text-black mb-2 tracking-tight">
                         Training Needs Analysis
                     </h2>
+                    <hr className="mb-8 border-gray-100" />
                 </div>
 
                 <div className="px-10 pb-10 overflow-y-auto flex-1 custom-scrollbar">
-                    <hr className="mb-10 border-gray-100" />
                     <div className="border border-gray-100 rounded-2xl overflow-hidden mb-8 shadow-sm">
                         <div className="bg-gray-50 flex text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200">
                             <div className="w-[20%] p-4 border-r border-gray-200">Tna Period</div>
@@ -314,6 +316,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                     <option value="">Select Course</option>
                                     {courses
                                         .filter(c => !formData.course_category || c.course_category === formData.course_category)
+                                        .sort((a, b) => (a.course_name || '').localeCompare(b.course_name || ''))
                                         .map(c => (
                                             <option key={c.course_id} value={c.course_id}>{c.course_name}</option>
                                         ))
@@ -367,19 +370,11 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                             className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
                                         >
                                             <option value="">Select Employee</option>
-                                            {employees.map(e => {
-                                                const isMandatory = ['Dean', 'Head of Division', 'Team Leader'].includes(e.role) || 
-                                                                    ['Kepala Divisi', 'Team Leader'].includes(e.position_name);
-                                                let label = `${e.nik} — ${e.full_name}`;
-                                                if (e.tna_count >= 3) label += " (Max TNA)";
-                                                else if (isMandatory) label += " (Leadership Req)";
-                                                
-                                                return (
-                                                    <option key={e.nik} value={e.nik}>
-                                                        {label}
-                                                    </option>
-                                                );
-                                            })}
+                                            {employees.map(e => (
+                                                <option key={e.nik} value={e.nik}>
+                                                    ({e.nik}) {e.full_name}
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
                                     <div className="w-[40%] p-4 border-r border-gray-50">

@@ -485,12 +485,21 @@ class AddTrainingView(APIView):
 
             for doc in data.get('documents', []):
                 if doc.get('url'):
+                    # Fallback to current user NIK if submitted_by is missing
+                    uploader_id = doc.get('submitted_by')
+                    if not uploader_id:
+                        if hasattr(request.user, 'profile') and request.user.profile.employee:
+                            uploader_id = request.user.profile.employee.nik
+                        else:
+                            # Final fallback to one of the known NIKs if still missing
+                            uploader_id = 200335 
+
                     EventDocument.objects.create(
                         event=event,
                         document_type=doc.get('type') or 'Other',
                         file_name=doc.get('file_name') or 'Untitled',
                         file_url=doc.get('url'),
-                        uploaded_by_id=doc.get('submitted_by')
+                        uploaded_by_id=uploader_id
                     )
 
             return Response({"message": "Training saved successfully", "training_code": tm.training_code}, status=status.HTTP_201_CREATED)
@@ -602,12 +611,21 @@ class AddTrainingView(APIView):
             event.documents.all().delete()
             for doc in data.get('documents', []):
                 if doc.get('url'):
+                    # Fallback to current user NIK if submitted_by is missing
+                    uploader_id = doc.get('submitted_by')
+                    if not uploader_id:
+                        if hasattr(request.user, 'profile') and request.user.profile.employee:
+                            uploader_id = request.user.profile.employee.nik
+                        else:
+                            # Final fallback to one of the known NIKs if still missing
+                            uploader_id = 200335 
+
                     EventDocument.objects.create(
                         event=event,
                         document_type=doc.get('type') or 'Other',
                         file_name=doc.get('file_name') or 'Untitled',
                         file_url=doc.get('url'),
-                        uploaded_by_id=doc.get('submitted_by')
+                        uploaded_by_id=uploader_id
                     )
 
             return Response({"message": "Training updated successfully"})
