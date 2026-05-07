@@ -222,40 +222,39 @@ export default function TrainingEvaluationEmployeePage() {
                 )}
 
                 {/* Toolbar */}
-                <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-10">
-                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-1/2">
-                        <div className="relative w-full sm:w-2/3">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                placeholder="Search evaluation..."
-                                className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400 text-sm"
-                            />
-                            <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </span>
-                        </div>
-                        <div className="relative w-full sm:w-1/3">
-                            <select
-                                value={selectedMainTemplate}
-                                onChange={e => setSelectedMainTemplate(e.target.value)}
-                                className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] focus:border-transparent appearance-none bg-no-repeat bg-right-4"
-                                style={{
-                                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
-                                    backgroundSize: '20px 20px',
-                                    backgroundPosition: 'right 12px center'
-                                }}
-                            >
-                                <option value="All_Templates">All Templates</option>
-                                <option value="L1_Templates">L1 Templates</option>
-                                <option value="L2_Templates">L2 Templates</option>
-                            </select>
-                        </div>
+                <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-3 mb-10 transition-all duration-300 sticky top-0 z-30">
+                    <div className="relative w-full sm:w-1/3">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Search evaluation..."
+                            className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400"
+                        />
+                        <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </span>
                     </div>
-                    <div className="flex items-center gap-6">
+                    <div className="relative w-full sm:w-48">
+                        <select
+                            value={selectedMainTemplate}
+                            onChange={e => setSelectedMainTemplate(e.target.value)}
+                            className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] focus:border-transparent appearance-none bg-no-repeat bg-right-4"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                                backgroundSize: '20px 20px',
+                                backgroundPosition: 'right 12px center'
+                            }}
+                        >
+                            <option value="All_Templates">All Templates</option>
+                            <option value="L1_Templates">L1 Templates</option>
+                            <option value="L2_Templates">L2 Templates</option>
+                        </select>
+                    </div>
+
+                    <div className="flex-1 flex flex-col sm:flex-row items-center justify-end gap-6">
                         <div className="font-bold flex space-x-4 text-sm">
                             <button onClick={() => setActiveYear('2026')} className={activeYear === '2026' ? 'text-[#2174C3] cursor-pointer' : 'text-gray-300 cursor-pointer hover:text-gray-500 transition-colors'}>2026</button>
                             <button onClick={() => setActiveYear('2025')} className={activeYear === '2025' ? 'text-[#2174C3] cursor-pointer' : 'text-gray-300 cursor-pointer hover:text-gray-500 transition-colors'}>2025</button>

@@ -132,9 +132,9 @@ const CoursePage = () => {
                 await api.post('/api/courses/', formData);
             }
             setShowModal(false);
-            setToast({ 
-                message: isEdit ? 'Course Update succesfully' : 'Course Added succesfully', 
-                type: 'success' 
+            setToast({
+                message: isEdit ? 'Course Update succesfully' : 'Course Added succesfully',
+                type: 'success'
             });
             fetchCourses();
         } catch (err) {
@@ -194,7 +194,7 @@ const CoursePage = () => {
     return (
         <MainLayout>
             {/* ─── Toolbar ─────────────────────────────────────────────── */}
-            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-10">
+            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-10 sticky top-0 z-30">
                 <div className="relative w-full sm:w-1/3">
                     <input
                         id="search-course"
@@ -244,8 +244,8 @@ const CoursePage = () => {
                     <Link
                         to="/category"
                         className={`pb-3 px-1 font-bold text-xl transition-colors ${location.pathname === '/category'
-                                ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
-                                : 'text-gray-400 hover:text-[#2174C3]'
+                            ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                            : 'text-gray-400 hover:text-[#2174C3]'
                             }`}
                     >
                         Category
@@ -253,8 +253,8 @@ const CoursePage = () => {
                     <Link
                         to="/courses"
                         className={`pb-3 px-1 font-bold text-xl transition-colors ${location.pathname === '/courses'
-                                ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
-                                : 'text-gray-400 hover:text-[#2174C3]'
+                            ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                            : 'text-gray-400 hover:text-[#2174C3]'
                             }`}
                     >
                         Course
@@ -315,8 +315,8 @@ const CoursePage = () => {
                                         <td className="px-6 py-4 text-right">
                                             <span
                                                 className={`px-3 py-1 rounded-full text-xs font-bold ${item.is_active
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-red-100 text-red-700'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-red-100 text-red-700'
                                                     }`}
                                             >
                                                 {item.is_active ? 'Active' : 'Inactive'}
@@ -330,41 +330,40 @@ const CoursePage = () => {
                 </div>
             </div>
 
-            {/* ─── Pagination ──────────────────────────────────────────── */}
+            {/* Pagination */}
             {totalPages > 1 && (
-                <div className="flex justify-end items-center mt-8 space-x-1">
-                    <button
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Previous
-                    </button>
-                    {getPageNumbers().map((page) => (
+                <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+                    <div className="flex items-center space-x-1">
                         <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`px-4 py-2 rounded-md font-medium transition-colors ${currentPage === page
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </button>
+                        {getPageNumbers().map((page) => (
+                            <button
+                                key={page}
+                                onClick={() => setCurrentPage(page)}
+                                className={`px-4 py-2 rounded-md font-medium transition-colors ${currentPage === page
                                     ? 'bg-[#2174C3] text-white'
                                     : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                                }`}
+                                    }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {page}
+                            Next
                         </button>
-                    ))}
-                    <button
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Next
-                    </button>
-                </div>
-            )}
-
-            {!loading && courses.length > 0 && (
-                <div className="mt-3 text-right text-sm text-gray-400">
-                    Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, courses.length)} of {courses.length} courses
+                    </div>
+                    <div className="text-xs text-gray-400 font-medium">
+                        Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, courses.length)} of {courses.length} courses
+                    </div>
                 </div>
             )}
 

@@ -30,7 +30,7 @@ const EmployeePage = () => {
                 api.get(`/api/employee/?page=${currentPage}&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}`),
                 api.get('/api/divisions/')
             ]);
-            
+
             if (empRes.data.results) {
                 setEmployees(empRes.data.results);
                 setTotalCount(empRes.data.count);
@@ -53,7 +53,7 @@ const EmployeePage = () => {
         try {
             const res = await api.get(`/api/employee/?nopage=true&report=true&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}`);
             const dataToExport = res.data;
-            
+
             if (!dataToExport.length) {
                 alert('Tidak ada data untuk diekspor.');
                 return;
@@ -145,7 +145,7 @@ const EmployeePage = () => {
 
             const ws = XLSX.utils.aoa_to_sheet([...header, ...rows]);
             ws['!merges'] = merges;
-            
+
             ws['!cols'] = [
                 { wch: 12 }, { wch: 35 }, { wch: 15 }, { wch: 70 }
             ];
@@ -182,7 +182,7 @@ const EmployeePage = () => {
 
     return (
         <MainLayout>
-            <div className="bg-white px-4 py-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-4 mb-8">
+            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-8 sticky top-0 z-30">
                 <div className="relative w-full sm:w-1/3">
                     <input
                         type="text"
@@ -200,7 +200,7 @@ const EmployeePage = () => {
 
                 {/* Search bar all division samakan dengan dashboard style */}
                 <div className="relative w-full sm:w-60">
-                    <select 
+                    <select
                         value={selectedDivision}
                         onChange={(e) => { setSelectedDivision(e.target.value); setCurrentPage(1); }}
                         className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
@@ -216,15 +216,15 @@ const EmployeePage = () => {
                         ))}
                     </select>
                 </div>
-                
+
                 <div className="flex-1 flex justify-end gap-2">
-                    <button 
+                    <button
                         onClick={handleExport}
                         className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer whitespace-nowrap"
                     >
                         Employee Report
                     </button>
-                    <button 
+                    <button
                         onClick={handleDivisionExport}
                         className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer whitespace-nowrap"
                     >
@@ -276,7 +276,7 @@ const EmployeePage = () => {
                                         <td className="px-4 py-3 text-gray-600">{item.position_name}</td>
                                         <td className="px-4 py-3 text-gray-500 italic">{item.special_position || '-'}</td>
                                         <td className="px-4 py-3 text-center font-bold">
-                                            <button 
+                                            <button
                                                 onClick={() => openAttendanceDetail(item)}
                                                 className="text-[#2174C3] cursor-pointer"
                                             >
@@ -303,39 +303,50 @@ const EmployeePage = () => {
                 </div>
             </div>
 
-            {/* Pagination (Matching HotelPage style) */}
-            {!loading && totalPages > 1 && (
-                <div className="flex flex-col items-end mt-8 gap-2">
-                    <div className="flex items-center space-x-1">
-                        <button 
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
-                        >
-                            Previous
-                        </button>
-                        {getPageNumbers().map(page => (
-                            <button 
-                                key={page}
-                                onClick={() => setCurrentPage(page)}
-                                className={`px-4 py-2 rounded-md font-medium transition-colors ${currentPage === page ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+            {/* Pagination */}
+            {!loading && (
+                totalPages > 1 ? (
+                    <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+                        <div className="flex items-center space-x-1">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
                             >
-                                {page}
+                                Previous
                             </button>
-                        ))}
-                        <button 
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-                        >
-                            Next
-                        </button>
+                            {getPageNumbers().map(page => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`px-4 py-2 rounded-md font-medium transition-colors ${currentPage === page ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>
+                        <div className="text-xs text-gray-400 font-medium">
+                            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} of {totalCount} employees
+                        </div>
                     </div>
-                    <div className="text-xs text-gray-400 font-medium">
-                        Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} of {totalCount} employees
-                    </div>
-                </div>
+                ) : (
+                    totalCount > 0 && (
+                        <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
+                            <div className="text-xs text-gray-400 font-medium">
+                                Showing 1–{totalCount} of {totalCount} employees
+                            </div>
+                        </div>
+                    )
+                )
             )}
+
 
             {/* Attendance Detail Modal */}
             {showAttendanceModal && selectedEmployee && (

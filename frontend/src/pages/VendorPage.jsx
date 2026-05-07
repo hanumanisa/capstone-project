@@ -21,7 +21,7 @@ const VendorPage = () => {
     // ─── UI State ───────────────────────────────────────────────────────
     const [toast, setToast] = useState(null); // { message: string, type: 'success' | 'error' }
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    
+
     const [formData, setFormData] = useState({
         vendor_id: '',
         vendor_name: '',
@@ -65,14 +65,14 @@ const VendorPage = () => {
     }, [fetchVendors]);
 
     // ─── Pagination ─────────────────────────────────────────────────────
-    const filteredVendors = vendors.filter(v => 
-        v.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const filteredVendors = vendors.filter(v =>
+        v.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         v.vendor_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         v.provider_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         v.speciality?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         v.province?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    
+
     const totalPages = Math.ceil(filteredVendors.length / ITEMS_PER_PAGE);
     const paginatedData = filteredVendors.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
@@ -95,10 +95,10 @@ const VendorPage = () => {
     const openAdd = () => {
         if (!isAdmin) return;
         setIsEdit(false);
-        setFormData({ 
-            vendor_id: '', vendor_name: '', provider_type: 'Internal', pic_name: '', 
-            speciality: '', address: '', city: '', province: '', country: '', 
-            postcode: '', phone: '', fax: '', email: '', web_address: '' 
+        setFormData({
+            vendor_id: '', vendor_name: '', provider_type: 'Internal', pic_name: '',
+            speciality: '', address: '', city: '', province: '', country: '',
+            postcode: '', phone: '', fax: '', email: '', web_address: ''
         });
         setShowModal(true);
     };
@@ -124,9 +124,9 @@ const VendorPage = () => {
                 await api.post('/api/vendors/', formData);
             }
             setShowModal(false);
-            setToast({ 
-                message: isEdit ? 'Vendor Update succesfully' : 'Vendor Added succesfully', 
-                type: 'success' 
+            setToast({
+                message: isEdit ? 'Vendor Update succesfully' : 'Vendor Added succesfully',
+                type: 'success'
             });
             fetchVendors();
         } catch (err) {
@@ -194,7 +194,7 @@ const VendorPage = () => {
     return (
         <MainLayout>
             {/* ─── Toolbar ─────────────────────────────────────────────── */}
-            <div className="bg-white px-4 py-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-8">
+            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-8 sticky top-0 z-30">
                 <div className="relative w-full sm:w-1/3">
                     <input
                         type="text"
@@ -209,17 +209,17 @@ const VendorPage = () => {
                         </svg>
                     </span>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
-                    <button 
+                    <button
                         onClick={handleExport}
                         className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer"
                     >
                         Report
                     </button>
                     {isAdmin && (
-                        <button 
-                            onClick={openAdd} 
+                        <button
+                            onClick={openAdd}
                             className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-1 rounded-lg font-medium flex items-center justify-center shadow-sm transition-all text-sm cursor-pointer"
                         >
                             <span className="mr-1 text-lg font-bold">+</span> Vendor
@@ -262,7 +262,7 @@ const VendorPage = () => {
                                     <tr key={item.vendor_id} className="hover:bg-blue-50/30 transition-colors align-top">
                                         <td className="px-3 py-4">
                                             {isAdmin ? (
-                                                <button 
+                                                <button
                                                     onClick={() => openEdit(item)}
                                                     className="text-[#2174C3] font-bold hover:underline cursor-pointer text-left"
                                                 >
@@ -294,38 +294,47 @@ const VendorPage = () => {
             </div>
 
             {/* ─── Pagination ──────────────────────────────────────────── */}
-            {!loading && totalPages > 1 && (
-                <div className="flex justify-end items-center mt-8 space-x-1">
-                    <button 
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
-                    >
-                        Previous
-                    </button>
-                    {getPageNumbers().map(page => (
-                        <button 
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`px-4 py-2 rounded-md font-medium transition-colors ${currentPage === page ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                        >
-                            {page}
-                        </button>
-                    ))}
-                    <button 
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-                    >
-                        Next
-                    </button>
-                </div>
-            )}
-
-            {!loading && filteredVendors.length > 0 && (
-                <div className="mt-3 text-right text-sm text-gray-400">
-                    Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredVendors.length)} of {filteredVendors.length} vendor
-                </div>
+            {!loading && (
+                totalPages > 1 ? (
+                    <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+                        <div className="flex items-center space-x-1">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
+                            >
+                                Previous
+                            </button>
+                            {getPageNumbers().map(page => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`px-4 py-2 rounded-md font-medium transition-colors ${currentPage === page ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>
+                        <div className="text-xs text-gray-400 font-medium">
+                            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredVendors.length)} of {filteredVendors.length} vendor
+                        </div>
+                    </div>
+                ) : (
+                    filteredVendors.length > 0 && (
+                        <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
+                            <div className="text-xs text-gray-400 font-medium">
+                                Showing 1–{filteredVendors.length} of {filteredVendors.length} vendor
+                            </div>
+                        </div>
+                    )
+                )
             )}
 
             {/* ─── Add / Edit Modal ────────────────────────────────────── */}
@@ -336,12 +345,12 @@ const VendorPage = () => {
                             {isEdit ? 'Edit Vendor' : 'Add Vendor'}
                         </h2>
                         <hr className="mb-8 border-gray-200" />
-                        
+
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                                 <label className="text-black font-semibold">Vendor Code</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.vendor_id}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
@@ -352,8 +361,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                                 <label className="text-black font-semibold">Vendor Name</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.vendor_name}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, vendor_name: e.target.value })}
@@ -365,19 +374,19 @@ const VendorPage = () => {
                                 <label className="text-black font-semibold">Vendor Type</label>
                                 <div className="sm:col-span-2 flex space-x-8">
                                     <label className="flex items-center space-x-2 cursor-pointer text-black font-medium">
-                                        <input 
-                                            type="radio" 
+                                        <input
+                                            type="radio"
                                             className="w-5 h-5 text-[#2174C3] focus:ring-[#2174C3] border-gray-300"
-                                            value="Internal" 
+                                            value="Internal"
                                             checked={formData.provider_type === 'Internal'}
                                             onChange={(e) => setFormData({ ...formData, provider_type: e.target.value })}
                                         /> <span>Internal</span>
                                     </label>
                                     <label className="flex items-center space-x-2 cursor-pointer text-black font-medium">
-                                        <input 
-                                            type="radio" 
+                                        <input
+                                            type="radio"
                                             className="w-5 h-5 text-[#2174C3] focus:ring-[#2174C3] border-gray-300"
-                                            value="External" 
+                                            value="External"
                                             checked={formData.provider_type === 'Eksternal' || formData.provider_type === 'External'}
                                             onChange={(e) => setFormData({ ...formData, provider_type: 'Eksternal' })}
                                         /> <span>Eksternal</span>
@@ -386,8 +395,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                                 <label className="text-black font-semibold">PIC</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.pic_name}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, pic_name: e.target.value })}
@@ -397,8 +406,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-start gap-2">
                                 <label className="text-black font-semibold pt-2">Speciality</label>
-                                <textarea 
-                                    rows="2" 
+                                <textarea
+                                    rows="2"
                                     value={formData.speciality}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, speciality: e.target.value })}
@@ -408,8 +417,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-start gap-2">
                                 <label className="text-black font-semibold pt-2">Address</label>
-                                <textarea 
-                                    rows="3" 
+                                <textarea
+                                    rows="3"
                                     value={formData.address}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -419,8 +428,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                                 <label className="text-black font-semibold">City</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.city}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -430,8 +439,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                                 <label className="text-black font-semibold text-nowrap">State/Province</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.province}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, province: e.target.value })}
@@ -441,8 +450,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                                 <label className="text-black font-semibold">Country</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.country}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
@@ -452,8 +461,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                                 <label className="text-black font-semibold">Postal Code</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.postcode}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
@@ -463,8 +472,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                                 <label className="text-black font-semibold">Phone</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.phone}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -474,8 +483,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                                 <label className="text-black font-semibold">FAX</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.fax}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, fax: e.target.value })}
@@ -485,8 +494,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                                 <label className="text-black font-semibold">Email</label>
-                                <input 
-                                    type="email" 
+                                <input
+                                    type="email"
                                     value={formData.email}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -496,8 +505,8 @@ const VendorPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                                 <label className="text-black font-semibold">Web Address</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.web_address}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, web_address: e.target.value })}

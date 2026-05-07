@@ -651,7 +651,7 @@ export default function TrainingMasterPage() {
   return (
     <MainLayout>
       {/* ─── Toolbar ─────────────────────────────────────────────── */}
-      <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-3 mb-10 transition-all hover:shadow-md">
+      <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-3 mb-10 transition-all hover:shadow-md sticky top-0 z-30">
         {/* Search */}
         <div className="relative w-full sm:w-1/3">
           <input
@@ -659,9 +659,9 @@ export default function TrainingMasterPage() {
             placeholder="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400 text-sm"
+            className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400"
           />
-          <span className="absolute right-3 top-2 text-gray-400 pointer-events-none">
+          <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
@@ -892,43 +892,50 @@ export default function TrainingMasterPage() {
         </div>
       </div>
 
-
-      {/* Pagination & Stats */}
-      <div className="mt-8 flex flex-col items-end gap-3">
-        {totalPages > 1 && (
-          <div className="flex justify-end items-center space-x-1">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            {[...Array(totalPages)].map((_, i) => (
+      {/* Pagination */}
+      {totalPages > 1 ? (
+        <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+            <div className="flex items-center space-x-1">
               <button
-                key={i}
-                onClick={() => setPage(i + 1)}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${page === i + 1 ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
               >
-                {i + 1}
+                Previous
               </button>
-            ))}
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPage(i + 1)}
+                  className={`px-4 py-2 rounded-md font-medium transition-colors ${page === i + 1 ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+            {!loading && totalCount > 0 && (
+              <div className="text-right text-xs text-gray-400 font-medium">
+                Showing {(page - 1) * 50 + 1}–{Math.min(page * 50, totalCount)} of {totalCount} training
+              </div>
+            )}
           </div>
+        ) : (
+          !loading && totalCount > 0 && (
+            <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
+              <div className="text-right text-xs text-gray-400 font-medium">
+                Showing 1–{totalCount} of {totalCount} training
+              </div>
+            </div>
+          )
         )}
 
-        {!loading && totalCount > 0 && (
-          <div className="text-right text-xs text-gray-400 font-medium">
-            Showing {(page - 1) * 50 + 1}–{Math.min(page * 50, totalCount)} of {totalCount} trainings
-          </div>
-        )}
-      </div>
 
       {/* ========================= MODAL REPORT ========================= */}
       {showReportModal && (

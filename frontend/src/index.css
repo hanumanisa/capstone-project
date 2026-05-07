@@ -25,10 +25,13 @@ body {
   display: flex;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 #root {
   width: 100%;
+  overflow-x: hidden;
 }
 
 @media (prefers-color-scheme: light) {

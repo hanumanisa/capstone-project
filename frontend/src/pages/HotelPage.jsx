@@ -21,7 +21,7 @@ const HotelPage = () => {
     // ─── UI State ───────────────────────────────────────────────────────
     const [toast, setToast] = useState(null); // { message: string, type: 'success' | 'error' }
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    
+
     const [formData, setFormData] = useState({
         hotel_id: '',
         hotel_city: '',
@@ -64,11 +64,11 @@ const HotelPage = () => {
     };
 
     // ─── Pagination ─────────────────────────────────────────────────────
-    const filteredHotels = hotels.filter(h => 
-        h.hotel_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const filteredHotels = hotels.filter(h =>
+        h.hotel_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         h.hotel_city?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    
+
     const totalPages = Math.ceil(filteredHotels.length / ITEMS_PER_PAGE);
     const paginatedData = filteredHotels.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
@@ -91,13 +91,13 @@ const HotelPage = () => {
     const openAdd = () => {
         if (!isAdmin) return;
         setIsEdit(false);
-        setFormData({ 
-            hotel_id: '', 
-            hotel_city: '', 
-            hotel_name: '', 
-            hotel_phone: '', 
-            price_estimation: '', 
-            hotel_star: 1 
+        setFormData({
+            hotel_id: '',
+            hotel_city: '',
+            hotel_name: '',
+            hotel_phone: '',
+            price_estimation: '',
+            hotel_star: 1
         });
         setShowModal(true);
     };
@@ -126,9 +126,9 @@ const HotelPage = () => {
                 await api.post('/api/hotels/', formData);
             }
             setShowModal(false);
-            setToast({ 
-                message: isEdit ? 'Hotel Update succesfully' : 'Hotel Added succesfully', 
-                type: 'success' 
+            setToast({
+                message: isEdit ? 'Hotel Update succesfully' : 'Hotel Added succesfully',
+                type: 'success'
             });
             fetchHotels();
         } catch (err) {
@@ -186,7 +186,7 @@ const HotelPage = () => {
     return (
         <MainLayout>
             {/* ─── Toolbar ─────────────────────────────────────────────── */}
-            <div className="bg-white px-4 py-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-8">
+            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-8 sticky top-0 z-30">
                 <div className="relative w-full sm:w-1/3">
                     <input
                         type="text"
@@ -201,17 +201,17 @@ const HotelPage = () => {
                         </svg>
                     </span>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
-                    <button 
+                    <button
                         onClick={handleExport}
                         className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer"
                     >
                         Report
                     </button>
                     {isAdmin && (
-                        <button 
-                            onClick={openAdd} 
+                        <button
+                            onClick={openAdd}
                             className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-1 rounded-lg font-medium flex items-center justify-center shadow-sm transition-all text-sm cursor-pointer"
                         >
                             <span className="mr-1 text-lg font-bold">+</span> Hotel
@@ -246,7 +246,7 @@ const HotelPage = () => {
                                     <tr key={item.hotel_id} className="hover:bg-blue-50/30 transition-colors">
                                         <td className="px-4 py-4 text-center">
                                             {isAdmin ? (
-                                                <button 
+                                                <button
                                                     onClick={() => openEdit(item)}
                                                     className="text-[#2174C3] font-bold hover:underline cursor-pointer"
                                                 >
@@ -277,40 +277,50 @@ const HotelPage = () => {
                 </div>
             </div>
 
-            {/* ─── Pagination ──────────────────────────────────────────── */}
-            {!loading && totalPages > 1 && (
-                <div className="flex justify-end items-center mt-8 space-x-1">
-                    <button 
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
-                    >
-                        Previous
-                    </button>
-                    {getPageNumbers().map(page => (
-                        <button 
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`px-4 py-2 rounded-md font-medium transition-colors ${currentPage === page ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+            {/* Pagination */}
+            {!loading && (
+                totalPages > 1 ? (
+                    <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+                    <div className="flex items-center space-x-1">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
                         >
-                            {page}
+                            Previous
                         </button>
-                    ))}
-                    <button 
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-                    >
-                        Next
-                    </button>
-                </div>
+                        {getPageNumbers().map(page => (
+                            <button
+                                key={page}
+                                onClick={() => setCurrentPage(page)}
+                                className={`px-4 py-2 rounded-md font-medium transition-colors ${currentPage === page ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                            Next
+                        </button>
+                    </div>
+                        <div className="text-xs text-gray-400 font-medium">
+                            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredHotels.length)} of {filteredHotels.length} hotels
+                        </div>
+                    </div>
+                ) : (
+                    filteredHotels.length > 0 && (
+                        <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
+                            <div className="text-xs text-gray-400 font-medium">
+                                Showing 1–{filteredHotels.length} of {filteredHotels.length} hotels
+                            </div>
+                        </div>
+                    )
+                )
             )}
 
-            {!loading && filteredHotels.length > 0 && (
-                <div className="mt-3 text-right text-sm text-gray-400">
-                    Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredHotels.length)} of {filteredHotels.length} hotels
-                </div>
-            )}
 
             {/* ─── Add / Edit Modal ────────────────────────────────────── */}
             {showModal && (
@@ -320,12 +330,12 @@ const HotelPage = () => {
                             {isEdit ? 'Edit Hotel' : 'Add Hotel'}
                         </h2>
                         <hr className="mb-8 border-gray-200" />
-                        
+
                         <div className="space-y-6">
                             <div className="grid grid-cols-3 items-center">
                                 <label className="text-[#495057] font-semibold">Hotel ID</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.hotel_id}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, hotel_id: e.target.value })}
@@ -336,8 +346,8 @@ const HotelPage = () => {
                             </div>
                             <div className="grid grid-cols-3 items-center">
                                 <label className="text-[#495057] font-semibold">City</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.hotel_city}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, hotel_city: e.target.value })}
@@ -347,8 +357,8 @@ const HotelPage = () => {
                             </div>
                             <div className="grid grid-cols-3 items-center">
                                 <label className="text-[#495057] font-semibold">Hotel Name</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.hotel_name}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, hotel_name: e.target.value })}
@@ -358,8 +368,8 @@ const HotelPage = () => {
                             </div>
                             <div className="grid grid-cols-3 items-center">
                                 <label className="text-[#495057] font-semibold">Phone Number</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={formData.hotel_phone}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, hotel_phone: e.target.value })}
@@ -369,8 +379,8 @@ const HotelPage = () => {
                             </div>
                             <div className="grid grid-cols-3 items-center">
                                 <label className="text-[#495057] font-semibold">Price per Night</label>
-                                <input 
-                                    type="number" 
+                                <input
+                                    type="number"
                                     value={formData.price_estimation}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, price_estimation: e.target.value })}
@@ -382,11 +392,11 @@ const HotelPage = () => {
                                 <label className="text-[#495057] font-semibold">Hotel Star</label>
                                 <div className="col-span-2 flex items-center space-x-1">
                                     {[1, 2, 3, 4, 5].map(i => (
-                                        <svg 
+                                        <svg
                                             key={i}
-                                            onClick={() => setFormData({ ...formData, hotel_star: i })} 
-                                            className={`w-8 h-8 cursor-pointer transition-colors ${i <= formData.hotel_star ? 'text-yellow-400' : 'text-gray-300'}`} 
-                                            fill="currentColor" 
+                                            onClick={() => setFormData({ ...formData, hotel_star: i })}
+                                            className={`w-8 h-8 cursor-pointer transition-colors ${i <= formData.hotel_star ? 'text-yellow-400' : 'text-gray-300'}`}
+                                            fill="currentColor"
                                             viewBox="0 0 20 20"
                                         >
                                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -395,7 +405,7 @@ const HotelPage = () => {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="flex justify-end space-x-2 mt-10">
                             {isEdit && (
                                 <button

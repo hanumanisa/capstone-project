@@ -3,12 +3,14 @@ import Navbar from './Navbar';
 
 const MainLayout = ({ children }) => {
     return (
-        <div className="min-h-screen bg-[#F4F7FA]">
+        <div className="h-screen bg-[#F4F7FA] flex flex-col overflow-hidden">
             <Navbar />
-            <main className="p-8 max-w-[1400px] mx-auto">
-                {children}
+            <main className="flex-1 w-full overflow-y-auto custom-scrollbar">
+                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 transition-all duration-300">
+                    {children}
+                </div>
             </main>
-            
+
             {/* Chat Floating Button */}
             <div className="fixed bottom-8 right-8 bg-[#215A92] w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl cursor-pointer hover:scale-110 transition-transform z-50">
                 <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 20 20">

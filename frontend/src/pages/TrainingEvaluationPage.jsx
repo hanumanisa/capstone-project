@@ -31,6 +31,7 @@ export default function TrainingEvaluationPage() {
     const [trainingMasters, setTrainingMasters] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
     const [cardToDelete, setCardToDelete] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     // --- Filter & Pagination State ---
     const [selectedMainTemplate, setSelectedMainTemplate] = useState('All_Templates');
@@ -72,6 +73,7 @@ export default function TrainingEvaluationPage() {
 
     /** Fetches all Evaluation Forms and maps them to UI card format */
     const loadForms = async () => {
+        setLoading(true);
         try {
             const res = await api.get('/api/evaluation-forms/');
             const data = Array.isArray(res.data) ? res.data : [];
@@ -98,11 +100,10 @@ export default function TrainingEvaluationPage() {
                         return {
                             q: q.question_text,
                             options: q.options || [],
-                            opts: (q.options || []).map(o => o.option_text),
+                            answer: correctIdx !== -1 ? String.fromCharCode(65 + correctIdx) : 'A',
+                            score: q.score || 0,
                             optActive: (q.options || []).map(o => o.is_active !== false),
-                            optVisible: (q.options || []).map(o => true),
-                            answer: correctIdx > -1 ? String.fromCharCode(65 + correctIdx) : 'A',
-                            score: q.score || 0
+                            optVisible: (q.options || []).map(() => true)
                         };
                     });
                 } else {
@@ -117,6 +118,8 @@ export default function TrainingEvaluationPage() {
             setAllCards(mapping);
         } catch (err) {
             console.error("Failed to fetch forms", err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -489,40 +492,39 @@ export default function TrainingEvaluationPage() {
                 )}
 
                 {/* Toolbar */}
-                <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-10">
-                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-1/2">
-                        <div className="relative w-full sm:w-2/3">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                placeholder="Search"
-                                className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400 text-sm"
-                            />
-                            <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </span>
-                        </div>
-                        <div className="relative w-full sm:w-1/3">
-                            <select
-                                value={selectedMainTemplate}
-                                onChange={e => setSelectedMainTemplate(e.target.value)}
-                                className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
-                                style={{
-                                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
-                                    backgroundSize: '20px 20px',
-                                    backgroundPosition: 'right 12px center'
-                                }}
-                            >
-                                <option value="All_Templates">All Templates</option>
-                                <option value="L1_Templates">L1 Templates</option>
-                                <option value="L2_Templates">L2 Templates</option>
-                            </select>
-                        </div>
+                <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-3 mb-10 transition-all duration-300 sticky top-0 z-30">
+                    <div className="relative w-full sm:w-1/3">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Search"
+                            className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400"
+                        />
+                        <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </span>
                     </div>
-                    <div className="flex items-center space-x-6">
+                    <div className="relative w-full sm:w-48">
+                        <select
+                            value={selectedMainTemplate}
+                            onChange={e => setSelectedMainTemplate(e.target.value)}
+                            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                                backgroundSize: '20px 20px',
+                                backgroundPosition: 'right 12px center'
+                            }}
+                        >
+                            <option value="All_Templates">All Templates</option>
+                            <option value="L1_Templates">L1 Templates</option>
+                            <option value="L2_Templates">L2 Templates</option>
+                        </select>
+                    </div>
+
+                    <div className="flex-1 flex flex-col sm:flex-row items-center justify-end gap-6">
                         <div className="font-bold flex space-x-4 text-sm">
                             <button onClick={() => setActiveYear('2026')} className={activeYear === '2026' ? 'text-[#2174C3] cursor-pointer' : 'text-gray-300 cursor-pointer hover:text-gray-500 transition-colors'}>2026</button>
                             <button onClick={() => setActiveYear('2025')} className={activeYear === '2025' ? 'text-[#2174C3] cursor-pointer' : 'text-gray-300 cursor-pointer hover:text-gray-500 transition-colors'}>2025</button>
@@ -560,20 +562,47 @@ export default function TrainingEvaluationPage() {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex justify-end items-center mt-8">
-                    <div className="flex items-center space-x-1">
-                        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${currentPage === 1 ? 'bg-[#E2E8F0] text-gray-400 cursor-not-allowed' : 'bg-[#E2E8F0] text-gray-600 hover:bg-gray-300'}`}>Previous</button>
-                        {pageNumbers.map(p => (
-                            <button key={p} onClick={() => setCurrentPage(p)} className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${p === currentPage ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{p}</button>
-                        ))}
-                        <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${currentPage === totalPages ? 'bg-white border border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>Next</button>
-                    </div>
-                </div>
-
-                {filteredCards.length > 0 && (
-                    <div className="mt-3 text-right text-sm text-gray-400">
-                        Showing <span className="font-semibold text-gray-600">{Math.min((currentPage - 1) * itemsPerPage + 1, filteredCards.length) || 0}</span>–<span className="font-semibold text-gray-600">{Math.min(currentPage * itemsPerPage, filteredCards.length)}</span> of <span className="font-semibold text-gray-600">{filteredCards.length}</span> templates
-                    </div>
+                {!loading && (
+                    totalPages > 1 ? (
+                        <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+                            <div className="flex items-center space-x-1">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${currentPage === 1 ? 'bg-[#E2E8F0] text-gray-400 cursor-not-allowed' : 'bg-[#E2E8F0] text-gray-600 hover:bg-gray-300'}`}
+                                >
+                                    Previous
+                                </button>
+                                {pageNumbers.map(p => (
+                                    <button
+                                        key={p}
+                                        onClick={() => setCurrentPage(p)}
+                                        className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${p === currentPage ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                    >
+                                        {p}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${currentPage === totalPages ? 'bg-white border border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                    Next
+                                </button>
+                            </div>
+                            <div className="text-xs text-gray-400 font-medium">
+                                Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredCards.length)} of {filteredCards.length} templates
+                            </div>
+                        </div>
+                    ) : (
+                        filteredCards.length > 0 && (
+                            <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
+                                <div className="text-xs text-gray-400 font-medium">
+                                    Showing 1–{filteredCards.length} of {filteredCards.length} templates
+                                </div>
+                            </div>
+                        )
+                    )
                 )}
 
                 {/* MODALS */}
