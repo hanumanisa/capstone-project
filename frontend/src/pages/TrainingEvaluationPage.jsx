@@ -496,7 +496,7 @@ export default function TrainingEvaluationPage() {
                                 type="text"
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                placeholder="Search template..."
+                                placeholder="Search"
                                 className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400 text-sm"
                             />
                             <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
@@ -585,7 +585,7 @@ export default function TrainingEvaluationPage() {
 
                             <h2 className="text-3xl font-bold text-black mb-2">Templates Form</h2>
                             <hr className="mb-8 border-gray-100" />
-                            
+
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
                                     <label className="text-black font-semibold">Select Training <span className="text-red-500">*</span></label>
@@ -605,20 +605,20 @@ export default function TrainingEvaluationPage() {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
                                     <label className="text-black font-semibold">Template Name <span className="text-red-500">*</span></label>
-                                    <input 
-                                        type="text" 
-                                        value={tplName} 
-                                        onChange={e => setTplName(e.target.value)} 
-                                        placeholder="Enter template name..." 
-                                        className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none text-sm text-black" 
+                                    <input
+                                        type="text"
+                                        value={tplName}
+                                        onChange={e => setTplName(e.target.value)}
+                                        placeholder="Enter template name"
+                                        className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none text-sm text-black"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
                                     <label className="text-black font-semibold">Template Type</label>
-                                    <select 
-                                        value={tplType} 
-                                        onChange={e => setTplType(e.target.value)} 
+                                    <select
+                                        value={tplType}
+                                        onChange={e => setTplType(e.target.value)}
                                         className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none text-sm text-black"
                                     >
                                         <option value="L1_Templates">L1_Templates</option>
@@ -628,21 +628,21 @@ export default function TrainingEvaluationPage() {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 items-start gap-4">
                                     <label className="text-black font-semibold pt-2">Description</label>
-                                    <textarea 
-                                        value={tplDesc} 
-                                        onChange={e => setTplDesc(e.target.value)} 
-                                        placeholder="Template description..." 
+                                    <textarea
+                                        value={tplDesc}
+                                        onChange={e => setTplDesc(e.target.value)}
+                                        placeholder="Enter template description"
                                         className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 h-32 resize-none focus:ring-2 focus:ring-[#2174C3] outline-none text-sm text-black"
                                     ></textarea>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
                                     <label className="text-black font-semibold">Deadline</label>
-                                    <input 
-                                        type="datetime-local" 
-                                        value={tplDeadline} 
-                                        onChange={e => setTplDeadline(e.target.value)} 
-                                        className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none text-sm text-black" 
+                                    <input
+                                        type="datetime-local"
+                                        value={tplDeadline}
+                                        onChange={e => setTplDeadline(e.target.value)}
+                                        className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none text-sm text-black"
                                     />
                                 </div>
                             </div>
@@ -650,17 +650,17 @@ export default function TrainingEvaluationPage() {
                             <div className="mt-6 flex flex-col items-end space-y-2">
                                 {!tplName.trim() && <p className="text-xs text-red-400">* Template name is required</p>}
                                 {tplName.trim() && tplNameDuplicate && <p className="text-xs text-red-400">* Name "{tplName.trim()}" is already used for this training</p>}
-                                
+
                                 <div className="flex justify-end space-x-2 mt-4">
-                                    <button 
-                                        onClick={() => { setShowTpl(false); setTplName(''); }} 
+                                    <button
+                                        onClick={() => { setShowTpl(false); setTplName(''); }}
                                         className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer"
                                     >
                                         Cancel
                                     </button>
-                                    <button 
-                                        onClick={submitTemplate} 
-                                        disabled={!tplName.trim() || tplNameDuplicate || !tplTrainingId} 
+                                    <button
+                                        onClick={submitTemplate}
+                                        disabled={!tplName.trim() || tplNameDuplicate || !tplTrainingId}
                                         className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer disabled:opacity-50 disabled:bg-gray-300"
                                     >
                                         Save
@@ -676,17 +676,10 @@ export default function TrainingEvaluationPage() {
                     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative max-h-[90vh] flex flex-col">
                             <div className="px-10 pt-10 pb-8 overflow-y-auto">
-                                <button 
-                                    onClick={() => setShowResponse(false)}
-                                    className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+
 
                                 <h2 className="text-3xl font-bold text-black mb-2">Response</h2>
-                                
+
                                 <hr className="mb-8 border-gray-100" />
 
                                 {selectedCard?.description && (
@@ -824,7 +817,7 @@ export default function TrainingEvaluationPage() {
                             <div className="shrink-0">
                                 <h2 className="text-3xl font-bold text-black mb-2">{isL2 ? 'Evaluation Builder L2' : 'Evaluation Builder L1'}</h2>
                                 <hr className="mb-8 border-gray-100" />
-                                
+
                                 <div className="flex items-end gap-4 mb-8">
                                     <div className="flex flex-col gap-1.5">
                                         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Template</label>
@@ -842,7 +835,7 @@ export default function TrainingEvaluationPage() {
                                                     value={trainingSearchQuery}
                                                     onFocus={() => setShowTrainingDropdown(true)}
                                                     onChange={(e) => setTrainingSearchQuery(e.target.value)}
-                                                    placeholder="Search training..."
+                                                    placeholder="Search"
                                                     className="w-52 border border-gray-200 rounded-lg px-3 py-2 pr-8 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#2174C3] focus:border-transparent outline-none transition" />
                                                 {trainingSearchQuery && (
                                                     <button onClick={clearTrainingSearch} className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -883,7 +876,7 @@ export default function TrainingEvaluationPage() {
                                                 <div key={index} className="l2-row-card" style={{ borderRadius: '0 0 10px 10px', marginBottom: '8px' }}>
                                                     <div style={{ display: 'grid', gridTemplateColumns: '36px 1fr 140px 90px 36px', gap: '6px', alignItems: 'center' }}>
                                                         <div className="row-num-badge">{index + 1}</div>
-                                                        <input type="text" value={row.q} onChange={e => { const r = [...evalRows]; r[index].q = e.target.value; setEvalRows(r); }} className="w-full h-9 border border-gray-200 rounded-lg px-3 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#2174C3] outline-none transition" placeholder="Write a question..." />
+                                                        <input type="text" value={row.q} onChange={e => { const r = [...evalRows]; r[index].q = e.target.value; setEvalRows(r); }} className="w-full h-9 border border-gray-200 rounded-lg px-3 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#2174C3] outline-none transition" placeholder="Enter a question" />
                                                         <select value={row.type} onChange={e => { const r = [...evalRows]; r[index].type = e.target.value; setEvalRows(r); }} className="w-full h-9 border border-gray-200 rounded-lg px-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#2174C3] outline-none transition">
                                                             <option value="Rating Scale">Rating</option>
                                                             <option value="Comment">Comment</option>
@@ -926,7 +919,7 @@ export default function TrainingEvaluationPage() {
                                                                 <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                                             </button>
                                                         </div>
-                                                        <input type="text" value={row.q} onChange={e => { const r = [...l2Rows]; r[index].q = e.target.value; setL2Rows(r); }} className="border border-gray-200 rounded-lg px-3 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#2174C3] outline-none transition" style={{ height: '36px', width: '100%' }} placeholder="Write a question..." />
+                                                        <input type="text" value={row.q} onChange={e => { const r = [...l2Rows]; r[index].q = e.target.value; setL2Rows(r); }} className="border border-gray-200 rounded-lg px-3 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#2174C3] outline-none transition" style={{ height: '36px', width: '100%' }} placeholder="Enter a question" />
                                                         <div className="type-pill" style={{ height: '36px' }}>Multiple Choice</div>
                                                         <div className="opts-stack" style={{ gap: '4px' }}>
                                                             {row.opts.map((opt, oi) => (

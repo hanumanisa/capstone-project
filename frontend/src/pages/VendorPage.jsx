@@ -346,6 +346,7 @@ const VendorPage = () => {
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
                                     disabled={isEdit}
+                                    placeholder="Enter vendor code e.g. KPMG"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] disabled:opacity-60"
                                 />
                             </div>
@@ -356,6 +357,7 @@ const VendorPage = () => {
                                     value={formData.vendor_name}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, vendor_name: e.target.value })}
+                                    placeholder="Enter vendor name"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -389,6 +391,7 @@ const VendorPage = () => {
                                     value={formData.pic_name}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, pic_name: e.target.value })}
+                                    placeholder="Enter vendor PIC"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -399,6 +402,7 @@ const VendorPage = () => {
                                     value={formData.speciality}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, speciality: e.target.value })}
+                                    placeholder="Enter vendor industry specialty"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 ></textarea>
                             </div>
@@ -409,6 +413,7 @@ const VendorPage = () => {
                                     value={formData.address}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                    placeholder="Enter vendor address"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 ></textarea>
                             </div>
@@ -419,6 +424,7 @@ const VendorPage = () => {
                                     value={formData.city}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                    placeholder="Enter vendor city"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -429,6 +435,7 @@ const VendorPage = () => {
                                     value={formData.province}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                                    placeholder="Enter vendor state/province"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -439,6 +446,7 @@ const VendorPage = () => {
                                     value={formData.country}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                                    placeholder="Enter vendor country"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -449,6 +457,7 @@ const VendorPage = () => {
                                     value={formData.postcode}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
+                                    placeholder="Enter vendor postal code"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -459,6 +468,7 @@ const VendorPage = () => {
                                     value={formData.phone}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    placeholder="Enter vendor phone e.g. +62 878 2190 29920"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -469,6 +479,7 @@ const VendorPage = () => {
                                     value={formData.fax}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, fax: e.target.value })}
+                                    placeholder="Enter vendor FAX e.g. (021) 555 1234"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -479,6 +490,7 @@ const VendorPage = () => {
                                     value={formData.email}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    placeholder="Enter vendor email"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -489,6 +501,7 @@ const VendorPage = () => {
                                     value={formData.web_address}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, web_address: e.target.value })}
+                                    placeholder="Enter vendor website"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>

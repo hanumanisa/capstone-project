@@ -263,10 +263,10 @@ export default function TrainingMasterPage() {
       setLoading(true);
       const res = await api.get(`/api/add-training/${id}/`);
       const data = res.data;
-      
+
       setIsEditMode(true);
       setEditingId(id);
-      
+
       // Reset all states before population
       setTrainingCode("");
       setTrainingType("Inhouse Training");
@@ -301,21 +301,21 @@ export default function TrainingMasterPage() {
       setPic(data.pic || "");
       setVendorId(data.vendor || "");
       setEstimatedCost(data.estimated_cost || "");
-      
+
       if (data.latest_event) {
         const ev = data.latest_event;
         setTopic(ev.topic || "");
         setStartDate(ev.start_date || "");
         setEndDate(ev.end_date || "");
         setStatus(ev.status === 'completed' ? 'Completed' : ev.status === 'cancelled' ? 'Cancelled' : 'Draft');
-        
+
         if (ev.location) {
           setLocationCity(ev.location.city || "");
           setVenue(ev.location.venue || "");
           setRoom(ev.location.room || "");
           setAddress(ev.location.address || "");
         }
-        
+
         setScheduleRows(ev.schedules?.length ? ev.schedules.map(s => ({
           date: s.training_date,
           start: s.start_time,
@@ -323,7 +323,7 @@ export default function TrainingMasterPage() {
           material: s.material_link,
           instructor: s.instructor_name
         })) : [{ date: "", start: "", end: "", material: "", instructor: "" }]);
-        
+
         setParticipantRows(ev.participants?.length ? ev.participants.map(p => {
           let score2 = p.l2_score;
           if (score2 > 4) {
@@ -339,13 +339,13 @@ export default function TrainingMasterPage() {
             l2: score2
           };
         }) : [{ employee: "", attendance: "Present", l1: "", l2: "" }]);
-        
+
         setEvaluation({
           courseAccess: ev.enable_course_access || false,
           feedback: ev.enable_feedback || false,
           evaluationStage: ev.enable_evaluations || false
         });
-        
+
         if (ev.costs?.length) {
           setCostRows(ev.costs.map(c => ({
             division: c.cost_center || "",
@@ -357,15 +357,15 @@ export default function TrainingMasterPage() {
           })));
           setCostAllocationType(ev.costs[0].cost_type || "Estimate Cost");
         }
-        
+
         setDocumentationRows(ev.documents?.length ? ev.documents.map(d => ({
           type: d.document_type,
           file_name: d.file_name,
           url: d.file_url,
           submitted_by: d.uploaded_by
-        })) : [{ type: "Invoice", file_name: "", url: "https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing", submitted_by: "" }]);
+        })) : [{ type: "", file_name: "", url: "", submitted_by: "" }]);
       }
-      
+
       setShowModal(true);
     } catch (e) {
       console.error("Failed to fetch detail:", e);
@@ -383,11 +383,11 @@ export default function TrainingMasterPage() {
     if (!isAdmin) return;
     setIsEditMode(false);
     setEditingId(null);
-    
+
     // Step 1 states
     setTrainingCode("");
-    setTrainingType("Inhouse Training");
-    setTrainingCategory("Soft Skill");
+    setTrainingType("");
+    setTrainingCategory("");
     setCourseCategory("");
     setCourseId("");
     setTrainingTitle("");
@@ -400,7 +400,7 @@ export default function TrainingMasterPage() {
     setTopic("");
     setStartDate("");
     setEndDate("");
-    setStatus("Draft");
+    setStatus("");
     setLocationCity("");
     setVenue("");
     setRoom("");
@@ -422,14 +422,14 @@ export default function TrainingMasterPage() {
         setToast({ message: "Please fill all fields", type: "error" });
         return;
       }
-      
+
       await api.post('/api/budgets/', {
         budget_name: budgetName,
         start_date_budget: budgetStartDate,
         end_date_budget: budgetEndDate,
         total_budget: totalBudget
       });
-      
+
       setToast({ message: "Budget saved successfully", type: "success" });
       setShowBudgetModal(false);
       setBudgetName("");
@@ -444,7 +444,7 @@ export default function TrainingMasterPage() {
 
   const handleExport = async (e, reportTypeOverride = null) => {
     if (e) e.preventDefault();
-    
+
     let params = new URLSearchParams();
     if (e) {
       const formData = new FormData(e.target);
@@ -559,8 +559,8 @@ export default function TrainingMasterPage() {
 
         const ws = XLSX.utils.json_to_sheet(exportData);
         ws["!cols"] = [
-          { wch: 20 }, { wch: 25 }, { wch: 18 }, { wch: 45 }, { wch: 12 }, 
-          { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 20 }, { wch: 25 }, 
+          { wch: 20 }, { wch: 25 }, { wch: 18 }, { wch: 45 }, { wch: 12 },
+          { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 20 }, { wch: 25 },
           { wch: 18 }, { wch: 12 }, { wch: 30 }, { wch: 25 }, { wch: 25 }
         ];
         if (!(user?.role === 'Head of Division' || user?.role === 'Employee')) {
@@ -578,71 +578,71 @@ export default function TrainingMasterPage() {
       // ─── Case 2: Monthly Report (Existing 2-sheet logic) ───────────────
       if (reportType === "monthly") {
         const slide1Data = realisasi_training.map(item => ({
-        "Course Category": item.course_category,
-        "Course Name": item.course_name,
-        "Training Title": item.training_title,
-        "Training Type": item.training_type,
-        "Training Category": item.training_category,
-        "Location": item.location,
-        "Hours": item.hours,
-        "Start Date": item.start_date,
-        "End Date": item.end_date,
-        "Duration Day": item.duration_day,
-        "Vendor": item.vendor,
-        "NIK": item.nik,
-        "Nama": item.nama,
-        "Divisi": item.divisi,
-        "Level": item.level,
-        "Jabatan": item.jabatan,
-        "Direktorat": item.direktorat,
-        "Gender": item.gender
-      }));
+          "Course Category": item.course_category,
+          "Course Name": item.course_name,
+          "Training Title": item.training_title,
+          "Training Type": item.training_type,
+          "Training Category": item.training_category,
+          "Location": item.location,
+          "Hours": item.hours,
+          "Start Date": item.start_date,
+          "End Date": item.end_date,
+          "Duration Day": item.duration_day,
+          "Vendor": item.vendor,
+          "NIK": item.nik,
+          "Nama": item.nama,
+          "Divisi": item.divisi,
+          "Level": item.level,
+          "Jabatan": item.jabatan,
+          "Direktorat": item.direktorat,
+          "Gender": item.gender
+        }));
 
-      const grandTotalHours = realisasi_training.reduce((sum, item) => sum + item.hours, 0);
-      const ws1 = XLSX.utils.json_to_sheet(slide1Data, { origin: "A3" });
-      XLSX.utils.sheet_add_aoa(ws1, [
-        ["Monthly Report", "", "Total Hours:", grandTotalHours.toFixed(2)]
-      ], { origin: "A1" });
-      ws1["!cols"] = [
-        { wch: 20 }, { wch: 25 }, { wch: 30 }, { wch: 20 }, { wch: 20 },
-        { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
-        { wch: 20 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 15 },
-        { wch: 20 }, { wch: 20 }, { wch: 10 }
-      ];
+        const grandTotalHours = realisasi_training.reduce((sum, item) => sum + item.hours, 0);
+        const ws1 = XLSX.utils.json_to_sheet(slide1Data, { origin: "A3" });
+        XLSX.utils.sheet_add_aoa(ws1, [
+          ["Monthly Report", "", "Total Hours:", grandTotalHours.toFixed(2)]
+        ], { origin: "A1" });
+        ws1["!cols"] = [
+          { wch: 20 }, { wch: 25 }, { wch: 30 }, { wch: 20 }, { wch: 20 },
+          { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
+          { wch: 20 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 15 },
+          { wch: 20 }, { wch: 20 }, { wch: 10 }
+        ];
 
-      const monthsMap = {};
-      realisasi_training.forEach(item => {
-        if (!item.start_date) return;
-        const d = new Date(item.start_date);
-        const monthName = d.toLocaleString('default', { month: 'long' });
-        const year = d.getFullYear();
-        const key = `${monthName} ${year}`;
-        if (!monthsMap[key]) monthsMap[key] = 0;
-        monthsMap[key] += item.hours;
-      });
+        const monthsMap = {};
+        realisasi_training.forEach(item => {
+          if (!item.start_date) return;
+          const d = new Date(item.start_date);
+          const monthName = d.toLocaleString('default', { month: 'long' });
+          const year = d.getFullYear();
+          const key = `${monthName} ${year}`;
+          if (!monthsMap[key]) monthsMap[key] = 0;
+          monthsMap[key] += item.hours;
+        });
 
-      const slide2AoA = [];
-      Object.keys(monthsMap).sort((a, b) => new Date(a) - new Date(b)).forEach(key => {
-        const totalJam = monthsMap[key];
-        const avg = total_employees > 0 ? (totalJam / total_employees) : 0;
-        slide2AoA.push([key, "Jumlah Jam Training", parseFloat(totalJam.toFixed(2))]);
-        slide2AoA.push(["", `Jumlah Karyawan per ${key}`, total_employees]);
-        slide2AoA.push(["", "Rata-rata jam training", parseFloat(avg.toFixed(2))]);
-        slide2AoA.push([]); 
-      });
+        const slide2AoA = [];
+        Object.keys(monthsMap).sort((a, b) => new Date(a) - new Date(b)).forEach(key => {
+          const totalJam = monthsMap[key];
+          const avg = total_employees > 0 ? (totalJam / total_employees) : 0;
+          slide2AoA.push([key, "Jumlah Jam Training", parseFloat(totalJam.toFixed(2))]);
+          slide2AoA.push(["", `Jumlah Karyawan per ${key}`, total_employees]);
+          slide2AoA.push(["", "Rata-rata jam training", parseFloat(avg.toFixed(2))]);
+          slide2AoA.push([]);
+        });
 
-      const ws2 = XLSX.utils.aoa_to_sheet(slide2AoA);
-      ws2["!cols"] = [{ wch: 15 }, { wch: 35 }, { wch: 15 }];
+        const ws2 = XLSX.utils.aoa_to_sheet(slide2AoA);
+        ws2["!cols"] = [{ wch: 15 }, { wch: 35 }, { wch: 15 }];
 
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws1, "Realisasi Training");
-      XLSX.utils.book_append_sheet(wb, ws2, "Akumulasi Jam Training");
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws1, "Realisasi Training");
+        XLSX.utils.book_append_sheet(wb, ws2, "Akumulasi Jam Training");
 
-      XLSX.writeFile(wb, `Monthly_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
-      setToast({ message: "Monthly Report exported successfully", type: "success" });
-      setShowReportModal(false);
-    }
-  } catch (error) {
+        XLSX.writeFile(wb, `Monthly_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+        setToast({ message: "Monthly Report exported successfully", type: "success" });
+        setShowReportModal(false);
+      }
+    } catch (error) {
       console.error("Export failed:", error);
       setToast({ message: "Failed to generate report", type: "error" });
     }
@@ -656,7 +656,7 @@ export default function TrainingMasterPage() {
         <div className="relative w-full sm:w-1/3">
           <input
             type="text"
-            placeholder="Search training..."
+            placeholder="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400 text-sm"
@@ -674,11 +674,11 @@ export default function TrainingMasterPage() {
             <select
               value={division}
               onChange={(e) => setDivision(e.target.value)}
-              className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+              className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
               style={{
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
-                  backgroundSize: '20px 20px',
-                  backgroundPosition: 'right 12px center'
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                backgroundSize: '20px 20px',
+                backgroundPosition: 'right 12px center'
               }}
             >
               <option value="">All Division</option>
@@ -694,11 +694,11 @@ export default function TrainingMasterPage() {
           <select
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+            className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
             style={{
-                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
-                backgroundSize: '20px 20px',
-                backgroundPosition: 'right 12px center'
+              backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+              backgroundSize: '20px 20px',
+              backgroundPosition: 'right 12px center'
             }}
           >
             <option value="">All Month</option>
@@ -816,11 +816,11 @@ export default function TrainingMasterPage() {
                 trainings.flatMap((t, i) => {
                   const isRestricted = user?.role === 'Head of Division' || user?.role === 'Employee';
                   const pNames = (t.division_participant_names || "").split(", ").filter(n => n);
-                  
+
                   if (isRestricted) {
                     // If restricted but somehow no names found (should not happen with backend filter)
                     if (pNames.length === 0) return [];
-                    
+
                     return pNames.map((name, pIdx) => (
                       <tr key={`${i}-${pIdx}`} className="hover:bg-blue-50/30 transition-colors cursor-pointer group border-b border-gray-50">
                         <td className="px-3 py-3 font-normal text-gray-700">{t.category_name}</td>
@@ -891,8 +891,8 @@ export default function TrainingMasterPage() {
           </table>
         </div>
       </div>
-      
-      
+
+
       {/* Pagination & Stats */}
       <div className="mt-8 flex flex-col items-end gap-3">
         {totalPages > 1 && (
@@ -922,7 +922,7 @@ export default function TrainingMasterPage() {
             </button>
           </div>
         )}
-        
+
         {!loading && totalCount > 0 && (
           <div className="text-right text-xs text-gray-400 font-medium">
             Showing {(page - 1) * 50 + 1}–{Math.min(page * 50, totalCount)} of {totalCount} trainings
@@ -948,9 +948,8 @@ export default function TrainingMasterPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveReportTab(tab.id)}
-                  className={`pb-3 px-1 font-bold text-sm tracking-wider transition-all relative ${
-                    activeReportTab === tab.id ? "text-[#2174C3]" : "text-gray-400 hover:text-gray-600"
-                  }`}
+                  className={`pb-3 px-1 font-bold text-sm tracking-wider transition-all relative ${activeReportTab === tab.id ? "text-[#2174C3]" : "text-gray-400 hover:text-gray-600"
+                    }`}
                 >
                   {tab.label}
                   {activeReportTab === tab.id && (
@@ -1066,15 +1065,15 @@ export default function TrainingMasterPage() {
               )}
 
               <div className="flex justify-end gap-3 mt-10">
-                <button 
-                  type="button" 
-                  onClick={() => setShowReportModal(false)} 
+                <button
+                  type="button"
+                  onClick={() => setShowReportModal(false)}
                   className="bg-[#878D94] hover:bg-[#607D8B] text-white px-4 py-1.5 text-sm rounded font-medium transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1.5 text-sm rounded font-medium transition-colors shadow-sm cursor-pointer"
                 >
                   Export
@@ -1096,12 +1095,13 @@ export default function TrainingMasterPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Training Code</label>
-                <input type="text" value={trainingCode} style={{ color: '#000' }} onChange={(e) => setTrainingCode(e.target.value)} className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3]" placeholder="e.g. LDPB1-26" />
+                <input type="text" value={trainingCode} style={{ color: '#000' }} onChange={(e) => setTrainingCode(e.target.value)} className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3]" placeholder="Enter training code e.g. LDPB1-26" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Training Type</label>
                 <select className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={trainingType} onChange={(e) => setTrainingType(e.target.value)}>
+                  <option value="">Select Type</option>
                   <option value="Inhouse Training">Inhouse Training</option>
                   <option value="Public Training">Public Training</option>
                   <option value="E-Learning">E-Learning</option>
@@ -1112,6 +1112,7 @@ export default function TrainingMasterPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Category</label>
                 <select className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={trainingCategory} onChange={(e) => setTrainingCategory(e.target.value)}>
+                  <option value="">Select Category</option>
                   <option value="Hard Skill">Hard Skill</option>
                   <option value="Soft Skill">Soft Skill</option>
                   <option value="ESG">ESG</option>
@@ -1121,7 +1122,7 @@ export default function TrainingMasterPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Course Category</label>
                 <select className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={courseCategory} onChange={(e) => setCourseCategory(e.target.value)}>
-                  <option value="">Select Category</option>
+                  <option value="">Select Course Category</option>
                   {courseCategories.map((c, i) => (
                     <option key={i} value={c.course_category_id}>{c.category_name}</option>
                   ))}
@@ -1145,7 +1146,7 @@ export default function TrainingMasterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 items-start gap-2">
                 <label className="text-black font-semibold pt-2">Description</label>
-                <textarea rows="3" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3]" style={{ color: '#000' }} value={trainingDescription} onChange={(e) => setTrainingDescription(e.target.value)}></textarea>
+                <textarea rows="3" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3]" style={{ color: '#000' }} value={trainingDescription} onChange={(e) => setTrainingDescription(e.target.value)} placeholder="Enter training description, background and objective"></textarea>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
@@ -1202,7 +1203,7 @@ export default function TrainingMasterPage() {
               {/* Training Topic */}
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Training Topic</label>
-                <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="" />
+                <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Enter training topic" />
               </div>
 
               {/* Start & End Date */}
@@ -1219,6 +1220,7 @@ export default function TrainingMasterPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Training Status</label>
                 <select className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <option value="">Select Status</option>
                   <option value="Draft">Draft</option>
                   <option value="Completed">Completed</option>
                   <option value="Cancelled">Cancelled</option>
@@ -1257,19 +1259,19 @@ export default function TrainingMasterPage() {
                   <h3 className="text-[#2174C3] font-bold text-lg mb-4">Location</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                     <label className="text-black font-semibold">Location City</label>
-                    <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={locationCity} onChange={(e) => setLocationCity(e.target.value)} />
+                    <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={locationCity} onChange={(e) => setLocationCity(e.target.value)} placeholder="Enter location city" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                     <label className="text-black font-semibold">Venue</label>
-                    <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={venue} onChange={(e) => setVenue(e.target.value)} />
+                    <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Enter location venue" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                     <label className="text-black font-semibold">Room</label>
-                    <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={room} onChange={(e) => setRoom(e.target.value)} />
+                    <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="Enter location room" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 items-start gap-2">
                     <label className="text-black font-semibold pt-2">Address</label>
-                    <textarea className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" rows="4" value={address} onChange={(e) => setAddress(e.target.value)}></textarea>
+                    <textarea className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" rows="4" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter location address"></textarea>
                   </div>
                 </div>
               )}
@@ -1330,9 +1332,9 @@ export default function TrainingMasterPage() {
                               <button type="button" onClick={() => setParticipantRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
                             </td>
                             <td className="p-2">
-                              <select 
-                                value={row.employee} 
-                                onChange={(e) => { const a = [...participantRows]; a[idx].employee = e.target.value; setParticipantRows(a); }} 
+                              <select
+                                value={row.employee}
+                                onChange={(e) => { const a = [...participantRows]; a[idx].employee = e.target.value; setParticipantRows(a); }}
                                 className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
                               >
                                 <option value="" style={{ color: '#000' }}>Select Employee</option>
@@ -1342,16 +1344,16 @@ export default function TrainingMasterPage() {
                               </select>
                             </td>
                             <td className="p-2">
-                              <select 
-                                value={row.attendance} 
-                                onChange={(e) => { const a = [...participantRows]; a[idx].attendance = e.target.value; setParticipantRows(a); }} 
+                              <select
+                                value={row.attendance}
+                                onChange={(e) => { const a = [...participantRows]; a[idx].attendance = e.target.value; setParticipantRows(a); }}
                                 className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
                               >
                                 <option value="Present">Present</option>
                                 <option value="Absent">Absent</option>
                               </select>
                             </td>
-                            <td className="p-2"><input type="number" step="0.1" value={row.l1} onChange={(e) => { const a = [...participantRows]; a[idx].l1 = e.target.value; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                            <td className="p-2"><input type="number" step="0.1" placeholder="1-4" value={row.l1} onChange={(e) => { const a = [...participantRows]; a[idx].l1 = e.target.value; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
                             <td className="p-2"><input type="number" step="0.01" min="1" max="4" placeholder="1-4" value={row.l2} onChange={(e) => { const a = [...participantRows]; a[idx].l2 = e.target.value; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
                           </tr>
                         ))}
@@ -1365,15 +1367,15 @@ export default function TrainingMasterPage() {
               {activeTab === "evaluation" && (
                 <div className="space-y-8">
                   <h3 className="text-[#2174C3] font-bold text-lg mb-6">Evaluation</h3>
-                  
+
                   <div className="space-y-6">
                     <div className="flex items-center space-x-12">
                       <div className="flex items-center w-72 justify-between">
                         <label className="text-gray-700 font-semibold">Enable Training Access</label>
-                        <input 
-                          type="checkbox" 
-                          checked={evaluation.courseAccess} 
-                          onChange={(e) => setEvaluation({...evaluation, courseAccess: e.target.checked})}
+                        <input
+                          type="checkbox"
+                          checked={evaluation.courseAccess}
+                          onChange={(e) => setEvaluation({ ...evaluation, courseAccess: e.target.checked })}
                           className="w-5 h-5 rounded border-gray-300 text-[#2174C3] focus:ring-[#2174C3] cursor-pointer"
                         />
                       </div>
@@ -1383,10 +1385,10 @@ export default function TrainingMasterPage() {
                     <div className="flex items-center space-x-12">
                       <div className="flex items-center w-72 justify-between">
                         <label className="text-gray-700 font-semibold">Enable Feedback (L1 Templates)</label>
-                        <input 
-                          type="checkbox" 
-                          checked={evaluation.feedback} 
-                          onChange={(e) => setEvaluation({...evaluation, feedback: e.target.checked})}
+                        <input
+                          type="checkbox"
+                          checked={evaluation.feedback}
+                          onChange={(e) => setEvaluation({ ...evaluation, feedback: e.target.checked })}
                           className="w-5 h-5 rounded border-gray-300 text-[#2174C3] focus:ring-[#2174C3] cursor-pointer"
                         />
                       </div>
@@ -1396,10 +1398,10 @@ export default function TrainingMasterPage() {
                     <div className="flex items-center space-x-12">
                       <div className="flex items-center w-72 justify-between">
                         <label className="text-gray-700 font-semibold">Enable Evaluation (L2 Templates)</label>
-                        <input 
-                          type="checkbox" 
-                          checked={evaluation.evaluationStage} 
-                          onChange={(e) => setEvaluation({...evaluation, evaluationStage: e.target.checked})}
+                        <input
+                          type="checkbox"
+                          checked={evaluation.evaluationStage}
+                          onChange={(e) => setEvaluation({ ...evaluation, evaluationStage: e.target.checked })}
                           className="w-5 h-5 rounded border-gray-300 text-[#2174C3] focus:ring-[#2174C3] cursor-pointer"
                         />
                       </div>
@@ -1415,8 +1417,8 @@ export default function TrainingMasterPage() {
                   <div className="flex items-center space-x-4 mb-2">
                     <span className="text-[#333] font-bold text-sm">Training Cost Allocation Type</span>
                     <div className="relative">
-                      <select 
-                        value={costAllocationType} 
+                      <select
+                        value={costAllocationType}
                         onChange={(e) => setCostAllocationType(e.target.value)}
                         className="bg-[#F3F4F6] border-none rounded-lg py-2 px-4 pr-10 text-sm font-bold appearance-none focus:ring-2 focus:ring-[#2174C3] cursor-pointer text-black"
                       >
@@ -1449,7 +1451,7 @@ export default function TrainingMasterPage() {
                           {costRows.map((row, idx) => {
                             const selectedDivObj = divisions.find(d => parseInt(d.division_id) === parseInt(row.division));
                             const abbr = selectedDivObj ? getAbbreviation(selectedDivObj.division_name) : "";
-                            
+
                             return (
                               <tr key={idx}>
                                 <td className="p-2">
@@ -1457,9 +1459,9 @@ export default function TrainingMasterPage() {
                                 </td>
                                 <td className="p-2">
                                   <div className="space-y-1">
-                                    <select 
-                                      value={row.division} 
-                                      onChange={(e) => { const a = [...costRows]; a[idx].division = e.target.value; setCostRows(a); }} 
+                                    <select
+                                      value={row.division}
+                                      onChange={(e) => { const a = [...costRows]; a[idx].division = e.target.value; setCostRows(a); }}
                                       className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
                                     >
                                       <option value="">Select Division</option>
@@ -1471,23 +1473,24 @@ export default function TrainingMasterPage() {
                                   </div>
                                 </td>
                                 <td className="p-2">
-                                  <select 
-                                    value={row.currency} 
-                                    onChange={(e) => { const a = [...costRows]; a[idx].currency = e.target.value; setCostRows(a); }} 
+                                  <select
+                                    value={row.currency}
+                                    onChange={(e) => { const a = [...costRows]; a[idx].currency = e.target.value; setCostRows(a); }}
                                     className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
                                   >
                                     <option value="IDR">IDR</option>
                                   </select>
                                 </td>
-                                <td className="p-2"><input type="number" value={row.training} onChange={(e) => { const a = [...costRows]; a[idx].training = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                                <td className="p-2"><input type="number" value={row.room} onChange={(e) => { const a = [...costRows]; a[idx].room = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                                <td className="p-2"><input type="number" value={row.sppd} onChange={(e) => { const a = [...costRows]; a[idx].sppd = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                                <td className="p-2"><input type="number" placeholder="Enter cost" value={row.training} onChange={(e) => { const a = [...costRows]; a[idx].training = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                                <td className="p-2"><input type="number" placeholder="Enter cost" value={row.room} onChange={(e) => { const a = [...costRows]; a[idx].room = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                                <td className="p-2"><input type="number" placeholder="Enter cost" value={row.sppd} onChange={(e) => { const a = [...costRows]; a[idx].sppd = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
                                 <td className="p-2">
-                                  <select 
-                                    value={row.status} 
-                                    onChange={(e) => { const a = [...costRows]; a[idx].status = e.target.value; setCostRows(a); }} 
+                                  <select
+                                    value={row.status}
+                                    onChange={(e) => { const a = [...costRows]; a[idx].status = e.target.value; setCostRows(a); }}
                                     className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
                                   >
+                                    <option value="">Status</option>
                                     <option value="Unpaid">Unpaid</option>
                                     <option value="Paid">Paid</option>
                                   </select>
@@ -1498,7 +1501,7 @@ export default function TrainingMasterPage() {
                         </tbody>
                       </table>
                     </div>
-                    <button type="button" onClick={() => setCostRows([...costRows, { division: "", currency: "IDR", room: "", training: "", sppd: "", status: "Unpaid" }])} className="text-[#2174C3] font-bold text-sm">+ Add Cost Center Allocation</button>
+                    <button type="button" onClick={() => setCostRows([...costRows, { division: "", currency: "IDR", room: "", training: "", sppd: "", status: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Cost Center Allocation</button>
                   </div>
                 </div>
               )}
@@ -1525,23 +1528,24 @@ export default function TrainingMasterPage() {
                               <button type="button" onClick={() => setDocumentationRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
                             </td>
                             <td className="p-2">
-                              <select 
-                                value={row.type} 
-                                onChange={(e) => { const a = [...documentationRows]; a[idx].type = e.target.value; setDocumentationRows(a); }} 
+                              <select
+                                value={row.type}
+                                onChange={(e) => { const a = [...documentationRows]; a[idx].type = e.target.value; setDocumentationRows(a); }}
                                 className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
                               >
+                                <option value="">Select Type</option>
                                 <option value="Invoice">Invoice</option>
                                 <option value="Form IHT">Form IHT</option>
                                 <option value="All Document">All Document</option>
                               </select>
                             </td>
                             <td className="p-2">
-                              <input 
-                                type="text" 
-                                value={row.file_name} 
-                                onChange={(e) => { const a = [...documentationRows]; a[idx].file_name = e.target.value; setDocumentationRows(a); }} 
-                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" 
-                                placeholder="Enter file name" 
+                              <input
+                                type="text"
+                                value={row.file_name}
+                                onChange={(e) => { const a = [...documentationRows]; a[idx].file_name = e.target.value; setDocumentationRows(a); }}
+                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                placeholder="Enter file name"
                               />
                             </td>
                             <td className="p-2 text-center">
@@ -1557,28 +1561,28 @@ export default function TrainingMasterPage() {
                               </button>
                             </td>
                             <td className="p-2">
-                              <input 
-                                type="text" 
-                                value={row.url} 
-                                onChange={(e) => { const a = [...documentationRows]; a[idx].url = e.target.value; setDocumentationRows(a); }} 
-                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" 
-                                placeholder="https://drive.google.com/..." 
+                              <input
+                                type="text"
+                                value={row.url}
+                                onChange={(e) => { const a = [...documentationRows]; a[idx].url = e.target.value; setDocumentationRows(a); }}
+                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                placeholder="Enter url"
                               />
                             </td>
                             <td className="p-2">
-                              <select 
-                                value={row.submitted_by} 
-                                onChange={(e) => { const a = [...documentationRows]; a[idx].submitted_by = e.target.value; setDocumentationRows(a); }} 
+                              <select
+                                value={row.submitted_by}
+                                onChange={(e) => { const a = [...documentationRows]; a[idx].submitted_by = e.target.value; setDocumentationRows(a); }}
                                 className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
                               >
                                 <option value="" style={{ color: '#000' }}>Select PIC</option>
-                                {employees.filter(emp => 
-                                  emp.role === 'Administrator' || 
-                                  emp.role === 'Super Administrator' || 
-                                  [200335, 200331, 200329].includes(parseInt(emp.nik)) || 
+                                {employees.filter(emp =>
+                                  emp.role === 'Administrator' ||
+                                  emp.role === 'Super Administrator' ||
+                                  [200335, 200331, 200329].includes(parseInt(emp.nik)) ||
                                   parseInt(emp.nik) === parseInt(user?.nik)
                                 ).map(emp => (
-                                  <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>{emp.full_name} ({emp.nik})</option>
+                                  <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>{emp.full_name}</option>
                                 ))}
                               </select>
                             </td>
@@ -1587,7 +1591,7 @@ export default function TrainingMasterPage() {
                       </tbody>
                     </table>
                   </div>
-                  <button type="button" onClick={() => setDocumentationRows([...documentationRows, { type: "Invoice", file_name: "", url: "https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing", submitted_by: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Documentation</button>
+                  <button type="button" onClick={() => setDocumentationRows([...documentationRows, { type: "", file_name: "", url: "", submitted_by: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Documentation</button>
                 </div>
               )}
             </div>
@@ -1626,24 +1630,24 @@ export default function TrainingMasterPage() {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-10 relative animate-in fade-in zoom-in duration-200 overflow-y-auto custom-scrollbar max-h-[90vh]">
             <h2 className="text-4xl font-bold text-black mb-2">Set Training Budget</h2>
             <hr className="mb-8 border-gray-200" />
-            
+
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Budget Name</label>
-                <input 
-                  type="text" 
-                  value={budgetName} 
+                <input
+                  type="text"
+                  value={budgetName}
                   onChange={(e) => setBudgetName(e.target.value)}
                   className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black"
                   placeholder="e.g. Annual Training Budget 2026"
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Start Date</label>
-                <input 
-                  type="date" 
-                  value={budgetStartDate} 
+                <input
+                  type="date"
+                  value={budgetStartDate}
                   onChange={(e) => setBudgetStartDate(e.target.value)}
                   className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black"
                 />
@@ -1651,9 +1655,9 @@ export default function TrainingMasterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">End Date</label>
-                <input 
-                  type="date" 
-                  value={budgetEndDate} 
+                <input
+                  type="date"
+                  value={budgetEndDate}
                   onChange={(e) => setBudgetEndDate(e.target.value)}
                   className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black"
                 />
@@ -1663,9 +1667,9 @@ export default function TrainingMasterPage() {
                 <label className="text-black font-semibold">Total Budget</label>
                 <div className="sm:col-span-2 relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">IDR</span>
-                  <input 
-                    type="number" 
-                    value={totalBudget} 
+                  <input
+                    type="number"
+                    value={totalBudget}
                     onChange={(e) => setTotalBudget(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black"
                     placeholder="0"
@@ -1673,16 +1677,16 @@ export default function TrainingMasterPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-end space-x-2 mt-10">
-              <button 
+              <button
                 type="button"
                 onClick={() => setShowBudgetModal(false)}
                 className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={handleSaveBudget}
                 className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer"

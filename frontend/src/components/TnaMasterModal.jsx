@@ -337,7 +337,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                             <div className="w-[15%] p-4 border-r border-gray-50">
                                 <input 
                                     type="text" 
-                                    placeholder="ID"
+                                    placeholder="e.g. AI26CH26"
                                     value={formData.tna_id}
                                     onChange={(e) => setFormData({...formData, tna_id: e.target.value})}
                                     className="w-full border-none rounded-lg p-3 bg-gray-200 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black font-bold"

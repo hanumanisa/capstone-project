@@ -101,7 +101,7 @@ const TnaPeriodModal = ({ isOpen, onClose, period, onSave, setToast }) => {
                             value={formData.period_code}
                             onChange={(e) => setFormData({ ...formData, period_code: e.target.value })}
                             className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none transition-all text-sm text-black"
-                            placeholder="e.g. TNA-2026"
+                            placeholder="Enter period e.g TNA-2026"
                         />
                     </div>
 
@@ -112,6 +112,7 @@ const TnaPeriodModal = ({ isOpen, onClose, period, onSave, setToast }) => {
                             value={formData.year}
                             onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                             className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none transition-all text-sm text-black"
+                            placeholder="Enter year"
                         />
                     </div>
 
@@ -122,7 +123,7 @@ const TnaPeriodModal = ({ isOpen, onClose, period, onSave, setToast }) => {
                             value={formData.period_name}
                             onChange={(e) => setFormData({ ...formData, period_name: e.target.value })}
                             className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] outline-none transition-all text-sm text-black"
-                            placeholder="e.g. Training Needs Analysis 2026"
+                            placeholder="Enter period name e.g Training Needs Analysis 2026"
                         />
                     </div>
 

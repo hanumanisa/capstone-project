@@ -14,22 +14,22 @@ import {
     ArcElement
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
-import { 
-    BookOpen, 
-    Clock, 
-    Users, 
-    User, 
-    Hourglass, 
-    CircleDollarSign, 
-    Layout, 
-    TrendingUp, 
-    BarChart3, 
-    MonitorPlay, 
-    Brain, 
-    Settings, 
-    Leaf, 
-    Star, 
-    UserCheck, 
+import {
+    BookOpen,
+    Clock,
+    Users,
+    User,
+    Hourglass,
+    CircleDollarSign,
+    Layout,
+    TrendingUp,
+    BarChart3,
+    MonitorPlay,
+    Brain,
+    Settings,
+    Leaf,
+    Star,
+    UserCheck,
     ClipboardCheck,
     HelpCircle
 } from 'lucide-react';
@@ -91,15 +91,15 @@ const Dashboard = () => {
             setUser(userData);
             // Administrator, Super Administrator, and Dean see the full dashboard
             const isAdminDashboardRole = ['Administrator', 'Super Administrator', 'Dean'].includes(userData.role);
-            
+
             if (!isAdminDashboardRole) {
                 const params = new URLSearchParams();
                 params.append('year', year);
                 api.get(`/api/dashboard/cards/?${params.toString()}`)
-                   .then(res => {
-                       if(res.data) setCardData(res.data);
-                   })
-                   .catch(err => console.error("Error fetching dashboard cards", err));
+                    .then(res => {
+                        if (res.data) setCardData(res.data);
+                    })
+                    .catch(err => console.error("Error fetching dashboard cards", err));
             } else {
                 const params = new URLSearchParams();
                 if (search) params.append('search', search);
@@ -108,8 +108,8 @@ const Dashboard = () => {
                 params.append('year', year);
 
                 api.get(`/api/dashboard/admin/?${params.toString()}`)
-                   .then(res => setAdminData(res.data))
-                   .catch(err => console.error("Error fetching admin dashboard", err));
+                    .then(res => setAdminData(res.data))
+                    .catch(err => console.error("Error fetching admin dashboard", err));
             }
         }
     }, [navigate, search, division, course, year]);
@@ -154,13 +154,13 @@ const Dashboard = () => {
     ] : [];
 
     const chartLabels = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    
+
     // Shared options for bar charts
     const commonBarOptions = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { 
+            legend: {
                 display: false,
                 position: 'bottom',
                 labels: {
@@ -352,12 +352,12 @@ const Dashboard = () => {
             {/* Filter Section */}
             <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center mb-8 gap-3">
                 <div className="relative w-full sm:w-1/3">
-                    <input 
-                        type="text" 
-                        placeholder="Search" 
+                    <input
+                        type="text"
+                        placeholder="Search"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400" 
+                        className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400"
                     />
                     <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,10 +368,10 @@ const Dashboard = () => {
 
                 {!isRestrictedRole && (
                     <div className="relative w-full sm:w-48">
-                        <select 
-                            value={division} 
+                        <select
+                            value={division}
                             onChange={(e) => setDivision(e.target.value)}
-                            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                            className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
                                 backgroundSize: '20px 20px',
@@ -387,10 +387,10 @@ const Dashboard = () => {
                 )}
 
                 <div className="relative w-full sm:w-48">
-                    <select 
-                        value={course} 
+                    <select
+                        value={course}
                         onChange={(e) => setCourse(e.target.value)}
-                        className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                        className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
                         style={{
                             backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
                             backgroundSize: '20px 20px',
@@ -399,17 +399,17 @@ const Dashboard = () => {
                     >
                         <option value="All Course">All Course</option>
                         {Array.from(new Set(coursesList.map(c => c.course_name)))
-                          .sort()
-                          .map((name, i) => (
-                            <option key={i} value={name}>{name}</option>
-                        ))}
+                            .sort()
+                            .map((name, i) => (
+                                <option key={i} value={name}>{name}</option>
+                            ))}
                     </select>
                 </div>
-                
+
                 <div className="flex-1 flex justify-end items-center space-x-6">
                     <div className="font-bold flex space-x-4 text-sm tracking-wide">
                         {['2026', '2025'].map(y => (
-                            <span 
+                            <span
                                 key={y}
                                 onClick={() => setYear(y)}
                                 className={`cursor-pointer transition-colors ${year === y ? 'text-[#2174C3]' : 'text-gray-300 hover:text-gray-400'}`}
@@ -423,41 +423,42 @@ const Dashboard = () => {
 
             {/* Statistics Horizontal Scroll Section */}
             <div className="overflow-x-auto pb-4 mb-8 -mx-4 px-4 scrollbar-hide lg:mx-0 lg:px-0">
-                <style dangerouslySetInnerHTML={{ __html: `
+                <style dangerouslySetInnerHTML={{
+                    __html: `
                     .scrollbar-hide::-webkit-scrollbar { display: none; }
                     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
                 `}} />
                 <div className={`grid ${isRestrictedRole ? 'grid-rows-1' : 'grid-rows-2'} grid-flow-col gap-5 w-max`}>
                     {stats.map((item, idx) => (
-                        <div 
-                            key={idx} 
+                        <div
+                            key={idx}
                             className="w-[210px] h-[140px] bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-default relative overflow-hidden"
                         >
                             {/* Subtle Background Accent */}
-                            <div 
+                            <div
                                 className="absolute -right-4 -bottom-4 w-20 h-20 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500 rounded-full"
                                 style={{ backgroundColor: item.bgIcon }}
                             />
 
                             <div className="flex justify-between items-start relative z-10">
                                 <h3 className="text-gray-400 text-[10px] font-extrabold uppercase leading-tight tracking-[0.1em]">{item.title}</h3>
-                                <div 
+                                <div
                                     className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center shadow-sm relative transition-all duration-300 group-hover:scale-110 overflow-hidden"
-                                    style={{ 
-                                        backgroundColor: `${item.bgIcon}15`, 
+                                    style={{
+                                        backgroundColor: `${item.bgIcon}15`,
                                     }}
                                 >
                                     {/* Inner Glow Effect */}
-                                    <div 
+                                    <div
                                         className="absolute inset-0 opacity-40"
-                                        style={{ 
-                                            background: `radial-gradient(circle at center, ${item.bgIcon} 0%, transparent 70%)` 
+                                        style={{
+                                            background: `radial-gradient(circle at center, ${item.bgIcon} 0%, transparent 70%)`
                                         }}
                                     />
-                                    <item.icon 
-                                        size={22} 
-                                        className="relative z-10 transition-transform duration-500 group-hover:rotate-12" 
-                                        style={{ color: item.bgIcon }} 
+                                    <item.icon
+                                        size={22}
+                                        className="relative z-10 transition-transform duration-500 group-hover:rotate-12"
+                                        style={{ color: item.bgIcon }}
                                         strokeWidth={2.5}
                                     />
                                 </div>
@@ -472,7 +473,7 @@ const Dashboard = () => {
                                         <div className="flex items-center text-[11px] font-bold">
                                             <span className={`flex items-center px-1.5 py-0.5 rounded-md ${item.up ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
                                                 <svg className={`w-3 h-3 mr-0.5 ${!item.up && 'rotate-180'}`} fill="currentColor" viewBox="0 0 20 20">
-                                                    <path d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"/>
+                                                    <path d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" />
                                                 </svg>
                                                 {item.change}
                                             </span>
@@ -562,74 +563,74 @@ const Dashboard = () => {
             {/* Tables Grid */}
             {!isRestrictedRole && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                {/* 10. Cost Table */}
-                <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 h-[450px] flex flex-col overflow-hidden">
-                    <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Cost</h3>
-                    <div className="flex-1 overflow-auto pr-2 custom-scrollbar">
-                        <table className="w-full text-xs text-left border-separate border-spacing-y-1">
-                            <thead className="text-gray-400 font-medium sticky top-0 bg-white z-10">
-                                <tr>
-                                    <th className="pb-4 pr-2 font-semibold">Month</th>
-                                    <th className="pb-4 pr-2 text-right font-semibold">Paid</th>
-                                    <th className="pb-4 pr-2 text-right font-semibold">Unpaid</th>
-                                    <th className="pb-4 pr-2 text-right font-semibold">Total Realisation</th>
-                                    <th className="pb-4 pr-2 text-right font-semibold">Remaining Budget</th>
-                                    <th className="pb-4 text-right font-semibold">Utilization%</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-[#1E2B4D]">
-                                {adminData?.tables?.cost?.map((c, i) => (
-                                    <tr key={i} className={i % 2 === 0 ? "bg-[#F8F9FD]" : "bg-white"}>
-                                        <td className="py-3 px-4 rounded-l-xl font-medium">{c.month}</td>
-                                        <td className="py-3 px-2 text-right">{c.paid.toLocaleString()}</td>
-                                        <td className="py-3 px-2 text-right">{c.unpaid.toLocaleString()}</td>
-                                        <td className="py-3 px-2 text-right">{c.realisation.toLocaleString()}</td>
-                                        <td className="py-3 px-2 text-right">{c.remaining.toLocaleString()}</td>
-                                        <td className="py-3 px-4 text-right font-bold rounded-r-xl">{c.utilization}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* Table Factory for repeated patterns */}
-                {[
-                    { id: 'course_category', title: 'Course Category', field: 'category' },
-                    { id: 'course', title: 'Course', field: 'course' },
-                    { id: 'training_type', title: 'Training Type', field: 'type' },
-                    { id: 'training_category', title: 'Training Category', field: 'category' },
-                    { id: 'location', title: 'Location', field: 'location' },
-                    { id: 'vendors', title: 'Training Vendors', field: 'vendor' },
-                    { id: 'division', title: 'Division', field: 'division' },
-                    { id: 'position', title: 'Position', field: 'position' }
-                ].map(table => (
-                    <div key={table.id} className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 h-[450px] flex flex-col overflow-hidden">
-                        <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">{table.title}</h3>
+                    {/* 10. Cost Table */}
+                    <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 h-[450px] flex flex-col overflow-hidden">
+                        <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">Cost</h3>
                         <div className="flex-1 overflow-auto pr-2 custom-scrollbar">
                             <table className="w-full text-xs text-left border-separate border-spacing-y-1">
                                 <thead className="text-gray-400 font-medium sticky top-0 bg-white z-10">
                                     <tr>
-                                        <th className="pb-4 pr-4 font-semibold">{table.title}</th>
-                                        <th className="pb-4 pr-4 text-center font-semibold">Learners</th>
-                                        <th className="pb-4 pr-4 text-center font-semibold">Hours</th>
-                                        <th className="pb-4 text-center font-semibold">Training Title</th>
+                                        <th className="pb-4 pr-2 font-semibold">Month</th>
+                                        <th className="pb-4 pr-2 text-right font-semibold">Paid</th>
+                                        <th className="pb-4 pr-2 text-right font-semibold">Unpaid</th>
+                                        <th className="pb-4 pr-2 text-right font-semibold">Total Realisation</th>
+                                        <th className="pb-4 pr-2 text-right font-semibold">Remaining Budget</th>
+                                        <th className="pb-4 text-right font-semibold">Utilization%</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-[#1E2B4D]">
-                                    {adminData?.tables?.[table.id]?.map((row, i) => (
+                                    {adminData?.tables?.cost?.map((c, i) => (
                                         <tr key={i} className={i % 2 === 0 ? "bg-[#F8F9FD]" : "bg-white"}>
-                                            <td className="py-3 px-4 rounded-l-xl font-medium">{row[table.field]}</td>
-                                            <td className="py-3 px-2 text-center">{row.learners}</td>
-                                            <td className="py-3 px-2 text-center">{row.hours}</td>
-                                            <td className="py-3 px-4 text-center rounded-r-xl">{row.title_count}</td>
+                                            <td className="py-3 px-4 rounded-l-xl font-medium">{c.month}</td>
+                                            <td className="py-3 px-2 text-right">{c.paid.toLocaleString()}</td>
+                                            <td className="py-3 px-2 text-right">{c.unpaid.toLocaleString()}</td>
+                                            <td className="py-3 px-2 text-right">{c.realisation.toLocaleString()}</td>
+                                            <td className="py-3 px-2 text-right">{c.remaining.toLocaleString()}</td>
+                                            <td className="py-3 px-4 text-right font-bold rounded-r-xl">{c.utilization}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                ))}
+
+                    {/* Table Factory for repeated patterns */}
+                    {[
+                        { id: 'course_category', title: 'Course Category', field: 'category' },
+                        { id: 'course', title: 'Course', field: 'course' },
+                        { id: 'training_type', title: 'Training Type', field: 'type' },
+                        { id: 'training_category', title: 'Training Category', field: 'category' },
+                        { id: 'location', title: 'Location', field: 'location' },
+                        { id: 'vendors', title: 'Training Vendors', field: 'vendor' },
+                        { id: 'division', title: 'Division', field: 'division' },
+                        { id: 'position', title: 'Position', field: 'position' }
+                    ].map(table => (
+                        <div key={table.id} className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 h-[450px] flex flex-col overflow-hidden">
+                            <h3 className="text-[#1E2B4D] font-bold mb-6 text-xl">{table.title}</h3>
+                            <div className="flex-1 overflow-auto pr-2 custom-scrollbar">
+                                <table className="w-full text-xs text-left border-separate border-spacing-y-1">
+                                    <thead className="text-gray-400 font-medium sticky top-0 bg-white z-10">
+                                        <tr>
+                                            <th className="pb-4 pr-4 font-semibold">{table.title}</th>
+                                            <th className="pb-4 pr-4 text-center font-semibold">Learners</th>
+                                            <th className="pb-4 pr-4 text-center font-semibold">Hours</th>
+                                            <th className="pb-4 text-center font-semibold">Training Title</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-[#1E2B4D]">
+                                        {adminData?.tables?.[table.id]?.map((row, i) => (
+                                            <tr key={i} className={i % 2 === 0 ? "bg-[#F8F9FD]" : "bg-white"}>
+                                                <td className="py-3 px-4 rounded-l-xl font-medium">{row[table.field]}</td>
+                                                <td className="py-3 px-2 text-center">{row.learners}</td>
+                                                <td className="py-3 px-2 text-center">{row.hours}</td>
+                                                <td className="py-3 px-4 text-center rounded-r-xl">{row.title_count}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
         </MainLayout>

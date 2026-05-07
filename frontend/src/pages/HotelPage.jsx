@@ -331,6 +331,7 @@ const HotelPage = () => {
                                     onChange={(e) => setFormData({ ...formData, hotel_id: e.target.value })}
                                     disabled={isEdit}
                                     className="col-span-2 bg-[#F1F3F5] rounded-lg p-3 outline-none focus:ring-2 focus:ring-[#2174C3] disabled:opacity-60"
+                                    placeholder="Enter ID e.g. H100"
                                 />
                             </div>
                             <div className="grid grid-cols-3 items-center">
@@ -341,6 +342,7 @@ const HotelPage = () => {
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, hotel_city: e.target.value })}
                                     className="col-span-2 bg-[#F1F3F5] rounded-lg p-3 outline-none focus:ring-2 focus:ring-[#2174C3]"
+                                    placeholder="Enter city"
                                 />
                             </div>
                             <div className="grid grid-cols-3 items-center">
@@ -351,6 +353,7 @@ const HotelPage = () => {
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, hotel_name: e.target.value })}
                                     className="col-span-2 bg-[#F1F3F5] rounded-lg p-3 outline-none focus:ring-2 focus:ring-[#2174C3]"
+                                    placeholder="Enter hotel name"
                                 />
                             </div>
                             <div className="grid grid-cols-3 items-center">
@@ -361,6 +364,7 @@ const HotelPage = () => {
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, hotel_phone: e.target.value })}
                                     className="col-span-2 bg-[#F1F3F5] rounded-lg p-3 outline-none focus:ring-2 focus:ring-[#2174C3]"
+                                    placeholder="Enter hotel phone number"
                                 />
                             </div>
                             <div className="grid grid-cols-3 items-center">
@@ -371,6 +375,7 @@ const HotelPage = () => {
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, price_estimation: e.target.value })}
                                     className="col-span-2 bg-[#F1F3F5] rounded-lg p-3 outline-none focus:ring-2 focus:ring-[#2174C3]"
+                                    placeholder="e.g. 1200000"
                                 />
                             </div>
                             <div className="grid grid-cols-3 items-center">

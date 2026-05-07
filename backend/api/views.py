@@ -274,7 +274,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         return super().paginate_queryset(queryset)
     
     def get_serializer_class(self):
-        if self.request.query_params.get('nopage') == 'true':
+        if self.request.query_params.get('nopage') == 'true' and self.request.query_params.get('report') != 'true':
             return EmployeeMinimalSerializer
         return EmployeeSerializer
 

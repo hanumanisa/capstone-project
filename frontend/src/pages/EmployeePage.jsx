@@ -16,6 +16,7 @@ const EmployeePage = () => {
     const [totalCount, setTotalCount] = useState(0);
     const [showAttendanceModal, setShowAttendanceModal] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [exporting, setExporting] = useState(false);
 
     const openAttendanceDetail = (emp) => {
         setSelectedEmployee(emp);
@@ -47,95 +48,116 @@ const EmployeePage = () => {
         }
     }, [currentPage, searchTerm, selectedDivision]);
 
-    const handleExport = () => {
-        if (!employees.length) {
-            alert('Tidak ada data untuk diekspor.');
-            return;
+    const handleExport = async () => {
+        setExporting(true);
+        try {
+            const res = await api.get(`/api/employee/?nopage=true&report=true&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}`);
+            const dataToExport = res.data;
+            
+            if (!dataToExport.length) {
+                alert('Tidak ada data untuk diekspor.');
+                return;
+            }
+            const exportData = dataToExport.map(emp => ({
+                'NIK': emp.nik,
+                'Nama': emp.full_name,
+                'Division': emp.division_name,
+                'Level': emp.level,
+                'Position': emp.position_name,
+                'Special Position': emp.special_position || '-',
+                'Attendance': emp.attendance,
+                'Inhouse Training': emp.inhouse_training,
+                'Public Training': emp.public_training,
+                'Knowledge Sharing': emp.knowledge_sharing,
+                'E-Learning': emp.elearning,
+                'IHT + Public': emp.iht_plus_public,
+                'Hours': emp.total_hours,
+                'Inhouse Tr. Hours': emp.inhouse_hours,
+                'Public Tr. Hours': emp.public_hours,
+                'KS Hours': emp.ks_hours,
+                'E-Learning Hours': emp.elearning_hours,
+                'TNA Count': emp.tna_count,
+                'TNA Fulfilled': emp.tna_fulfilled
+            }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wscols = [
+                { wch: 10 }, { wch: 30 }, { wch: 25 }, { wch: 10 },
+                { wch: 25 }, { wch: 20 }, { wch: 12 }, { wch: 18 },
+                { wch: 18 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
+                { wch: 10 }, { wch: 18 }, { wch: 18 }, { wch: 15 },
+                { wch: 18 }, { wch: 12 }, { wch: 15 }
+            ];
+            ws['!cols'] = wscols;
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Employee Report');
+            XLSX.writeFile(wb, 'Employee Report.xlsx');
+        } catch (err) {
+            console.error('Export failed:', err);
+            alert('Failed to export data.');
+        } finally {
+            setExporting(false);
         }
-        const exportData = employees.map(emp => ({
-            'NIK': emp.nik,
-            'Nama': emp.full_name,
-            'Division': emp.division_name,
-            'Level': emp.level,
-            'Position': emp.position_name,
-            'Special Position': emp.special_position || '-',
-            'Attendance': emp.attendance,
-            'Inhouse Training': emp.inhouse_training,
-            'Public Training': emp.public_training,
-            'Knowledge Sharing': emp.knowledge_sharing,
-            'E-Learning': emp.elearning,
-            'IHT + Public': emp.iht_plus_public,
-            'Hours': emp.total_hours,
-            'Inhouse Tr. Hours': emp.inhouse_hours,
-            'Public Tr. Hours': emp.public_hours,
-            'KS Hours': emp.ks_hours,
-            'E-Learning Hours': emp.elearning_hours,
-            'TNA Count': emp.tna_count,
-            'TNA Fulfilled': emp.tna_fulfilled
-        }));
-        const ws = XLSX.utils.json_to_sheet(exportData);
-        const wscols = [
-            { wch: 10 }, { wch: 30 }, { wch: 25 }, { wch: 10 },
-            { wch: 25 }, { wch: 20 }, { wch: 12 }, { wch: 18 },
-            { wch: 18 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
-            { wch: 10 }, { wch: 18 }, { wch: 18 }, { wch: 15 },
-            { wch: 18 }, { wch: 12 }, { wch: 15 }
-        ];
-        ws['!cols'] = wscols;
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Employee Report');
-        XLSX.writeFile(wb, 'Employee Report.xlsx');
     };
 
-    const handleDivisionExport = () => {
-        if (!employees.length) {
-            alert('Tidak ada data untuk diekspor.');
-            return;
-        }
+    const handleDivisionExport = async () => {
+        setExporting(true);
+        try {
+            const res = await api.get(`/api/employee/?nopage=true&report=true&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}`);
+            const dataToExport = res.data;
 
-        const wb = XLSX.utils.book_new();
-        const header = [['NIK', 'Nama', 'Total Hours', 'Training Title']];
-        const rows = [];
-        const merges = [];
-
-        let currentRow = 1; // Start after header
-
-        employees.forEach(emp => {
-            const details = emp.attendance_details || [];
-            const numRows = details.length || 1;
-
-            if (details.length === 0) {
-                rows.push([emp.nik, emp.full_name, emp.total_hours, '-']);
-                currentRow++;
-            } else {
-                details.forEach((d, idx) => {
-                    rows.push([
-                        emp.nik,
-                        emp.full_name,
-                        emp.total_hours,
-                        d.title
-                    ]);
-                });
-
-                if (numRows > 1) {
-                    merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow + numRows - 1, c: 0 } }); // NIK
-                    merges.push({ s: { r: currentRow, c: 1 }, e: { r: currentRow + numRows - 1, c: 1 } }); // Nama
-                    merges.push({ s: { r: currentRow, c: 2 }, e: { r: currentRow + numRows - 1, c: 2 } }); // Total Hours
-                }
-                currentRow += numRows;
+            if (!dataToExport.length) {
+                alert('Tidak ada data untuk diekspor.');
+                return;
             }
-        });
 
-        const ws = XLSX.utils.aoa_to_sheet([...header, ...rows]);
-        ws['!merges'] = merges;
-        
-        // Add styling for borders and alignment if possible (xlsx basic has limits)
-        ws['!cols'] = [
-            { wch: 12 }, { wch: 35 }, { wch: 15 }, { wch: 70 }
-        ];
+            const wb = XLSX.utils.book_new();
+            const header = [['NIK', 'Nama', 'Total Hours', 'Training Title']];
+            const rows = [];
+            const merges = [];
 
-        XLSX.utils.book_append_sheet(wb, ws, 'Division Report');
-        XLSX.writeFile(wb, `Division Report_${selectedDivision}.xlsx`);
+            let currentRow = 1; // Start after header
+
+            dataToExport.forEach(emp => {
+                const details = emp.attendance_details || [];
+                const numRows = details.length || 1;
+
+                if (details.length === 0) {
+                    rows.push([emp.nik, emp.full_name, emp.total_hours, '-']);
+                    currentRow++;
+                } else {
+                    details.forEach((d, idx) => {
+                        rows.push([
+                            emp.nik,
+                            emp.full_name,
+                            emp.total_hours,
+                            d.title
+                        ]);
+                    });
+
+                    if (numRows > 1) {
+                        merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow + numRows - 1, c: 0 } }); // NIK
+                        merges.push({ s: { r: currentRow, c: 1 }, e: { r: currentRow + numRows - 1, c: 1 } }); // Nama
+                        merges.push({ s: { r: currentRow, c: 2 }, e: { r: currentRow + numRows - 1, c: 2 } }); // Total Hours
+                    }
+                    currentRow += numRows;
+                }
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet([...header, ...rows]);
+            ws['!merges'] = merges;
+            
+            ws['!cols'] = [
+                { wch: 12 }, { wch: 35 }, { wch: 15 }, { wch: 70 }
+            ];
+
+            XLSX.utils.book_append_sheet(wb, ws, 'Division Report');
+            XLSX.writeFile(wb, `Division Report_${selectedDivision}.xlsx`);
+        } catch (err) {
+            console.error('Division Export failed:', err);
+            alert('Failed to export division report.');
+        } finally {
+            setExporting(false);
+        }
     };
 
     useEffect(() => {
@@ -181,7 +203,7 @@ const EmployeePage = () => {
                     <select 
                         value={selectedDivision}
                         onChange={(e) => { setSelectedDivision(e.target.value); setCurrentPage(1); }}
-                        className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                        className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
                         style={{
                             backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
                             backgroundSize: '20px 20px',

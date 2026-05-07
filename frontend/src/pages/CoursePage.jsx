@@ -199,7 +199,7 @@ const CoursePage = () => {
                     <input
                         id="search-course"
                         type="text"
-                        placeholder="Search course..."
+                        placeholder="Search"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400"
@@ -390,6 +390,7 @@ const CoursePage = () => {
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, course_id: e.target.value })}
                                     disabled={isEdit}
+                                    placeholder="Enter course code e.g. GA26"
                                     className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] disabled:opacity-60"
                                 />
                             </div>
@@ -418,6 +419,7 @@ const CoursePage = () => {
                                     value={formData.course_name}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, course_name: e.target.value })}
+                                    placeholder="Enter course name"
                                     className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -429,6 +431,7 @@ const CoursePage = () => {
                                     value={formData.description}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    placeholder="Enter course description"
                                     className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>

@@ -185,7 +185,7 @@ const CourseCategoryPage = () => {
                     <input
                         id="search-category"
                         type="text"
-                        placeholder="Search category..."
+                        placeholder="Search"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-4 pr-10 py-2 rounded-lg border-none bg-gray-100 focus:bg-white focus:ring-1 focus:ring-[#2174C3] transition-all text-gray-600 placeholder-gray-400"
@@ -378,6 +378,7 @@ const CourseCategoryPage = () => {
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, course_category_id: e.target.value })}
                                     disabled={isEdit}
+                                    placeholder="Enter category code e.g. AI26"
                                     className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3] disabled:opacity-60"
                                 />
                             </div>
@@ -390,6 +391,7 @@ const CourseCategoryPage = () => {
                                     value={formData.category_name}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
+                                    placeholder="Enter category name"
                                     className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -402,6 +404,7 @@ const CourseCategoryPage = () => {
                                     value={formData.description}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    placeholder="Enter category description"
                                     className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
