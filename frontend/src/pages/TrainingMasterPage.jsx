@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "../components/MainLayout";
 import api from "../api/axios";
 import { getUserFromToken } from "../utils/auth";
@@ -7,6 +8,7 @@ import ConfirmModal from "../components/ConfirmModal";
 import * as XLSX from 'xlsx';
 
 export default function TrainingMasterPage() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [trainings, setTrainings] = useState([]);
   const [page, setPage] = useState(1);
@@ -92,7 +94,7 @@ export default function TrainingMasterPage() {
     return text.split(" ").filter(w => w.length > 0).map(w => w[0].toUpperCase()).join("");
   };
 
-  const isAdmin = user?.role === 'Super Administrator' || user?.role === 'Administrator';
+  const isAdmin = user?.role === 'Super Administrator' || user?.role === 'Administrator' || user?.role === 'Dean';
 
   // ================= FETCH DATA =================
   const fetchTrainings = useCallback(async () => {
@@ -669,7 +671,7 @@ export default function TrainingMasterPage() {
         </div>
 
         {/* Division Filter */}
-        {user?.role !== 'Head of Division' && user?.role !== 'Employee' && (
+        {!['Head of Division', 'Team Leader', 'Employee'].includes(user?.role) && (
           <div className="relative w-full sm:w-48">
             <select
               value={division}
@@ -738,7 +740,7 @@ export default function TrainingMasterPage() {
             >
               Report
             </button>
-            {isAdmin && (
+            {isAdmin && user?.role !== 'Dean' && (
               <button
                 onClick={openAddModal}
                 className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-1 rounded-lg font-medium flex items-center justify-center text-sm shadow-sm transition-all cursor-pointer"
@@ -751,8 +753,10 @@ export default function TrainingMasterPage() {
       </div>
 
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Training Master</h1>
-        {isAdmin && (
+        <div className="flex items-center gap-4">
+          <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Training Master</h1>
+        </div>
+        {isAdmin && user?.role !== 'Dean' && (
           <button
             onClick={() => setShowBudgetModal(true)}
             className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-1 rounded-lg font-medium flex items-center justify-center text-sm shadow-sm transition-all cursor-pointer"
@@ -1188,7 +1192,7 @@ export default function TrainingMasterPage() {
             </div>
 
             <div className="flex justify-end space-x-2 mt-10">
-              {isEditMode && (
+              {isEditMode && user?.role !== 'Dean' && (
                 <button type="button" onClick={handleDeleteClick} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Delete</button>
               )}
               <button type="button" onClick={() => { setShowModal(false); setIsEditMode(false); setEditingId(null); }} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Cancel</button>
@@ -1604,11 +1608,13 @@ export default function TrainingMasterPage() {
             </div>
 
             <div className="flex justify-end space-x-2 mt-12">
-              {isEditMode && (
+              {isEditMode && user?.role !== 'Dean' && (
                 <button type="button" onClick={handleDeleteClick} className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Delete</button>
               )}
               <button type="button" onClick={() => setShowEventModal(false)} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-4 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Cancel</button>
-              <button type="button" onClick={handleSaveAll} className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-6 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer">Save</button>
+              {user?.role !== 'Dean' && (
+                <button type="button" onClick={handleSaveAll} className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-6 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer">Save</button>
+              )}
             </div>
           </div>
         </div>
@@ -1693,13 +1699,15 @@ export default function TrainingMasterPage() {
               >
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={handleSaveBudget}
-                className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer"
-              >
-                Save
-              </button>
+              {user?.role !== 'Dean' && (
+                <button
+                  type="button"
+                  onClick={handleSaveBudget}
+                  className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer"
+                >
+                  Save
+                </button>
+              )}
             </div>
           </div>
         </div>

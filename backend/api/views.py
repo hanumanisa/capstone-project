@@ -328,7 +328,7 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
                     qs = qs.filter(trainingevent__start_date__month=m).distinct()
                 except (ValueError, TypeError):
                     pass
-        elif "Head of Division" in user_groups:
+        elif "Head of Division" in user_groups or "Team Leader" in user_groups:
             if hasattr(user, 'profile') and user.profile.employee:
                 div_id = user.profile.employee.division_id
                 # Only show trainings that have at least one participant from their division
@@ -952,6 +952,12 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def respondents(self, request, pk=None):
         form = self.get_object()
+        
+        # Check permission: Only Admin and Dean can see respondents
+        is_admin = request.user.is_superuser or request.user.groups.filter(name__in=['Super Administrator', 'Administrator', 'Dean']).exists()
+        if not is_admin:
+            return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+
         # Query directly from EvaluationResult summary table
         results = EvaluationResult.objects.filter(form=form).order_by('-created_at')
         
@@ -993,6 +999,20 @@ class EvaluationResultViewSet(viewsets.ModelViewSet):
     serializer_class = EvaluationResultSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        if not user.is_authenticated:
+            return qs.none()
+            
+        user_groups = list(user.groups.values_list('name', flat=True))
+        
+        if user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
+            return qs
+        
+        # Head of Division, Team Leader, Employee only see their own results
+        return qs.filter(user=user)
+
 # AI Assistant ViewSets 
 
 class IsAdminOrReadOnly(permissions.BasePermission):
@@ -1003,7 +1023,7 @@ class IsAdminOrReadOnly(permissions.BasePermission):
             return False
         if request.user.is_superuser:
             return True
-        return request.user.groups.filter(name__in=['Super Administrator', 'Administrator']).exists()
+        return request.user.groups.filter(name__in=['Super Administrator', 'Administrator', 'Dean']).exists()
 
 class AiAdminConfigViewSet(viewsets.ModelViewSet):
     queryset = AiAdminConfig.objects.all()

@@ -139,7 +139,7 @@ const TnaPage = () => {
                         </span>
                     </div>
 
-                    {user?.role !== 'Head of Division' && user?.role !== 'Employee' && (
+                    {!['Head of Division', 'Team Leader', 'Employee'].includes(user?.role) && (
                         <div className="relative w-full sm:w-48">
                             <select
                                 value={divisionFilter}

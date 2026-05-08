@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link, useLocation } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import { getUserFromToken } from '../utils/auth';
 import api from '../api/axios';
@@ -7,7 +7,9 @@ import './TrainingEvaluationPage.css';
 
 export default function TrainingEvaluationEmployeePage() {
     const user = getUserFromToken();
-    const canAccess = user?.role === 'Head of Division' || user?.role === 'Team Leader' || user?.role === 'Employee';
+    const location = useLocation();
+    const isAdmin = ['Super Administrator', 'Administrator', 'Dean'].includes(user?.role);
+    const canAccess = ['Head of Division', 'Team Leader', 'Employee', 'Dean', 'Administrator', 'Super Administrator'].includes(user?.role);
 
     const [allCards, setAllCards] = useState([]);
     const [selectedCard, setSelectedCard] = useState(null);
@@ -206,7 +208,7 @@ export default function TrainingEvaluationEmployeePage() {
         return 'Needs Improvement';
     };
 
-    if (!canAccess) {
+    if (user && !canAccess && !isAdmin) {
         return <Navigate to="/dashboard" replace />;
     }
 
@@ -262,7 +264,31 @@ export default function TrainingEvaluationEmployeePage() {
                     </div>
                 </div>
 
-                <h1 className="text-4xl font-bold text-gray-800 tracking-tight mb-2">Training Evaluation</h1>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
+                    <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Training Evaluation</h1>
+                    {isAdmin && (
+                        <div className="flex space-x-8 border-b border-gray-300">
+                            <Link
+                                to="/evaluation"
+                                className={`pb-3 px-1 font-bold text-xl transition-colors ${location.pathname === '/evaluation'
+                                    ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                                    : 'text-gray-400 hover:text-[#2174C3]'
+                                    }`}
+                            >
+                                All Evaluation 
+                            </Link>
+                            <Link
+                                to="/evaluation-employee"
+                                className={`pb-3 px-1 font-bold text-xl transition-colors ${location.pathname === '/evaluation-employee'
+                                    ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                                    : 'text-gray-400 hover:text-[#2174C3]'
+                                    }`}
+                            >
+                                Evaluation
+                            </Link>
+                        </div>
+                    )}
+                </div>
                 <p className="text-sm text-gray-400 mb-8">Click on a card to fill out the evaluation. Completed cards will display the results.</p>
 
                 {/* Cards Grid */}

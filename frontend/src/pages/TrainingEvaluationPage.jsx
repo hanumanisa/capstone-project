@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import { getUserFromToken } from '../utils/auth';
 import api from '../api/axios';
+import ConfirmModal from '../components/ConfirmModal';
 import './TrainingEvaluationPage.css';
 
 /**
@@ -10,10 +11,11 @@ import './TrainingEvaluationPage.css';
  * Manages the L1 and L2 evaluation forms for administrators.
  */
 export default function TrainingEvaluationPage() {
+    const navigate = useNavigate();
+    const location = useLocation();
     const user = getUserFromToken();
-    const isDean = user?.role === 'Dean';
-    const isAdmin = user?.role === 'Super Administrator' || user?.role === 'Administrator' || isDean;
-    const canEdit = user?.role === 'Super Administrator' || user?.role === 'Administrator';
+    const isAdmin = ['Super Administrator', 'Administrator', 'Dean'].includes(user?.role);
+    const canEdit = ['Super Administrator', 'Administrator'].includes(user?.role);
 
     // --- UI Visibility State ---
     const [showTpl, setShowTpl] = useState(false);
@@ -476,7 +478,7 @@ export default function TrainingEvaluationPage() {
         }
     };
 
-    if (!isAdmin) {
+    if (user && !isAdmin) {
         return <Navigate to="/dashboard" replace />;
     }
 
@@ -544,7 +546,31 @@ export default function TrainingEvaluationPage() {
                     </div>
                 </div>
 
-                <h1 className="text-4xl font-bold text-gray-800 tracking-tight mb-8">Training Evaluation</h1>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
+                    <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Training Evaluation</h1>
+                    {isAdmin && (
+                        <div className="flex space-x-8 border-b border-gray-300">
+                            <Link
+                                to="/evaluation"
+                                className={`pb-3 px-1 font-bold text-xl transition-colors ${location.pathname === '/evaluation'
+                                    ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                                    : 'text-gray-400 hover:text-[#2174C3]'
+                                    }`}
+                            >
+                                All Evaluation
+                            </Link>
+                            <Link
+                                to="/evaluation-employee"
+                                className={`pb-3 px-1 font-bold text-xl transition-colors ${location.pathname === '/evaluation-employee'
+                                    ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                                    : 'text-gray-400 hover:text-[#2174C3]'
+                                    }`}
+                            >
+                                Evaluation
+                            </Link>
+                        </div>
+                    )}
+                </div>
 
                 {/* Cards Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
@@ -1006,30 +1032,13 @@ export default function TrainingEvaluationPage() {
                 )}
 
                 {/* Delete Confirmation Modal */}
-                {showDeleteConfirm && (
-                    <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden relative">
-                            <div className="h-1.5 bg-gradient-to-r from-red-400 to-red-600"></div>
-                            <div className="px-7 py-7">
-                                <div className="flex justify-center mb-4">
-                                    <div className="w-14 h-14 rounded-full bg-red-50 border-2 border-red-100 flex items-center justify-center">
-                                        <svg className="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </div>
-                                </div>
-                                <h3 className="text-lg font-bold text-gray-800 text-center mb-2">Delete Evaluation?</h3>
-                                <p className="text-sm text-gray-500 text-center mb-1">You are about to delete</p>
-                                <p className="text-sm font-semibold text-gray-800 text-center mb-4 px-2">"{cardToDelete?.title}"</p>
-                                <p className="text-xs text-gray-400 text-center mb-6 leading-relaxed">This action cannot be undone. All respondent data and related questions will be deleted.</p>
-                                <div className="flex gap-3">
-                                    <button onClick={() => { setShowDeleteConfirm(false); setCardToDelete(null); }} className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Cancel</button>
-                                    <button onClick={deleteCard} className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-sm">Yes, Delete</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <ConfirmModal
+                    isOpen={showDeleteConfirm}
+                    onClose={() => { setShowDeleteConfirm(false); setCardToDelete(null); }}
+                    onConfirm={deleteCard}
+                    title="Confirm Delete"
+                    message={`Are you sure want to delete this Evaluation "${cardToDelete?.title}"?`}
+                />
             </div>
         </MainLayout>
     );

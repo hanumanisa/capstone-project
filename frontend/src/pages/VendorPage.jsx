@@ -477,7 +477,7 @@ const VendorPage = () => {
                                     value={formData.phone}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    placeholder="Enter vendor phone e.g. +62 878 2190 29920"
+                                    placeholder="Enter vendor phone e.g. 62878219029920"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>
@@ -488,7 +488,7 @@ const VendorPage = () => {
                                     value={formData.fax}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, fax: e.target.value })}
-                                    placeholder="Enter vendor FAX e.g. (021) 555 1234"
+                                    placeholder="Enter vendor FAX e.g. 021-5551234"
                                     className="sm:col-span-2 bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3]"
                                 />
                             </div>

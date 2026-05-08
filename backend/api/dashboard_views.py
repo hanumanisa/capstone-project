@@ -29,12 +29,16 @@ class DashboardCardsAPIView(APIView):
         # Base filters
         events = TrainingEvent.objects.exclude(status='cancelled').filter(start_date__year=year)
         
-        if role == 'Head of Division':
+        if role in ['Head of Division', 'Team Leader']:
             # Scope to entire division
             division = employee.division
             target_niks = Employee.objects.filter(division=division).values_list('nik', flat=True)
             participants = EventParticipant.objects.filter(nik__in=target_niks).exclude(attendance_status='Absent')
             employee_count = len(target_niks)
+        elif role in ['Super Administrator', 'Administrator', 'Dean']:
+            # Admin sees everything
+            participants = EventParticipant.objects.exclude(attendance_status='Absent')
+            employee_count = Employee.objects.count()
         else:
             # Role Employee - scope to self only
             participants = EventParticipant.objects.filter(nik=employee).exclude(attendance_status='Absent')
