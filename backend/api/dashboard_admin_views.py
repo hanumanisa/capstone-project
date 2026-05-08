@@ -63,7 +63,10 @@ class DashboardAdminAPIView(APIView):
         total_learners = participants.count()
 
         # 3. Total Employee
-        total_employee = participants.values('nik').distinct().count()
+        total_employee_in_system = Employee.objects.count()
+        if division:
+            total_employee_in_system = Employee.objects.filter(division__division_name__icontains=division).count()
+        total_employee_attended = participants.values('nik').distinct().count()
 
         # 4. Total Hours
         part_counts_dict = {
@@ -80,7 +83,8 @@ class DashboardAdminAPIView(APIView):
                     total_hours_val += duration * part_counts_dict.get(sched.event_id, 0)
         
         # 5. Average Hours
-        average_hours_val = total_hours_val / total_employee if total_employee > 0 else 0
+        average_hours_val = total_hours_val / total_employee_attended if total_employee_attended > 0 else 0
+        average_hours_by_all = total_hours_val / total_employee_in_system if total_employee_in_system > 0 else 0
 
         # 6. Budget Used (Actual Cost where status is Paid/Settled)
         costs = EventCost.objects.filter(event_id__in=event_ids)
@@ -101,22 +105,12 @@ class DashboardAdminAPIView(APIView):
         esg = TrainingMaster.objects.filter(training_id__in=training_ids, training_category='ESG').count()
 
         # Evaluations
-        def scale_score(avg_val):
-            if not avg_val: return 0
-            if avg_val <= 25: return 1
-            if avg_val <= 50: return 2
-            if avg_val <= 75: return 3
-            return 4
+        # Evaluation Scores from EventParticipant (Training Master)
+        l1_avg = participants.filter(l1_score__isnull=False).aggregate(Avg('l1_score'))['l1_score__avg'] or 0
+        l1_score = float(l1_avg)
 
-        # Link results via form -> training_master
-        training_master_ids = list(training_ids)
-        l1_results = EvaluationResult.objects.filter(form__training_master_id__in=training_master_ids, template='L1')
-        l1_avg = l1_results.aggregate(Avg('score'))['score__avg'] or 0
-        l1_score = scale_score(l1_avg)
-
-        l2_results = EvaluationResult.objects.filter(form__training_master_id__in=training_master_ids, template='L2')
-        l2_avg = l2_results.aggregate(Avg('score'))['score__avg'] or 0
-        l2_score = scale_score(l2_avg)
+        l2_avg = participants.filter(l2_score__isnull=False).aggregate(Avg('l2_score'))['l2_score__avg'] or 0
+        l2_score = float(l2_avg)
 
         # TNA Coverage
         tna_qs = TnaMaster.objects.filter(tna_period__year=year)
@@ -169,8 +163,8 @@ class DashboardAdminAPIView(APIView):
             "budget_remaining": f"{float(budget_remaining):,.0f}",
             "total_training_category": total_training_category,
             "total_training_type": total_training_type,
-            "total_employee": total_employee,
-            "presentase_karyawan": "100%",
+            "total_employee": total_employee_attended,
+            "presentase_karyawan": f"{(total_employee_attended / total_employee_in_system * 100):.1f}%" if total_employee_in_system > 0 else "0%",
             "e_learning": e_learning,
             "inhouse_training": inhouse_training,
             "knowledge_sharing": knowledge_sharing,
@@ -178,8 +172,8 @@ class DashboardAdminAPIView(APIView):
             "soft_skill": soft_skill,
             "hard_skill": hard_skill,
             "esg": esg,
-            "l1_score": f"{l1_score:.1f}",
-            "l2_score": f"{l2_score:.1f}",
+            "l1_score": f"{l1_score:.2f}",
+            "l2_score": f"{l2_score:.2f}",
             "tna_program_coverage": tna_program_coverage,
             "tna_learners_coverage": tna_learners_coverage,
         }

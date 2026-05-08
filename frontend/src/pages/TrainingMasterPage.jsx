@@ -448,8 +448,9 @@ export default function TrainingMasterPage() {
     if (e) e.preventDefault();
 
     let params = new URLSearchParams();
+    let formData = null;
     if (e) {
-      const formData = new FormData(e.target);
+      formData = new FormData(e.target);
       for (let [key, value] of formData.entries()) {
         if (value) params.append(key, value);
       }
@@ -469,7 +470,7 @@ export default function TrainingMasterPage() {
 
       // ─── Case 1: Division Report (Merged Cells) ───────────────────────
       if (reportType === "division") {
-        const divisionFilter = formData.get('division');
+        const divisionFilter = formData ? formData.get('division') : null;
         let targetEmployees = employees;
         if (divisionFilter && divisionFilter !== "") {
           targetEmployees = employees.filter(e => e.division_name === divisionFilter);
@@ -477,7 +478,8 @@ export default function TrainingMasterPage() {
 
         const empMap = {};
         targetEmployees.forEach(e => {
-          empMap[e.nik] = {
+          const key = String(e.nik);
+          empMap[key] = {
             nik: e.nik,
             nama: e.full_name,
             total_hours: 0,
@@ -486,11 +488,12 @@ export default function TrainingMasterPage() {
         });
 
         realisasi_training.forEach(item => {
-          if (empMap[item.nik]) {
-            empMap[item.nik].total_hours += item.hours;
-            empMap[item.nik].trainings.push({
+          const key = String(item.nik);
+          if (empMap[key]) {
+            empMap[key].total_hours += (Number(item.hours) || 0);
+            empMap[key].trainings.push({
               title: item.training_title,
-              hours: item.hours
+              hours: (Number(item.hours) || 0)
             });
           }
         });
@@ -530,7 +533,11 @@ export default function TrainingMasterPage() {
 
       // ─── Case 3: Master Report (Full dump sorted by date) ────────────
       if (reportType === "master") {
-        const sortedData = [...realisasi_training].sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+        const sortedData = [...realisasi_training].sort((a, b) => {
+          const dA = a.start_date ? new Date(a.start_date) : new Date(0);
+          const dB = b.start_date ? new Date(b.start_date) : new Date(0);
+          return dA - dB;
+        });
 
         const exportData = sortedData.map(item => {
           const row = {
@@ -579,70 +586,96 @@ export default function TrainingMasterPage() {
 
       // ─── Case 2: Monthly Report (Existing 2-sheet logic) ───────────────
       if (reportType === "monthly") {
-        const slide1Data = realisasi_training.map(item => ({
-          "Course Category": item.course_category,
-          "Course Name": item.course_name,
-          "Training Title": item.training_title,
-          "Training Type": item.training_type,
-          "Training Category": item.training_category,
-          "Location": item.location,
-          "Hours": item.hours,
-          "Start Date": item.start_date,
-          "End Date": item.end_date,
-          "Duration Day": item.duration_day,
-          "Vendor": item.vendor,
-          "NIK": item.nik,
-          "Nama": item.nama,
-          "Divisi": item.divisi,
-          "Level": item.level,
-          "Jabatan": item.jabatan,
-          "Direktorat": item.direktorat,
-          "Gender": item.gender
-        }));
+        console.log("Generating Monthly Report with", realisasi_training.length, "records");
+        
+        const slide1Data = realisasi_training.map(item => {
+          const h = Number(item.hours) || 0;
+          return {
+            "Course Category": item.course_category || "",
+            "Course Name": item.course_name || "",
+            "Training Title": item.training_title || "",
+            "Training Type": item.training_type || "",
+            "Training Category": item.training_category || "",
+            "Location": item.location || "",
+            "Hours": h,
+            "Start Date": item.start_date || "",
+            "End Date": item.end_date || "",
+            "Duration Day": item.duration_day || 0,
+            "Vendor": item.vendor || "",
+            "NIK": item.nik || "",
+            "Nama": item.nama || "",
+            "Divisi": item.divisi || "",
+            "Level": item.level || "",
+            "Jabatan": item.jabatan || "",
+            "Direktorat": item.direktorat || "",
+            "Gender": item.gender || ""
+          };
+        });
 
-        const grandTotalHours = realisasi_training.reduce((sum, item) => sum + item.hours, 0);
+        const grandTotalHours = realisasi_training.reduce((sum, item) => sum + (Number(item.hours) || 0), 0);
+        
+        const wb = XLSX.utils.book_new();
+        
+        // Sheet 1: Realisasi Training
         const ws1 = XLSX.utils.json_to_sheet(slide1Data, { origin: "A3" });
         XLSX.utils.sheet_add_aoa(ws1, [
-          ["Monthly Report", "", "Total Hours:", grandTotalHours.toFixed(2)]
+          ["Monthly Report", "", "Total Hours:", Number(grandTotalHours.toFixed(2))]
         ], { origin: "A1" });
+        
         ws1["!cols"] = [
           { wch: 20 }, { wch: 25 }, { wch: 30 }, { wch: 20 }, { wch: 20 },
           { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
           { wch: 20 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 15 },
           { wch: 20 }, { wch: 20 }, { wch: 10 }
         ];
+        XLSX.utils.book_append_sheet(wb, ws1, "Realisasi Training");
 
+        // Sheet 2: Accumulation
         const monthsMap = {};
         realisasi_training.forEach(item => {
           if (!item.start_date) return;
-          const d = new Date(item.start_date);
-          const monthName = d.toLocaleString('default', { month: 'long' });
-          const year = d.getFullYear();
-          const key = `${monthName} ${year}`;
-          if (!monthsMap[key]) monthsMap[key] = 0;
-          monthsMap[key] += item.hours;
+          try {
+            const d = new Date(item.start_date);
+            if (isNaN(d.getTime())) return;
+            const monthName = d.toLocaleString('default', { month: 'long' });
+            const year = d.getFullYear();
+            const key = `${monthName} ${year}`;
+            if (!monthsMap[key]) monthsMap[key] = 0;
+            monthsMap[key] += (Number(item.hours) || 0);
+          } catch (e) {
+            console.warn("Date parsing error for item", item);
+          }
         });
 
         const slide2AoA = [];
-        Object.keys(monthsMap).sort((a, b) => new Date(a) - new Date(b)).forEach(key => {
-          const totalJam = monthsMap[key];
-          const avg = total_employees > 0 ? (totalJam / total_employees) : 0;
-          slide2AoA.push([key, "Jumlah Jam Training", parseFloat(totalJam.toFixed(2))]);
-          slide2AoA.push(["", `Jumlah Karyawan per ${key}`, total_employees]);
-          slide2AoA.push(["", "Rata-rata jam training", parseFloat(avg.toFixed(2))]);
-          slide2AoA.push([]);
-        });
+        const sortedMonthKeys = Object.keys(monthsMap).sort((a, b) => new Date(a) - new Date(b));
+        
+        let runningTotal = 0;
+        if (sortedMonthKeys.length > 0) {
+          sortedMonthKeys.forEach(key => {
+            const monthlyHours = monthsMap[key];
+            runningTotal += monthlyHours;
+            const avg = total_employees > 0 ? (runningTotal / total_employees) : 0;
+            slide2AoA.push([key, "Jumlah Jam Training (Kumulatif)", Number(runningTotal.toFixed(2))]);
+            slide2AoA.push(["", `Jumlah Karyawan per ${key}`, total_employees]);
+            slide2AoA.push(["", "Rata-rata jam training", Number(avg.toFixed(2))]);
+            slide2AoA.push([]);
+          });
+        } else {
+          slide2AoA.push(["No data available for the selected period", "", ""]);
+        }
 
         const ws2 = XLSX.utils.aoa_to_sheet(slide2AoA);
-        ws2["!cols"] = [{ wch: 15 }, { wch: 35 }, { wch: 15 }];
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws1, "Realisasi Training");
+        ws2["!cols"] = [{ wch: 20 }, { wch: 35 }, { wch: 15 }];
         XLSX.utils.book_append_sheet(wb, ws2, "Akumulasi Jam Training");
 
-        XLSX.writeFile(wb, `Monthly_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+        // Download
+        const fileName = `Monthly_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
         setToast({ message: "Monthly Report exported successfully", type: "success" });
         setShowReportModal(false);
+        return;
       }
     } catch (error) {
       console.error("Export failed:", error);
@@ -1364,8 +1397,8 @@ export default function TrainingMasterPage() {
                                 <option value="Absent">Absent</option>
                               </select>
                             </td>
-                            <td className="p-2"><input type="number" step="0.1" placeholder="1-4" value={row.l1} onChange={(e) => { const a = [...participantRows]; a[idx].l1 = e.target.value; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                            <td className="p-2"><input type="number" step="0.01" min="1" max="4" placeholder="1-4" value={row.l2} onChange={(e) => { const a = [...participantRows]; a[idx].l2 = e.target.value; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                            <td className="p-2"><input type="number" step="0.1" max="4" placeholder="1-4" value={row.l1} onChange={(e) => { const val = e.target.value; const a = [...participantRows]; a[idx].l1 = (val > 4) ? 4 : val; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                            <td className="p-2"><input type="number" step="0.1" max="4" placeholder="1-4" value={row.l2} onChange={(e) => { const val = e.target.value; const a = [...participantRows]; a[idx].l2 = (val > 4) ? 4 : val; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
                           </tr>
                         ))}
                       </tbody>

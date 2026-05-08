@@ -275,7 +275,7 @@ export default function TrainingEvaluationEmployeePage() {
                                     : 'text-gray-400 hover:text-[#2174C3]'
                                     }`}
                             >
-                                All Evaluation 
+                                All Evaluation
                             </Link>
                             <Link
                                 to="/evaluation-employee"

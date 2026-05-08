@@ -451,22 +451,25 @@ class AddTrainingView(APIView):
 
             for part in data.get('participants', []):
                 if part.get('employee'):
+                    l1_val = part.get('l1')
                     l2_val = part.get('l2')
+
+                    # Cap L1 at 4.0
+                    if l1_val is not None and l1_val != "":
+                        try:
+                            if float(l1_val) > 4: l1_val = 4.0
+                        except: pass
+
+                    # Cap L2 at 4.0
                     if l2_val is not None and l2_val != "":
                         try:
-                            l2_num = float(l2_val)
-                            if l2_num > 4:
-                                if l2_num <= 25: l2_val = 1
-                                elif l2_num <= 50: l2_val = 2
-                                elif l2_num <= 75: l2_val = 3
-                                else: l2_val = 4
-                        except:
-                            pass
+                            if float(l2_val) > 4: l2_val = 4.0
+                        except: pass
 
                     EventParticipant.objects.create(
                         event=event,
                         nik_id=part.get('employee'),
-                        l1_score=part.get('l1') or None,
+                        l1_score=l1_val if l1_val != "" else None,
                         l2_score=l2_val if l2_val != "" else None
                     )
 
@@ -573,22 +576,25 @@ class AddTrainingView(APIView):
             event.participants.all().delete()
             for part in data.get('participants', []):
                 if part.get('employee'):
+                    l1_val = part.get('l1')
                     l2_val = part.get('l2')
+
+                    # Cap L1 at 4.0
+                    if l1_val is not None and l1_val != "":
+                        try:
+                            if float(l1_val) > 4: l1_val = 4.0
+                        except: pass
+
+                    # Cap L2 at 4.0
                     if l2_val is not None and l2_val != "":
                         try:
-                            l2_num = float(l2_val)
-                            if l2_num > 4:
-                                if l2_num <= 25: l2_val = 1
-                                elif l2_num <= 50: l2_val = 2
-                                elif l2_num <= 75: l2_val = 3
-                                else: l2_val = 4
-                        except:
-                            pass
+                            if float(l2_val) > 4: l2_val = 4.0
+                        except: pass
 
                     EventParticipant.objects.create(
                         event=event,
                         nik_id=part.get('employee'),
-                        l1_score=part.get('l1') or None,
+                        l1_score=l1_val if l1_val != "" else None,
                         l2_score=l2_val if l2_val != "" else None
                     )
 
@@ -1376,7 +1382,7 @@ class ExportReportView(APIView):
         ).prefetch_related('event__schedules').all()
 
         # Apply RBAC Scoping
-        if user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
+        if user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups or "Super Administrator" in user_groups:
             if employee_filter:
                 qs = qs.filter(nik_id=employee_filter)
             if division_filter:
@@ -1415,19 +1421,25 @@ class ExportReportView(APIView):
 
         from datetime import datetime, date
         data_slide1 = []
+        event_hours_cache = {}
+        
         for ep in qs:
             event = ep.event
             training = event.training
             emp = ep.nik
             
-            # Hours calculation
-            event_hours = 0
-            for sch in event.schedules.all():
-                if sch.start_time and sch.end_time:
-                    dummy_date = date(2000, 1, 1)
-                    t1 = datetime.combine(dummy_date, sch.start_time)
-                    t2 = datetime.combine(dummy_date, sch.end_time)
-                    event_hours += (t2 - t1).total_seconds() / 3600
+            # Hours calculation with caching
+            if event.event_id not in event_hours_cache:
+                event_hours = 0
+                for sch in event.schedules.all():
+                    if sch.start_time and sch.end_time:
+                        dummy_date = date(2000, 1, 1)
+                        t1 = datetime.combine(dummy_date, sch.start_time)
+                        t2 = datetime.combine(dummy_date, sch.end_time)
+                        event_hours += (t2 - t1).total_seconds() / 3600
+                event_hours_cache[event.event_id] = event_hours
+            
+            event_hours = event_hours_cache[event.event_id]
             
             days = (event.end_date - event.start_date).days + 1 if event.start_date and event.end_date else 0
             

@@ -65,7 +65,14 @@ class DashboardCardsAPIView(APIView):
                 if duration > 0:
                     total_hours_val += duration * part_counts_dict.get(sched.event_id, 0)
         
-        average_hours_val = total_hours_val / employee_count if employee_count > 0 else 0
+        # Determine divisor for Average Hours based on role
+        if role == 'Employee':
+            divisor = total_training
+        else:
+            # For Head of Division, Team Leader, and Admins in this view
+            divisor = participants.values('nik').distinct().count()
+
+        average_hours_val = total_hours_val / divisor if divisor > 0 else 0
         
         l1_agg = participants.filter(l1_score__isnull=False).aggregate(Avg('l1_score'))['l1_score__avg']
         l2_agg = participants.filter(l2_score__isnull=False).aggregate(Avg('l2_score'))['l2_score__avg']
