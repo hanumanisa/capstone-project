@@ -163,6 +163,58 @@ export default function TrainingMasterPage() {
     if (courseCategory) fetchCourses(courseCategory);
   }, [courseCategory]);
 
+  const checkTrainingCode = async (code) => {
+    if (!code) return;
+    try {
+      const res = await api.get(`/api/check-training-code/?code=${code}${editingId ? `&exclude_id=${editingId}` : ''}`);
+      if (res.data.exists) {
+        setToast({ message: "Training code already existed", type: "error" });
+      }
+    } catch (e) {
+      console.warn("Check training code failed", e);
+    }
+  };
+
+  const handleEmployeeChange = async (idx, nik) => {
+    if (!nik) return;
+    
+    // Check if already in the list
+    const isDuplicate = participantRows.some((row, i) => i !== idx && row.employee === nik);
+    if (isDuplicate) {
+      setToast({ message: "Employee already added to this list", type: "error" });
+      const a = [...participantRows];
+      a[idx].employee = "";
+      setParticipantRows(a);
+      return;
+    }
+
+    if (!startDate || !endDate) {
+      const a = [...participantRows];
+      a[idx].employee = nik;
+      setParticipantRows(a);
+      return;
+    }
+
+    try {
+      const res = await api.get(`/api/check-participant-conflict/?nik=${nik}&start_date=${startDate}&end_date=${endDate}${editingId ? `&exclude_id=${editingId}` : ''}`);
+      if (res.data.conflict) {
+        setToast({ message: res.data.message, type: "error" });
+        const a = [...participantRows];
+        a[idx].employee = "";
+        setParticipantRows(a);
+      } else {
+        const a = [...participantRows];
+        a[idx].employee = nik;
+        setParticipantRows(a);
+      }
+    } catch (e) {
+      console.warn("Conflict check failed", e);
+      const a = [...participantRows];
+      a[idx].employee = nik;
+      setParticipantRows(a);
+    }
+  };
+
   // ================= UI FUNCTIONS =================
   const handleFilter = (e) => {
     e.preventDefault();
@@ -173,7 +225,7 @@ export default function TrainingMasterPage() {
   const handleSaveAll = async () => {
     try {
       if (!trainingCode || !courseCategory || !courseId || !pic || !vendorId) {
-        setToast({ message: "Mohon lengkapi semua field wajib!", type: "error" });
+        setToast({ message: "Please complete all required fields!", type: "error" });
         return;
       }
 
@@ -217,10 +269,10 @@ export default function TrainingMasterPage() {
 
       if (isEditMode) {
         await api.put(`/api/add-training/${editingId}/`, payload);
-        setToast({ message: "Training Update succesfully", type: "success" });
+        setToast({ message: "Training updated successfully", type: "success" });
       } else {
         await api.post("/api/add-training/", payload);
-        setToast({ message: "Training Added Succesfully", type: "success" });
+        setToast({ message: "Training added successfully", type: "success" });
       }
 
       setShowModal(false);
@@ -231,7 +283,7 @@ export default function TrainingMasterPage() {
       setEditingId(null);
     } catch (error) {
       console.error("Failed to save:", error.response?.data || error.message);
-      const errorMsg = error.response?.data?.error || error.response?.data?.message || "Training Added Unsuccesfully";
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || "Failed to add training";
       setToast({ message: errorMsg, type: "error" });
     }
   };
@@ -244,7 +296,7 @@ export default function TrainingMasterPage() {
   const handleConfirmDelete = async () => {
     try {
       await api.delete(`/api/add-training/${editingId}/`);
-      setToast({ message: "Training Deleted succesfully", type: "success" });
+      setToast({ message: "Training deleted successfully", type: "success" });
       setShowModal(false);
       setShowEventModal(false);
       setShowDeleteConfirm(false);
@@ -254,7 +306,7 @@ export default function TrainingMasterPage() {
       setEditingId(null);
     } catch (e) {
       console.error("Failed to delete:", e);
-      setToast({ message: "Training Deleted Unsuccesfully", type: "error" });
+      setToast({ message: "Failed to delete training", type: "error" });
       setShowDeleteConfirm(false);
     }
   };
@@ -1139,7 +1191,10 @@ export default function TrainingMasterPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Training Code</label>
-                <input type="text" value={trainingCode} style={{ color: '#000' }} onChange={(e) => setTrainingCode(e.target.value)} className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3]" placeholder="Enter training code e.g. LDPB1-26" />
+                <input type="text" value={trainingCode} style={{ color: '#000' }} 
+                  onChange={(e) => setTrainingCode(e.target.value)} 
+                  onBlur={(e) => checkTrainingCode(e.target.value)}
+                  className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3]" placeholder="Enter training code e.g. LDPB1-26" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
@@ -1378,7 +1433,7 @@ export default function TrainingMasterPage() {
                             <td className="p-2">
                               <select
                                 value={row.employee}
-                                onChange={(e) => { const a = [...participantRows]; a[idx].employee = e.target.value; setParticipantRows(a); }}
+                                onChange={(e) => handleEmployeeChange(idx, e.target.value)}
                                 className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
                               >
                                 <option value="" style={{ color: '#000' }}>Select Employee</option>

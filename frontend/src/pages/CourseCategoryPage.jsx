@@ -119,13 +119,13 @@ const CourseCategoryPage = () => {
             }
             setShowModal(false);
             setToast({
-                message: isEdit ? 'Course Category Update succesfully' : 'Course Category Added succesfully',
+                message: isEdit ? 'Course category updated successfully' : 'Course category added successfully',
                 type: 'success'
             });
             fetchCategories();
         } catch (err) {
             console.error('Save failed:', err);
-            setToast({ message: 'Course Category Added Unsuccesfully', type: 'error' });
+            setToast({ message: 'Failed to add course category', type: 'error' });
         } finally {
             setSaving(false);
         }
@@ -141,18 +141,18 @@ const CourseCategoryPage = () => {
             await api.delete(`/api/course-categories/${formData.course_category_id}/`);
             setShowModal(false);
             setShowDeleteConfirm(false);
-            setToast({ message: 'Course Category Deleted succesfully', type: 'success' });
+            setToast({ message: 'Course category deleted successfully', type: 'success' });
             fetchCategories();
         } catch (err) {
             console.error('Delete failed:', err);
-            setToast({ message: 'Course Category Deleted Unsuccesfully', type: 'error' });
+            setToast({ message: 'Failed to delete course category', type: 'error' });
             setShowDeleteConfirm(false);
         }
     };
 
     const handleExport = () => {
         if (!categories.length) {
-            alert('Tidak ada data untuk diekspor.');
+            alert('No data available to export.');
             return;
         }
         const exportData = categories.map(cat => ({

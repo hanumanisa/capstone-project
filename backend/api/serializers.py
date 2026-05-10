@@ -596,6 +596,36 @@ class EventParticipantSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['created_at']
 
+    def validate(self, data):
+        event = data.get('event')
+        nik = data.get('nik')
+        
+        if not event or not nik:
+            return data
+
+        # Get the dates of the current event
+        new_start = event.start_date
+        new_end = event.end_date
+        
+        # Check for overlapping events for this employee
+        # We use Q objects to check for overlap: (StartA <= EndB) and (EndA >= StartB)
+        conflicts = EventParticipant.objects.filter(
+            nik=nik,
+            event__start_date__lte=new_end,
+            event__end_date__gte=new_start
+        )
+        
+        if self.instance:
+            conflicts = conflicts.exclude(pk=self.instance.pk)
+            
+        if conflicts.exists():
+            conflict_event = conflicts.first().event
+            raise serializers.ValidationError(
+                f"Employee already registered for other training: {conflict_event.training_topic} ({conflict_event.start_date} to {conflict_event.end_date})"
+            )
+        
+        return data
+
 
 class EventCostSerializer(serializers.ModelSerializer):
     class Meta:

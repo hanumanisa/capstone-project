@@ -176,6 +176,7 @@ class DashboardAdminAPIView(APIView):
             "l2_score": f"{l2_score:.2f}",
             "tna_program_coverage": tna_program_coverage,
             "tna_learners_coverage": tna_learners_coverage,
+            "training_reach": f"{(total_employee_attended / total_employee_in_system * 100):.1f}%" if total_employee_in_system > 0 else "0%",
         }
 
         # CHARTS 
@@ -198,6 +199,7 @@ class DashboardAdminAPIView(APIView):
         totalTrainingMonthly = [0] * 12
         totalHoursMonthly = [0] * 12
         totalLearnersMonthly = [0] * 12
+        totalEmployeeMonthly = [0] * 12 # Unique employees per month
 
         for m in months:
             m_events = events_by_month.filter(month=m)
@@ -220,6 +222,7 @@ class DashboardAdminAPIView(APIView):
             totalTrainingMonthly[m-1] = m_events.count()
             totalHoursMonthly[m-1] = round(m_hours, 1)
             totalLearnersMonthly[m-1] = m_participants.count()
+            totalEmployeeMonthly[m-1] = m_employee_count
             
             # Monthly Budget Used (Paid)
             m_costs_paid = costs.filter(event_id__in=m_event_ids, cost_type='Actual Cost', status_cost__in=['Paid', 'Settled'])
@@ -236,6 +239,38 @@ class DashboardAdminAPIView(APIView):
                         dur = (sch.end_time.hour - sch.start_time.hour) + (sch.end_time.minute - sch.start_time.minute) / 60.0
                         type_h += dur * part_counts_dict.get(sch.event_id, 0)
                 type_hours[t_type][m-1] = type_h
+
+        # Calculate MoM Changes
+        from datetime import datetime
+        now = datetime.now()
+        if not year or year == str(now.year):
+            curr_idx = now.month - 1
+        else:
+            curr_idx = 11 # December for past years
+        
+        prev_idx = curr_idx - 1
+        
+        def calc_change(arr, c_idx, p_idx):
+            cv = arr[c_idx]
+            pv = arr[p_idx] if p_idx >= 0 else 0
+            if pv == 0:
+                return (f"{100}%" if cv > 0 else "0%"), True
+            change_val = ((cv - pv) / pv) * 100
+            return f"{abs(change_val):.1f}%", change_val >= 0
+
+        tr_change, tr_up = calc_change(totalTrainingMonthly, curr_idx, prev_idx)
+        hr_change, hr_up = calc_change(totalHoursMonthly, curr_idx, prev_idx)
+        ln_change, ln_up = calc_change(totalLearnersMonthly, curr_idx, prev_idx)
+        emp_change, emp_up = calc_change(totalEmployeeMonthly, curr_idx, prev_idx)
+        av_change, av_up = calc_change(averageHours, curr_idx, prev_idx)
+
+        stats.update({
+            "total_training_change": tr_change, "total_training_up": tr_up,
+            "total_hours_change": hr_change, "total_hours_up": hr_up,
+            "total_learners_change": ln_change, "total_learners_up": ln_up,
+            "total_employee_change": emp_change, "total_employee_up": emp_up,
+            "average_hours_change": av_change, "average_hours_up": av_up,
+        })
 
         charts = {
             "summaryCombined": {

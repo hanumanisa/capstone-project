@@ -369,7 +369,7 @@ export default function TrainingEvaluationPage() {
     const saveEvaluation = async () => {
         if (isSaving) return;
         if (!selectedTraining) {
-            alert('Silakan pilih training terlebih dahulu');
+            alert('Please select a training first');
             return;
         }
         const trainingIdx = allCards.findIndex(c => `${c.title} - ${c.trainingTitle}` === selectedTraining);

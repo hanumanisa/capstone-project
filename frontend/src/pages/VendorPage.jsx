@@ -125,13 +125,13 @@ const VendorPage = () => {
             }
             setShowModal(false);
             setToast({
-                message: isEdit ? 'Vendor Update succesfully' : 'Vendor Added succesfully',
+                message: isEdit ? 'Vendor updated successfully' : 'Vendor added successfully',
                 type: 'success'
             });
             fetchVendors();
         } catch (err) {
             console.error('Save failed:', err);
-            setToast({ message: 'Vendor Added Unsuccesfully', type: 'error' });
+            setToast({ message: 'Failed to add vendor', type: 'error' });
         } finally {
             setSaving(false);
         }
@@ -147,18 +147,18 @@ const VendorPage = () => {
             await api.delete(`/api/vendors/${formData.vendor_id}/`);
             setShowModal(false);
             setShowDeleteConfirm(false);
-            setToast({ message: 'Vendor Deleted succesfully', type: 'success' });
+            setToast({ message: 'Vendor deleted successfully', type: 'success' });
             fetchVendors();
         } catch (err) {
             console.error('Delete failed:', err);
-            setToast({ message: 'Vendor Deleted Unsuccesfully', type: 'error' });
+            setToast({ message: 'Failed to delete vendor', type: 'error' });
             setShowDeleteConfirm(false);
         }
     };
 
     const handleExport = () => {
         if (!vendors.length) {
-            alert('Tidak ada data untuk diekspor.');
+            alert('No data available to export.');
             return;
         }
         const exportData = vendors.map(v => ({

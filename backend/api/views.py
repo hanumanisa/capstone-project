@@ -466,6 +466,16 @@ class AddTrainingView(APIView):
                             if float(l2_val) > 4: l2_val = 4.0
                         except: pass
 
+                    # Check for conflicts
+                    conflicts = EventParticipant.objects.filter(
+                        nik_id=part.get('employee'),
+                        event__start_date__lte=event.end_date,
+                        event__end_date__gte=event.start_date
+                    )
+                    if conflicts.exists():
+                        conflict_event = conflicts.first().event
+                        raise Exception(f"Employee {part.get('employee')} already registered for other training: {conflict_event.training_topic}")
+
                     EventParticipant.objects.create(
                         event=event,
                         nik_id=part.get('employee'),
@@ -590,6 +600,17 @@ class AddTrainingView(APIView):
                         try:
                             if float(l2_val) > 4: l2_val = 4.0
                         except: pass
+
+                    # Check for conflicts
+                    conflicts = EventParticipant.objects.filter(
+                        nik_id=part.get('employee'),
+                        event__start_date__lte=event.end_date,
+                        event__end_date__gte=event.start_date
+                    ).exclude(event=event)
+                    
+                    if conflicts.exists():
+                        conflict_event = conflicts.first().event
+                        raise Exception(f"Employee {part.get('employee')} already registered for other training: {conflict_event.training_topic}")
 
                     EventParticipant.objects.create(
                         event=event,
@@ -1485,4 +1506,47 @@ class ExportReportView(APIView):
             'realisasi_training': data_slide1,
             'total_employees': total_employees
         })
+
+class CheckTrainingCodeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        code = request.query_params.get('code')
+        exclude_id = request.query_params.get('exclude_id')
+        if not code:
+            return Response({"exists": False})
+        
+        qs = TrainingMaster.objects.filter(training_code=code)
+        if exclude_id:
+            qs = qs.exclude(training_id=exclude_id)
+            
+        return Response({"exists": qs.exists()})
+
+class CheckParticipantConflictView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        nik = request.query_params.get('nik')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        exclude_id = request.query_params.get('exclude_id') # training_id to exclude current latest event
+
+        if not nik or not start_date or not end_date:
+            return Response({"conflict": False})
+
+        conflicts = EventParticipant.objects.filter(
+            nik_id=nik,
+            event__start_date__lte=end_date,
+            event__end_date__gte=start_date
+        )
+        
+        if exclude_id:
+            conflicts = conflicts.exclude(event__training_id=exclude_id)
+
+        if conflicts.exists():
+            conflict_event = conflicts.first().event
+            return Response({
+                "conflict": True,
+                "message": f"Employee already registered for other training: {conflict_event.training_topic} ({conflict_event.start_date} to {conflict_event.end_date})"
+            })
+        
+        return Response({"conflict": False})
 

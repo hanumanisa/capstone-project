@@ -10,7 +10,7 @@ from .views import (
     TrainingMasterViewSet, TrainingEventViewSet, EventLocationViewSet,
     EventScheduleViewSet, EventParticipantViewSet, EventCostViewSet,
     EventDocumentViewSet, AddTrainingView, DivisionViewSet, ExportReportView,
-    BudgetViewSet
+    BudgetViewSet, CheckTrainingCodeView, CheckParticipantConflictView
 )
 from .dashboard_views import DashboardCardsAPIView
 from .dashboard_admin_views import DashboardAdminAPIView
@@ -68,5 +68,7 @@ urlpatterns = [
     path('dashboard/admin/', DashboardAdminAPIView.as_view(), name='dashboard-admin'),
 
     
+    path('check-training-code/', CheckTrainingCodeView.as_view(), name='check-training-code'),
+    path('check-participant-conflict/', CheckParticipantConflictView.as_view(), name='check-participant-conflict'),
     path('', include(router.urls)),
 ]

@@ -133,13 +133,13 @@ const CoursePage = () => {
             }
             setShowModal(false);
             setToast({
-                message: isEdit ? 'Course Update succesfully' : 'Course Added succesfully',
+                message: isEdit ? 'Course updated successfully' : 'Course added successfully',
                 type: 'success'
             });
             fetchCourses();
         } catch (err) {
             console.error('Save failed:', err);
-            setToast({ message: 'Course Added Unsuccesfully', type: 'error' });
+            setToast({ message: 'Failed to add course', type: 'error' });
         } finally {
             setSaving(false);
         }
@@ -155,18 +155,18 @@ const CoursePage = () => {
             await api.delete(`/api/courses/${formData.course_id}/`);
             setShowModal(false);
             setShowDeleteConfirm(false);
-            setToast({ message: 'Course Deleted succesfully', type: 'success' });
+            setToast({ message: 'Course deleted successfully', type: 'success' });
             fetchCourses();
         } catch (err) {
             console.error('Delete failed:', err);
-            setToast({ message: 'Course Deleted Unsuccesfully', type: 'error' });
+            setToast({ message: 'Failed to delete course', type: 'error' });
             setShowDeleteConfirm(false);
         }
     };
 
     const handleExport = () => {
         if (!courses.length) {
-            alert('Tidak ada data untuk diekspor.');
+            alert('No data available to export.');
             return;
         }
         const exportData = courses.map(course => ({

@@ -90,8 +90,8 @@ export default function TrainingEvaluationEmployeePage() {
         if (isLocked(card)) {
             setAlertModal({
                 show: true,
-                title: 'Akses Ditolak',
-                message: 'Tidak bisa di akses karena sudah melebihi batas waktu pengisian.'
+                title: 'Access Denied',
+                message: 'Cannot access because the fill time limit has been exceeded.'
             });
             return;
         }
@@ -183,8 +183,8 @@ export default function TrainingEvaluationEmployeePage() {
         } catch (err) {
             setAlertModal({
                 show: true,
-                title: 'Gagal',
-                message: 'Gagal mengirim jawaban. Silakan coba lagi atau hubungi administrator.'
+                title: 'Failed',
+                message: 'Failed to submit answers. Please try again or contact the administrator.'
             });
             console.error(err);
         }
@@ -243,7 +243,7 @@ export default function TrainingEvaluationEmployeePage() {
                         <select
                             value={selectedMainTemplate}
                             onChange={e => setSelectedMainTemplate(e.target.value)}
-                            className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] focus:border-transparent appearance-none bg-no-repeat bg-right-4"
+                            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4 transition-all"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
                                 backgroundSize: '20px 20px',
@@ -416,7 +416,7 @@ export default function TrainingEvaluationEmployeePage() {
                                         {selectedCard.score >= 3.5 ? 'Very Satisfied' : selectedCard.score >= 2.5 ? 'Satisfied' : 'Needs Improvement'}
                                     </div>
                                     <p className="text-xs text-gray-400 mt-2">
-                                        Dikirim: <span className="font-semibold">{selectedCard.submittedAt}</span>
+                                        Submitted: <span className="font-semibold">{selectedCard.submittedAt}</span>
                                     </p>
                                 </div>
                             ) : !selectedCard.hasQuestions ? (

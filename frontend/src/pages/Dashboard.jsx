@@ -125,19 +125,19 @@ const Dashboard = () => {
         { title: 'TNA Program Coverage', val: cardData.stats.tna_coverage, icon: ClipboardCheck, bgIcon: '#3B82F6' }
     ] : []) : adminData ? [
         // Column 1
-        { title: 'Total Training', val: adminData.stats.total_training, change: '16%', up: true, icon: BookOpen, bgIcon: '#F59E0B' },
+        { title: 'Total Training', val: adminData.stats.total_training, change: adminData.stats.total_training_change, up: adminData.stats.total_training_up, icon: BookOpen, bgIcon: '#F59E0B' },
         { title: 'E-Learning', val: adminData.stats.e_learning, icon: MonitorPlay, bgIcon: '#8B5CF6' },
         // Column 2
-        { title: 'Total Hours', val: adminData.stats.total_hours, change: '16%', up: false, icon: Clock, bgIcon: '#10B981' },
+        { title: 'Total Hours', val: adminData.stats.total_hours, change: adminData.stats.total_hours_change, up: adminData.stats.total_hours_up, icon: Clock, bgIcon: '#10B981' },
         { title: 'Soft Skill', val: adminData.stats.soft_skill, icon: Brain, bgIcon: '#EC4899' },
         // Column 3
-        { title: 'Total Learners', val: adminData.stats.total_learners, change: '16%', up: true, icon: Users, bgIcon: '#FBBF24' },
+        { title: 'Total Learners', val: adminData.stats.total_learners, change: adminData.stats.total_learners_change, up: adminData.stats.total_learners_up, icon: Users, bgIcon: '#FBBF24' },
         { title: 'Hard Skill', val: adminData.stats.hard_skill, icon: Settings, bgIcon: '#06B6D4' },
         // Column 4
-        { title: 'Total Employee', val: adminData.stats.total_employee, change: '16%', up: false, icon: Users, bgIcon: '#06B6D4' },
+        { title: 'Total Employee', val: adminData.stats.total_employee, change: adminData.stats.total_employee_change, up: adminData.stats.total_employee_up, icon: Users, bgIcon: '#06B6D4' },
         { title: 'ESG', val: adminData.stats.esg, icon: Leaf, bgIcon: '#10B981' },
         // Column 5
-        { title: 'Average Hours', val: adminData.stats.average_hours, change: '16%', up: true, icon: Hourglass, bgIcon: '#8B5CF6' },
+        { title: 'Average Hours', val: adminData.stats.average_hours, change: adminData.stats.average_hours_change, up: adminData.stats.average_hours_up, icon: Hourglass, bgIcon: '#8B5CF6' },
         { title: 'Training Evaluation L1', val: adminData.stats.l1_score, icon: Star, bgIcon: '#FBBF24' },
         // Column 6
         { title: 'Budget Used', val: adminData.stats.budget_used, sub: `${adminData.stats.budget_remaining} Remaining`, icon: CircleDollarSign, bgIcon: '#EF4444' },
@@ -150,7 +150,7 @@ const Dashboard = () => {
         { title: 'TNA Program Coverage', val: adminData.stats.tna_program_coverage, icon: ClipboardCheck, bgIcon: '#3B82F6' },
         // Column 9
         { title: 'Public Training', val: adminData.stats.public_training, icon: TrendingUp, bgIcon: '#10B981' },
-        { title: 'Coming Soon', val: '-', icon: HelpCircle, bgIcon: '#D1D5DB' }
+        { title: 'Employee Training Reach', val: adminData.stats.training_reach, icon: UserCheck, bgIcon: '#3B82F6' }
     ] : [];
 
     const chartLabels = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -428,11 +428,14 @@ const Dashboard = () => {
                     .scrollbar-hide::-webkit-scrollbar { display: none; }
                     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
                 `}} />
-                <div className={`grid ${isRestrictedRole ? 'grid-rows-1' : 'grid-rows-2'} grid-flow-col gap-5 w-max`}>
+                <div className={isRestrictedRole 
+                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 w-full" 
+                    : "grid grid-rows-2 grid-flow-col gap-5 w-max mx-auto"
+                }>
                     {stats.map((item, idx) => (
                         <div
                             key={idx}
-                            className="w-[210px] h-[140px] bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-default relative overflow-hidden"
+                            className={`${isRestrictedRole ? 'w-full' : 'w-[210px]'} h-[140px] bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-default relative overflow-hidden`}
                         >
                             {/* Subtle Background Accent */}
                             <div

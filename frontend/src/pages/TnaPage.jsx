@@ -94,7 +94,7 @@ const TnaPage = () => {
 
     const handleExport = () => {
         if (!participants.length) {
-            alert('Tidak ada data untuk diekspor.');
+            alert('No data available to export.');
             return;
         }
         const exportData = participants.map(item => ({

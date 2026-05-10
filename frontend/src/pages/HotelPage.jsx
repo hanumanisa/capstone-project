@@ -127,13 +127,13 @@ const HotelPage = () => {
             }
             setShowModal(false);
             setToast({
-                message: isEdit ? 'Hotel Update succesfully' : 'Hotel Added succesfully',
+                message: isEdit ? 'Hotel updated successfully' : 'Hotel added successfully',
                 type: 'success'
             });
             fetchHotels();
         } catch (err) {
             console.error('Save failed:', err);
-            setToast({ message: 'Hotel Added Unsuccesfully', type: 'error' });
+            setToast({ message: 'Failed to add hotel', type: 'error' });
         } finally {
             setSaving(false);
         }
@@ -149,18 +149,18 @@ const HotelPage = () => {
             await api.delete(`/api/hotels/${formData.hotel_id}/`);
             setShowModal(false);
             setShowDeleteConfirm(false);
-            setToast({ message: 'Hotel Deleted succesfully', type: 'success' });
+            setToast({ message: 'Hotel deleted successfully', type: 'success' });
             fetchHotels();
         } catch (err) {
             console.error('Delete failed:', err);
-            setToast({ message: 'Hotel Deleted Unsuccesfully', type: 'error' });
+            setToast({ message: 'Failed to delete hotel', type: 'error' });
             setShowDeleteConfirm(false);
         }
     };
 
     const handleExport = () => {
         if (!hotels.length) {
-            alert('Tidak ada data untuk diekspor.');
+            alert('No data available to export.');
             return;
         }
         const exportData = hotels.map(h => ({

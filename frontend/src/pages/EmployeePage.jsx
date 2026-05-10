@@ -55,7 +55,7 @@ const EmployeePage = () => {
             const dataToExport = res.data;
 
             if (!dataToExport.length) {
-                alert('Tidak ada data untuk diekspor.');
+                alert('No data available to export.');
                 return;
             }
             const exportData = dataToExport.map(emp => ({
@@ -106,7 +106,7 @@ const EmployeePage = () => {
             const dataToExport = res.data;
 
             if (!dataToExport.length) {
-                alert('Tidak ada data untuk diekspor.');
+                alert('No data available to export.');
                 return;
             }
 
