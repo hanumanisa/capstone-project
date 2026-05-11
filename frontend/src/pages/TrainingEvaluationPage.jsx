@@ -4,6 +4,7 @@ import MainLayout from '../components/MainLayout';
 import { getUserFromToken } from '../utils/auth';
 import api from '../api/axios';
 import ConfirmModal from '../components/ConfirmModal';
+import YearPicker from '../components/YearPicker';
 import './TrainingEvaluationPage.css';
 
 /**
@@ -38,7 +39,7 @@ export default function TrainingEvaluationPage() {
     // --- Filter & Pagination State ---
     const [selectedMainTemplate, setSelectedMainTemplate] = useState('All_Templates');
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeYear, setActiveYear] = useState('2026');
+    const [activeYear, setActiveYear] = useState(new Date().getFullYear().toString());
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
 
@@ -65,9 +66,10 @@ export default function TrainingEvaluationPage() {
     /** Fetches Training Master data for dropdowns */
     const loadTrainingMasters = async () => {
         try {
-            const res = await api.get('/api/training-master/');
+            const res = await api.get(`/api/training-master/?year=${activeYear}`);
             const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
-            setTrainingMasters(data);
+            const sortedData = data.sort((a, b) => (a.training_title || "").localeCompare(b.training_title || ""));
+            setTrainingMasters(sortedData);
         } catch (err) {
             console.error("Failed to fetch trainings", err);
         }
@@ -77,11 +79,11 @@ export default function TrainingEvaluationPage() {
     const loadForms = async () => {
         setLoading(true);
         try {
-            const res = await api.get('/api/evaluation-forms/');
+            const res = await api.get(`/api/evaluation-forms/?year=${activeYear}`);
             const data = Array.isArray(res.data) ? res.data : [];
             const mapping = data.map(item => {
                 const isL2 = item.form_type === 'L2' || (item.form_name && item.form_name.includes('[L2]'));
-                const year = item.created_at ? new Date(item.created_at).getFullYear().toString() : '2026';
+                const year = item.created_at ? new Date(item.created_at).getFullYear().toString() : activeYear;
 
                 const card = {
                     id: item.form_id,
@@ -161,7 +163,8 @@ export default function TrainingEvaluationPage() {
 
     const filteredTrainings = useMemo(() => {
         const type = isL2 ? 'L2' : 'L1';
-        return allCards.filter(c => c.type === type && c.year === activeYear);
+        return allCards.filter(c => c.type === type && c.year === activeYear)
+            .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
     }, [allCards, isL2, activeYear]);
 
     const filteredTrainingOptions = useMemo(() => {
@@ -527,10 +530,7 @@ export default function TrainingEvaluationPage() {
                     </div>
 
                     <div className="flex-1 flex flex-col sm:flex-row items-center justify-end gap-6">
-                        <div className="font-bold flex space-x-4 text-sm">
-                            <button onClick={() => setActiveYear('2026')} className={activeYear === '2026' ? 'text-[#2174C3] cursor-pointer' : 'text-gray-300 cursor-pointer hover:text-gray-500 transition-colors'}>2026</button>
-                            <button onClick={() => setActiveYear('2025')} className={activeYear === '2025' ? 'text-[#2174C3] cursor-pointer' : 'text-gray-300 cursor-pointer hover:text-gray-500 transition-colors'}>2025</button>
-                        </div>
+                        <YearPicker selectedYear={activeYear} onYearChange={(y) => setActiveYear(y)} />
                         <div className="flex gap-2">
                             {canEdit && (
                                 <>
@@ -577,8 +577,7 @@ export default function TrainingEvaluationPage() {
                     {paginatedCards.length === 0 ? (
                         <div className="col-span-5 py-16 flex flex-col items-center text-gray-400">
                             <svg className="w-12 h-12 mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            <p className="text-sm font-medium">No templates found</p>
-                            <p className="text-xs mt-1">Try changing the filter or search keyword</p>
+                            <p className="text-sm font-medium">No data available</p>
                         </div>
                     ) : (
                         paginatedCards.map((card, i) => (
@@ -1086,3 +1085,4 @@ function CardItem({ card, canEdit, onClick, onDelete }) {
         </div>
     );
 }
+

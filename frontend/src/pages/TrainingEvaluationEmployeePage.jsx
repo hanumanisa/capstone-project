@@ -3,6 +3,8 @@ import { Navigate, Link, useLocation } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import { getUserFromToken } from '../utils/auth';
 import api from '../api/axios';
+import YearPicker from '../components/YearPicker';
+
 import './TrainingEvaluationPage.css';
 
 export default function TrainingEvaluationEmployeePage() {
@@ -24,17 +26,17 @@ export default function TrainingEvaluationEmployeePage() {
 
     const [selectedMainTemplate, setSelectedMainTemplate] = useState('All_Templates');
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeYear, setActiveYear] = useState('2026');
+    const [activeYear, setActiveYear] = useState(new Date().getFullYear().toString());
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
 
     useEffect(() => {
         loadEvaluations();
-    }, []);
+    }, [activeYear]);
 
     const loadEvaluations = async () => {
         try {
-            const res = await api.get('/api/evaluation-forms/my_evaluations/');
+            const res = await api.get(`/api/evaluation-forms/my_evaluations/?year=${activeYear}`);
             const mapped = (res.data || []).map(item => {
                 // Backend already provides 'type' (L1 or L2) and 'title' (cleaned form_name)
                 const isL2 = item.type === 'L2';
@@ -43,7 +45,7 @@ export default function TrainingEvaluationEmployeePage() {
                     // 'title' is already provided by backend, fallback in case
                     title: item.title || (item.form_name || '').replace('[L1] ', '').replace('[L2] ', ''),
                     type: isL2 ? 'L2' : 'L1',
-                    year: item.year ? String(item.year) : (item.created_at ? new Date(item.created_at).getFullYear().toString() : '2026'),
+                    year: item.year ? String(item.year) : activeYear,
                     questions: (item.questions || []).map(q => ({
                         id: q.id || q.question_id,
                         q: q.q || q.question_text,
@@ -242,8 +244,8 @@ export default function TrainingEvaluationEmployeePage() {
                     <div className="relative w-full sm:w-48">
                         <select
                             value={selectedMainTemplate}
-                            onChange={e => setSelectedMainTemplate(e.target.value)}
-                            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4 transition-all"
+                            onChange={(e) => setSelectedMainTemplate(e.target.value)}
+                            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
                                 backgroundSize: '20px 20px',
@@ -257,10 +259,7 @@ export default function TrainingEvaluationEmployeePage() {
                     </div>
 
                     <div className="flex-1 flex flex-col sm:flex-row items-center justify-end gap-6">
-                        <div className="font-bold flex space-x-4 text-sm">
-                            <button onClick={() => setActiveYear('2026')} className={activeYear === '2026' ? 'text-[#2174C3] cursor-pointer' : 'text-gray-300 cursor-pointer hover:text-gray-500 transition-colors'}>2026</button>
-                            <button onClick={() => setActiveYear('2025')} className={activeYear === '2025' ? 'text-[#2174C3] cursor-pointer' : 'text-gray-300 cursor-pointer hover:text-gray-500 transition-colors'}>2025</button>
-                        </div>
+                        <YearPicker selectedYear={activeYear} onYearChange={(y) => setActiveYear(y)} />
                     </div>
                 </div>
 
@@ -296,7 +295,7 @@ export default function TrainingEvaluationEmployeePage() {
                     {paginatedCards.length === 0 ? (
                         <div className="col-span-5 py-16 flex flex-col items-center text-gray-400">
                             <svg className="w-12 h-12 mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            <p className="text-sm font-medium">No evaluations found</p>
+                            <p className="text-sm font-medium">No data available</p>
                         </div>
                     ) : (
                         paginatedCards.map((card, i) => (

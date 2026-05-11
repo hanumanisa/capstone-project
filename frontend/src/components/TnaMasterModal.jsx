@@ -9,7 +9,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
     const [categories, setCategories] = useState([]);
     const [courses, setCourses] = useState([]);
     const [employees, setEmployees] = useState([]);
-    
+
     const [formData, setFormData] = useState({
         tna_id: '',
         tna_period: '',
@@ -18,7 +18,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
         group_name: 1,
         created_by: '',
     });
-    
+
     const [participants, setParticipants] = useState([{ nik: '' }]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -71,7 +71,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                     // Fetch Master Data
                     const resMaster = await api.get(`/api/tna-master/${tnaRecord.tna_id}/`);
                     const master = resMaster.data;
-                    
+
                     setFormData({
                         tna_id: master.tna_id || '',
                         tna_period: master.tna_period || '',
@@ -134,7 +134,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                     group_name: matchedTna.group_name,
                     created_by: matchedTna.created_by
                 });
-                
+
                 const resPart = await api.get('/api/tna-participant/', {
                     params: { tna_id: matchedTna.tna_id }
                 });
@@ -178,7 +178,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
             setToast({ message: 'Created By is required', type: 'error' });
             return;
         }
-        
+
         setSaving(true);
         try {
             let masterExists = false;
@@ -194,7 +194,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
             } else {
                 await api.post('/api/tna-master/', formData);
             }
-            
+
             const currentRes = await api.get(`/api/tna-participant/?tna_id=${formData.tna_id}`);
             for (const p of currentRes.data) {
                 await api.delete(`/api/tna-participant/${p.tna_participant_id}/`);
@@ -210,9 +210,9 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
             }
 
             const isUpdate = !!tnaRecord?.tna_id;
-            setToast({ 
-                message: isUpdate ? 'TNA Update succesfully' : 'TNA Added succesfully', 
-                type: 'success' 
+            setToast({
+                message: isUpdate ? 'TNA Update succesfully' : 'TNA Added succesfully',
+                type: 'success'
             });
             onSave();
             onClose();
@@ -284,9 +284,9 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                         </div>
                         <div className="flex bg-white items-start">
                             <div className="w-[20%] p-4 border-r border-gray-50">
-                                <select 
+                                <select
                                     value={formData.tna_period}
-                                    onChange={(e) => setFormData({...formData, tna_period: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, tna_period: e.target.value })}
                                     className="w-full border-none rounded-lg p-3 bg-gray-100 focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black outline-none"
                                 >
                                     <option value="">Select Period</option>
@@ -296,9 +296,9 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                 </select>
                             </div>
                             <div className="w-[20%] p-4 border-r border-gray-50">
-                                <select 
+                                <select
                                     value={formData.course_category}
-                                    onChange={(e) => setFormData({...formData, course_category: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, course_category: e.target.value })}
                                     className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
                                 >
                                     <option value="">Select Category</option>
@@ -308,9 +308,9 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                 </select>
                             </div>
                             <div className="w-[25%] p-4 border-r border-gray-50">
-                                <select 
+                                <select
                                     value={formData.course}
-                                    onChange={(e) => setFormData({...formData, course: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
                                     className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
                                 >
                                     <option value="">Select Course</option>
@@ -324,27 +324,27 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                 </select>
                             </div>
                             <div className="w-[10%] p-4 border-r border-gray-50">
-                                <select 
+                                <select
                                     value={formData.group_name}
                                     onChange={(e) => handleGroupSwitch(parseInt(e.target.value))}
                                     className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black text-center"
                                 >
-                                    {[1,2,3,4,5,6].map(v => (
+                                    {[1, 2, 3, 4, 5, 6].map(v => (
                                         <option key={v} value={v}>{v}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="w-[15%] p-4 border-r border-gray-50">
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     placeholder="e.g. AI26CH26"
                                     value={formData.tna_id}
-                                    onChange={(e) => setFormData({...formData, tna_id: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, tna_id: e.target.value })}
                                     className="w-full border-none rounded-lg p-3 bg-gray-200 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black font-bold"
                                 />
                             </div>
                             <div className="w-[10%] p-4 flex justify-center">
-                                <button 
+                                <button
                                     onClick={handleAddParticipant}
                                     className="bg-blue-50 hover:bg-[#2174C3] text-[#2174C3] hover:text-white w-10 h-10 rounded-xl font-bold transition-all flex items-center justify-center border border-blue-100 shadow-sm cursor-pointer"
                                 >
@@ -364,7 +364,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                             {participants.map((participant, idx) => (
                                 <div key={idx} className="flex bg-white items-center border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-all">
                                     <div className="w-[50%] p-4 border-r border-gray-50">
-                                        <select 
+                                        <select
                                             value={participant.nik}
                                             onChange={(e) => handleParticipantChange(idx, e.target.value)}
                                             className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
@@ -379,9 +379,9 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                     </div>
                                     <div className="w-[40%] p-4 border-r border-gray-50">
                                         {idx === 0 ? (
-                                            <select 
+                                            <select
                                                 value={formData.created_by}
-                                                onChange={(e) => setFormData({...formData, created_by: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, created_by: e.target.value })}
                                                 className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
                                             >
                                                 <option value="">Select Creator</option>
@@ -394,7 +394,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                         )}
                                     </div>
                                     <div className="w-[10%] p-4 flex justify-center">
-                                        <button 
+                                        <button
                                             onClick={() => handleRemoveParticipant(idx)}
                                             disabled={participants.length === 1}
                                             className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white w-9 h-9 flex items-center justify-center rounded-xl transition-all disabled:opacity-30 border border-red-50 cursor-pointer"
@@ -410,20 +410,20 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
 
                 <div className="bg-gray-50/80 px-10 py-6 flex justify-end items-center border-t border-gray-100 space-x-2 shrink-0">
                     {isAdmin && formData.tna_id && (
-                        <button 
+                        <button
                             onClick={handleDeleteClick}
                             className="bg-[#F15E5E] hover:bg-[#D32F2F] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer"
                         >
                             Delete
                         </button>
                     )}
-                    <button 
+                    <button
                         onClick={onClose}
                         className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer"
                     >
                         Cancel
                     </button>
-                    <button 
+                    <button
                         onClick={handleSave}
                         disabled={saving}
                         className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer disabled:opacity-50"
@@ -432,7 +432,8 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                     </button>
                 </div>
 
-                <style dangerouslySetInnerHTML={{ __html: `
+                <style dangerouslySetInnerHTML={{
+                    __html: `
                     .custom-scrollbar::-webkit-scrollbar {
                         width: 4px;
                         height: 4px;

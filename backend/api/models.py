@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from django.db import models
 from django.conf import settings
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User, Group
 
@@ -83,25 +83,31 @@ class Employee(models.Model):
         self._prefetched_events = events
         return events
 
-    @property
-    def completed_events(self):
-        return [
+    def get_completed_events(self, year=None):
+        events = [
             ep for ep in self.attended_events
             if ep.event.status.lower() != 'cancelled' and ep.attendance_status != 'Absent'
         ]
+        if year:
+            try:
+                y = int(year)
+                events = [ep for ep in events if ep.event.start_date and ep.event.start_date.year == y]
+            except (ValueError, TypeError):
+                pass
+        return events
 
     @property
-    def training_stats(self):
-        if hasattr(self, '_training_stats'):
-            return self._training_stats
-        
+    def completed_events(self):
+        return self.get_completed_events()
+
+    def get_training_stats(self, year=None):
         stats = {
             'inhouse_count': 0, 'public_count': 0, 'ks_count': 0, 'elearning_count': 0,
             'inhouse_hours': 0, 'public_hours': 0, 'ks_hours': 0, 'elearning_hours': 0,
             'total_hours': 0
         }
         
-        events = self.completed_events
+        events = self.get_completed_events(year)
         for ep in events:
             tt = (ep.event.training.training_type or '').strip()
             
@@ -128,27 +134,44 @@ class Employee(models.Model):
             
             stats['total_hours'] += event_hours
             
-        self._training_stats = stats
         return stats
 
     @property
-    def iht_plus_public(self):
-        stats = self.training_stats
+    def training_stats(self):
+        return self.get_training_stats()
+
+    def get_iht_plus_public(self, year=None):
+        stats = self.get_training_stats(year)
         return stats['inhouse_count'] + stats['public_count']
 
     @property
-    def tna_fulfilled(self):
-        tna_list = self.tnaparticipant_set.all()
+    def iht_plus_public(self):
+        return self.get_iht_plus_public()
+
+    def get_tna_fulfilled(self, year=None):
+        tna_qs = self.tnaparticipant_set.all()
+        if year:
+            try:
+                y = int(year)
+                tna_qs = tna_qs.filter(tna__tna_period__year=y)
+            except (ValueError, TypeError):
+                pass
+        
+        tna_list = list(tna_qs)
         if not tna_list:
             return 0
             
-        events = self.completed_events
+        events = self.get_completed_events(year)
         attended_course_ids = set(ep.event.training.course_id for ep in events)
         fulfilled_count = 0
         for tp in tna_list:
             if tp.tna.course_id in attended_course_ids:
                 fulfilled_count += 1
         return fulfilled_count
+
+    @property
+    def tna_fulfilled(self):
+        return self.get_tna_fulfilled()
 
     @property
     def attendance(self):
@@ -525,6 +548,36 @@ class EventParticipant(models.Model):
     class Meta:
         db_table = 'event_participants'
         unique_together = ('event', 'nik')
+
+@receiver(post_delete, sender=EventParticipant)
+def cleanup_evaluation_results(sender, instance, **kwargs):
+    """
+    If a participant is removed from an event, 
+    their evaluation results for that training should also be removed.
+    """
+    try:
+        employee = instance.nik
+        training = instance.event.training
+        
+        # Find the User associated with this Employee (via Profile)
+        profile = Profile.objects.filter(employee=employee).first()
+        if not profile or not profile.user:
+            return
+            
+        user = profile.user
+        
+        # Find all forms related to this training
+        # We use training_master_id because form.training_master is a ForeignKey
+        form_ids = EvaluationForm.objects.filter(training_master=training).values_list('form_id', flat=True)
+        
+        if form_ids:
+            # Delete detailed answers
+            EvaluationAnswer.objects.filter(user=user, form_id__in=form_ids).delete()
+            # Delete summary results
+            EvaluationResult.objects.filter(user=user, form_id__in=form_ids).delete()
+            
+    except Exception as e:
+        print(f"Error cleaning up evaluation results: {e}")
 
 
 class EventCost(models.Model):

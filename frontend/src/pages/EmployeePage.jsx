@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import MainLayout from '../components/MainLayout';
 import api from '../api/axios';
 import * as XLSX from 'xlsx';
+import YearPicker from '../components/YearPicker';
+
 
 const ITEMS_PER_PAGE = 50;
 
@@ -11,6 +13,7 @@ const EmployeePage = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDivision, setSelectedDivision] = useState('All Division');
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
@@ -27,7 +30,7 @@ const EmployeePage = () => {
         setLoading(true);
         try {
             const [empRes, divRes] = await Promise.all([
-                api.get(`/api/employee/?page=${currentPage}&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}`),
+                api.get(`/api/employee/?page=${currentPage}&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}&year=${selectedYear}`),
                 api.get('/api/divisions/')
             ]);
 
@@ -46,12 +49,12 @@ const EmployeePage = () => {
         } finally {
             setLoading(false);
         }
-    }, [currentPage, searchTerm, selectedDivision]);
+    }, [currentPage, searchTerm, selectedDivision, selectedYear]);
 
     const handleExport = async () => {
         setExporting(true);
         try {
-            const res = await api.get(`/api/employee/?nopage=true&report=true&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}`);
+            const res = await api.get(`/api/employee/?nopage=true&report=true&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}&year=${selectedYear}`);
             const dataToExport = res.data;
 
             if (!dataToExport.length) {
@@ -102,7 +105,7 @@ const EmployeePage = () => {
     const handleDivisionExport = async () => {
         setExporting(true);
         try {
-            const res = await api.get(`/api/employee/?nopage=true&report=true&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}`);
+            const res = await api.get(`/api/employee/?nopage=true&report=true&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}&year=${selectedYear}`);
             const dataToExport = res.data;
 
             if (!dataToExport.length) {
@@ -203,33 +206,36 @@ const EmployeePage = () => {
                     <select
                         value={selectedDivision}
                         onChange={(e) => { setSelectedDivision(e.target.value); setCurrentPage(1); }}
-                        className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                        className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
                         style={{
                             backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
                             backgroundSize: '20px 20px',
                             backgroundPosition: 'right 12px center'
                         }}
                     >
-                        <option>All Division</option>
-                        {divisions.map(div => (
-                            <option key={div.division_id} value={div.division_name}>{div.division_name}</option>
+                        <option value="All Division">All Division</option>
+                        {divisions.map((div, i) => (
+                            <option key={i} value={div.division_name}>{div.division_name}</option>
                         ))}
                     </select>
                 </div>
 
-                <div className="flex-1 flex justify-end gap-2">
-                    <button
-                        onClick={handleExport}
-                        className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer whitespace-nowrap"
-                    >
-                        Employee Report
-                    </button>
-                    <button
-                        onClick={handleDivisionExport}
-                        className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer whitespace-nowrap"
-                    >
-                        Division Report
-                    </button>
+                <div className="flex-1 flex items-center justify-end gap-6">
+                    <YearPicker selectedYear={selectedYear} onYearChange={(y) => { setSelectedYear(y); setCurrentPage(1); }} />
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleExport}
+                            className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer whitespace-nowrap"
+                        >
+                            Employee Report
+                        </button>
+                        <button
+                            onClick={handleDivisionExport}
+                            className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer whitespace-nowrap"
+                        >
+                            Division Report
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -265,7 +271,7 @@ const EmployeePage = () => {
                             {loading ? (
                                 <tr><td colSpan="19" className="px-6 py-12 text-center text-gray-400">Loading...</td></tr>
                             ) : paginatedData.length === 0 ? (
-                                <tr><td colSpan="19" className="px-6 py-12 text-center text-gray-400">No employees found.</td></tr>
+                                <tr><td colSpan="19" className="px-6 py-12 text-center text-gray-400 font-medium">No data available</td></tr>
                             ) : (
                                 paginatedData.map((item) => (
                                     <tr key={item.nik} className="hover:bg-blue-50/30 transition-colors">

@@ -33,6 +33,8 @@ import {
     ClipboardCheck,
     HelpCircle
 } from 'lucide-react';
+import YearPicker from '../components/YearPicker';
+
 
 // Register ChartJS modules
 ChartJS.register(
@@ -62,7 +64,7 @@ const Dashboard = () => {
     const [search, setSearch] = useState("");
     const [division, setDivision] = useState("");
     const [course, setCourse] = useState("");
-    const [year, setYear] = useState("2026");
+    const [year, setYear] = useState(new Date().getFullYear().toString());
 
     const [divisionsList, setDivisionsList] = useState([]);
     const [coursesList, setCoursesList] = useState([]);
@@ -153,7 +155,7 @@ const Dashboard = () => {
         { title: 'Employee Training Reach', val: adminData.stats.training_reach, icon: UserCheck, bgIcon: '#3B82F6' }
     ] : [];
 
-    const chartLabels = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const chartLabels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
     // Shared options for bar charts
     const commonBarOptions = {
@@ -371,14 +373,14 @@ const Dashboard = () => {
                         <select
                             value={division}
                             onChange={(e) => setDivision(e.target.value)}
-                            className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4 transition-all"
+                            className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4 outline-none"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
                                 backgroundSize: '20px 20px',
                                 backgroundPosition: 'right 12px center'
                             }}
                         >
-                            <option value="All Division">All Division</option>
+                            <option value="">All Division</option>
                             {divisionsList.map((d, i) => (
                                 <option key={i} value={d.division_name}>{d.division_name}</option>
                             ))}
@@ -390,14 +392,14 @@ const Dashboard = () => {
                     <select
                         value={course}
                         onChange={(e) => setCourse(e.target.value)}
-                        className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4 transition-all"
+                        className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4 outline-none"
                         style={{
                             backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
                             backgroundSize: '20px 20px',
                             backgroundPosition: 'right 12px center'
                         }}
                     >
-                        <option value="All Course">All Course</option>
+                        <option value="">All Course</option>
                         {Array.from(new Set(coursesList.map(c => c.course_name)))
                             .sort()
                             .map((name, i) => (
@@ -407,17 +409,7 @@ const Dashboard = () => {
                 </div>
 
                 <div className="flex-1 flex justify-end items-center space-x-6 shrink-0">
-                    <div className="font-bold flex space-x-4 text-sm tracking-wide">
-                        {['2026', '2025'].map(y => (
-                            <span
-                                key={y}
-                                onClick={() => setYear(y)}
-                                className={`cursor-pointer transition-colors ${year === y ? 'text-[#2174C3]' : 'text-gray-300 hover:text-gray-400'}`}
-                            >
-                                {y}
-                            </span>
-                        ))}
-                    </div>
+                    <YearPicker selectedYear={year} onYearChange={(y) => setYear(y)} />
                 </div>
             </div>
 
@@ -428,8 +420,8 @@ const Dashboard = () => {
                     .scrollbar-hide::-webkit-scrollbar { display: none; }
                     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
                 `}} />
-                <div className={isRestrictedRole 
-                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 w-full" 
+                <div className={isRestrictedRole
+                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 w-full"
                     : "grid grid-rows-2 grid-flow-col gap-5 w-max mx-auto"
                 }>
                     {stats.map((item, idx) => (
@@ -576,22 +568,28 @@ const Dashboard = () => {
                                         <th className="pb-4 pr-2 font-semibold">Month</th>
                                         <th className="pb-4 pr-2 text-right font-semibold">Paid</th>
                                         <th className="pb-4 pr-2 text-right font-semibold">Unpaid</th>
-                                        <th className="pb-4 pr-2 text-right font-semibold">Total Realisation</th>
-                                        <th className="pb-4 pr-2 text-right font-semibold">Remaining Budget</th>
-                                        <th className="pb-4 text-right font-semibold">Utilization%</th>
+                                        <th className="pb-4 pr-2 text-center font-semibold">Total Realisation</th>
+                                        <th className="pb-4 pr-2 text-center font-semibold">Remaining Budget</th>
+                                        <th className="pb-4 text-center font-semibold">Utilization%</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-[#1E2B4D]">
-                                    {adminData?.tables?.cost?.map((c, i) => (
-                                        <tr key={i} className={i % 2 === 0 ? "bg-[#F8F9FD]" : "bg-white"}>
-                                            <td className="py-3 px-4 rounded-l-xl font-medium">{c.month}</td>
-                                            <td className="py-3 px-2 text-right">{c.paid.toLocaleString()}</td>
-                                            <td className="py-3 px-2 text-right">{c.unpaid.toLocaleString()}</td>
-                                            <td className="py-3 px-2 text-right">{c.realisation.toLocaleString()}</td>
-                                            <td className="py-3 px-2 text-right">{c.remaining.toLocaleString()}</td>
-                                            <td className="py-3 px-4 text-right font-bold rounded-r-xl">{c.utilization}</td>
+                                    {adminData?.tables?.cost?.length > 0 ? (
+                                        adminData.tables.cost.map((c, i) => (
+                                            <tr key={i} className={i % 2 === 0 ? "bg-[#F8F9FD]" : "bg-white"}>
+                                                <td className="py-3 px-4 rounded-l-xl font-medium">{c.month}</td>
+                                                <td className="py-3 px-2 text-right">{c.paid.toLocaleString()}</td>
+                                                <td className="py-3 px-2 text-right">{c.unpaid.toLocaleString()}</td>
+                                                <td className="py-3 px-2 text-right">{c.realisation.toLocaleString()}</td>
+                                                <td className="py-3 px-2 text-right">{c.remaining.toLocaleString()}</td>
+                                                <td className="py-3 px-4 text-right font-bold rounded-r-xl">{c.utilization}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="6" className="py-20 text-center text-gray-400 font-medium">No data available</td>
                                         </tr>
-                                    ))}
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -621,14 +619,20 @@ const Dashboard = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="text-[#1E2B4D]">
-                                        {adminData?.tables?.[table.id]?.map((row, i) => (
-                                            <tr key={i} className={i % 2 === 0 ? "bg-[#F8F9FD]" : "bg-white"}>
-                                                <td className="py-3 px-4 rounded-l-xl font-medium">{row[table.field]}</td>
-                                                <td className="py-3 px-2 text-center">{row.learners}</td>
-                                                <td className="py-3 px-2 text-center">{row.hours}</td>
-                                                <td className="py-3 px-4 text-center rounded-r-xl">{row.title_count}</td>
+                                        {adminData?.tables?.[table.id]?.length > 0 ? (
+                                            adminData.tables[table.id].map((row, i) => (
+                                                <tr key={i} className={i % 2 === 0 ? "bg-[#F8F9FD]" : "bg-white"}>
+                                                    <td className="py-3 px-4 rounded-l-xl font-medium">{row[table.field]}</td>
+                                                    <td className="py-3 px-2 text-center">{row.learners}</td>
+                                                    <td className="py-3 px-2 text-center">{row.hours}</td>
+                                                    <td className="py-3 px-4 text-center rounded-r-xl">{row.title_count}</td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="4" className="py-20 text-center text-gray-400 font-medium">No data available</td>
                                             </tr>
-                                        ))}
+                                        )}
                                     </tbody>
                                 </table>
                             </div>

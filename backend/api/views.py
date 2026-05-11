@@ -69,9 +69,15 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 
 class BudgetViewSet(viewsets.ModelViewSet):
-    queryset = Budget.objects.all().order_by('-start_date_budget')
     serializer_class = BudgetSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        qs = Budget.objects.all().order_by('-start_date_budget')
+        year = self.request.query_params.get('year', None)
+        if year:
+            qs = qs.filter(start_date_budget__year=year)
+        return qs
 
 
 # Jwt login view
@@ -106,7 +112,11 @@ class CourseCategoryViewSet(viewsets.ModelViewSet):
     lookup_field = 'course_category_id'
 
     def get_queryset(self):
-        return CourseCategory.objects.all().order_by('course_category_id')
+        qs = CourseCategory.objects.all().order_by('course_category_id')
+        year = self.request.query_params.get('year', None)
+        if year:
+            qs = qs.filter(created_at__year=year)
+        return qs
 
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -122,8 +132,11 @@ class CourseViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = Course.objects.all().order_by('course_id')
         category_id = self.request.query_params.get('category', None)
+        year = self.request.query_params.get('year', None)
         if category_id:
             qs = qs.filter(course_category_id=category_id)
+        if year:
+            qs = qs.filter(created_at__year=year)
         return qs
 
 
@@ -134,6 +147,13 @@ class VendorViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['vendor_id', 'vendor_name', 'speciality', 'city', 'pic_name', 'provider_type', 'province']
 
+    def get_queryset(self):
+        qs = Vendor.objects.all().order_by('vendor_name')
+        year = self.request.query_params.get('year', None)
+        if year:
+            qs = qs.filter(created_at__year=year)
+        return qs
+
 
 class TnaPeriodViewSet(viewsets.ModelViewSet):
     queryset = TnaPeriod.objects.all().order_by('-year', 'tna_period_id')
@@ -141,6 +161,13 @@ class TnaPeriodViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter]
     search_fields = ['period_code', 'period_name']
+
+    def get_queryset(self):
+        qs = TnaPeriod.objects.all().order_by('-year', 'tna_period_id')
+        year = self.request.query_params.get('year', None)
+        if year:
+            qs = qs.filter(year=year)
+        return qs
 
 
 class TnaMasterViewSet(viewsets.ModelViewSet):
@@ -173,6 +200,7 @@ class TnaMasterViewSet(viewsets.ModelViewSet):
         period_id = self.request.query_params.get('period', None)
         course_id = self.request.query_params.get('course', None)
         group_name = self.request.query_params.get('group_name', None)
+        year = self.request.query_params.get('year', None)
 
         if category_id:
             qs = qs.filter(course_category_id=category_id)
@@ -182,6 +210,8 @@ class TnaMasterViewSet(viewsets.ModelViewSet):
             qs = qs.filter(course_id=course_id)
         if group_name:
             qs = qs.filter(group_name=group_name)
+        if year:
+            qs = qs.filter(tna_period__year=year)
         return qs
 
 
@@ -224,6 +254,7 @@ class TnaParticipantViewSet(viewsets.ModelViewSet):
         course_name = self.request.query_params.get('course_name', None)
         division = self.request.query_params.get('division', None)
         group_name = self.request.query_params.get('group_name', None)
+        year = self.request.query_params.get('year', None)
 
         if tna_id:
             qs = qs.filter(tna_id=tna_id)
@@ -237,6 +268,8 @@ class TnaParticipantViewSet(viewsets.ModelViewSet):
             qs = qs.filter(nik__division__division_name=division)
         if group_name:
             qs = qs.filter(tna__group_name=group_name)
+        if year:
+            qs = qs.filter(tna__tna_period__year=year)
         return qs
 
 
@@ -284,6 +317,11 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['nik', 'full_name', 'division__division_name', 'level', 'position_name']
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['year'] = self.request.query_params.get('year')
+        return context
+
 
 class DivisionViewSet(viewsets.ModelViewSet):
     queryset = Division.objects.all().order_by('division_id')
@@ -319,6 +357,7 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
             # Apply standard filters
             division_filter = self.request.query_params.get('division')
             month_filter = self.request.query_params.get('month')
+            year_filter = self.request.query_params.get('year')
             
             if division_filter:
                 qs = qs.filter(trainingevent__participants__nik__division_id=division_filter).distinct()
@@ -328,6 +367,8 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
                     qs = qs.filter(trainingevent__start_date__month=m).distinct()
                 except (ValueError, TypeError):
                     pass
+            if year_filter:
+                qs = qs.filter(trainingevent__start_date__year=year_filter).distinct()
         elif "Head of Division" in user_groups or "Team Leader" in user_groups:
             if hasattr(user, 'profile') and user.profile.employee:
                 div_id = user.profile.employee.division_id
@@ -583,6 +624,29 @@ class AddTrainingView(APIView):
                     )
 
             # Update Participants
+            new_participants = data.get('participants', [])
+            new_niks = set()
+            for p in new_participants:
+                if p.get('employee'):
+                    try:
+                        new_niks.add(int(p.get('employee')))
+                    except: pass
+            
+            # Cleanup evaluation data for removed participants
+            # (Note: signals don't fire on queryset.delete(), so we do this manually)
+            for ep in event.participants.all():
+                if ep.nik_id not in new_niks:
+                    try:
+                        profile = Profile.objects.filter(employee_id=ep.nik_id).first()
+                        if profile and profile.user:
+                            user = profile.user
+                            f_ids = EvaluationForm.objects.filter(training_master=event.training).values_list('form_id', flat=True)
+                            if f_ids:
+                                EvaluationAnswer.objects.filter(user=user, form_id__in=f_ids).delete()
+                                EvaluationResult.objects.filter(user=user, form_id__in=f_ids).delete()
+                    except Exception as e:
+                        print(f"Manual cleanup error: {e}")
+
             event.participants.all().delete()
             for part in data.get('participants', []):
                 if part.get('employee'):
@@ -789,12 +853,13 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
         if not employee:
             return Response([], status=status.HTTP_200_OK)
             
-        # Find all events where this employee is a participant
-        # need to filter based on event flags: enable_course_access must be True
+        year = request.query_params.get('year')
         participants = EventParticipant.objects.filter(
             nik=employee, 
             event__enable_course_access=True
         ).select_related('event')
+        if year:
+            participants = participants.filter(event__start_date__year=year)
         
         result = []
         for p in participants:
@@ -987,6 +1052,19 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
 
         # Query directly from EvaluationResult summary table
         results = EvaluationResult.objects.filter(form=form).order_by('-created_at')
+
+        # Filter: Only show results for users who are still participants of the training
+        if form.training_master_id:
+            participant_niks = EventParticipant.objects.filter(
+                event__training_id=form.training_master_id
+            ).values_list('nik_id', flat=True)
+            
+            # Find User IDs associated with these NIKs
+            participant_user_ids = Profile.objects.filter(
+                employee_id__in=participant_niks
+            ).values_list('user_id', flat=True)
+            
+            results = results.filter(user_id__in=participant_user_ids)
         
         result = []
         for res in results:

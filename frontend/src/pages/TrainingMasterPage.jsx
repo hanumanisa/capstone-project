@@ -6,6 +6,8 @@ import { getUserFromToken } from "../utils/auth";
 import Toast from "../components/Toast";
 import ConfirmModal from "../components/ConfirmModal";
 import * as XLSX from 'xlsx';
+import YearPicker from "../components/YearPicker";
+
 
 export default function TrainingMasterPage() {
   const navigate = useNavigate();
@@ -20,7 +22,7 @@ export default function TrainingMasterPage() {
   const [search, setSearch] = useState("");
   const [division, setDivision] = useState("");
   const [month, setMonth] = useState("");
-  const [selectedYear, setSelectedYear] = useState("2026");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
 
   // Lookup tables
   const [divisions, setDivisions] = useState([]);
@@ -100,9 +102,8 @@ export default function TrainingMasterPage() {
   const fetchTrainings = useCallback(async () => {
     setLoading(true);
     try {
-      // Note: Backend endpoint for listing might need adjustment if using training-master instead of custom view
       const res = await api.get(
-        `/api/training-master/?page=${page}&search=${search}&division=${division}&month=${month}`
+        `/api/training-master/?page=${page}&search=${search}&division=${division}&month=${month}&year=${selectedYear}`
       );
       if (res && res.data) {
         // Handling both DRF results object and raw list
@@ -117,7 +118,7 @@ export default function TrainingMasterPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, division, month]);
+  }, [page, search, division, month, selectedYear]);
 
   const fetchData = async () => {
     try {
@@ -177,7 +178,7 @@ export default function TrainingMasterPage() {
 
   const handleEmployeeChange = async (idx, nik) => {
     if (!nik) return;
-    
+
     // Check if already in the list
     const isDuplicate = participantRows.some((row, i) => i !== idx && row.employee === nik);
     if (isDuplicate) {
@@ -639,7 +640,7 @@ export default function TrainingMasterPage() {
       // ─── Case 2: Monthly Report (Existing 2-sheet logic) ───────────────
       if (reportType === "monthly") {
         console.log("Generating Monthly Report with", realisasi_training.length, "records");
-        
+
         const slide1Data = realisasi_training.map(item => {
           const h = Number(item.hours) || 0;
           return {
@@ -665,15 +666,15 @@ export default function TrainingMasterPage() {
         });
 
         const grandTotalHours = realisasi_training.reduce((sum, item) => sum + (Number(item.hours) || 0), 0);
-        
+
         const wb = XLSX.utils.book_new();
-        
+
         // Sheet 1: Realisasi Training
         const ws1 = XLSX.utils.json_to_sheet(slide1Data, { origin: "A3" });
         XLSX.utils.sheet_add_aoa(ws1, [
           ["Monthly Report", "", "Total Hours:", Number(grandTotalHours.toFixed(2))]
         ], { origin: "A1" });
-        
+
         ws1["!cols"] = [
           { wch: 20 }, { wch: 25 }, { wch: 30 }, { wch: 20 }, { wch: 20 },
           { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
@@ -701,7 +702,7 @@ export default function TrainingMasterPage() {
 
         const slide2AoA = [];
         const sortedMonthKeys = Object.keys(monthsMap).sort((a, b) => new Date(a) - new Date(b));
-        
+
         let runningTotal = 0;
         if (sortedMonthKeys.length > 0) {
           sortedMonthKeys.forEach(key => {
@@ -724,7 +725,7 @@ export default function TrainingMasterPage() {
         // Download
         const fileName = `Monthly_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
         XLSX.writeFile(wb, fileName);
-        
+
         setToast({ message: "Monthly Report exported successfully", type: "success" });
         setShowReportModal(false);
         return;
@@ -797,20 +798,7 @@ export default function TrainingMasterPage() {
 
         {/* Right Section: Year & Actions */}
         <div className="flex-1 flex justify-end items-center space-x-6 shrink-0">
-          <div className="font-bold flex space-x-4 text-sm tracking-wide">
-            <button
-              onClick={() => setSelectedYear("2026")}
-              className={`cursor-pointer transition-colors ${selectedYear === "2026" ? "text-[#2174C3]" : "text-gray-300 hover:text-gray-400"}`}
-            >
-              2026
-            </button>
-            <button
-              onClick={() => setSelectedYear("2025")}
-              className={`cursor-pointer transition-colors ${selectedYear === "2025" ? "text-[#2174C3]" : "text-gray-300 hover:text-gray-400"}`}
-            >
-              2025
-            </button>
-          </div>
+          <YearPicker selectedYear={selectedYear} onYearChange={(y) => setSelectedYear(y)} />
 
           <div className="flex gap-2">
             <button
@@ -984,46 +972,46 @@ export default function TrainingMasterPage() {
       {/* Pagination */}
       {totalPages > 1 ? (
         <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
-            <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
+            >
+              Previous
+            </button>
+            {[...Array(totalPages)].map((_, i) => (
               <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
+                key={i}
+                onClick={() => setPage(i + 1)}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${page === i + 1 ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
               >
-                Previous
+                {i + 1}
               </button>
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setPage(i + 1)}
-                  className={`px-4 py-2 rounded-md font-medium transition-colors ${page === i + 1 ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-            {!loading && totalCount > 0 && (
-              <div className="text-right text-xs text-gray-400 font-medium">
-                Showing {(page - 1) * 50 + 1}–{Math.min(page * 50, totalCount)} of {totalCount} training
-              </div>
-            )}
+            ))}
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Next
+            </button>
           </div>
-        ) : (
-          !loading && totalCount > 0 && (
-            <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
-              <div className="text-right text-xs text-gray-400 font-medium">
-                Showing 1–{totalCount} of {totalCount} training
-              </div>
+          {!loading && totalCount > 0 && (
+            <div className="text-right text-xs text-gray-400 font-medium">
+              Showing {(page - 1) * 50 + 1}–{Math.min(page * 50, totalCount)} of {totalCount} training
             </div>
-          )
-        )}
+          )}
+        </div>
+      ) : (
+        !loading && totalCount > 0 && (
+          <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
+            <div className="text-right text-xs text-gray-400 font-medium">
+              Showing 1–{totalCount} of {totalCount} training
+            </div>
+          </div>
+        )
+      )}
 
 
       {/* ========================= MODAL REPORT ========================= */}
@@ -1191,8 +1179,8 @@ export default function TrainingMasterPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Training Code</label>
-                <input type="text" value={trainingCode} style={{ color: '#000' }} 
-                  onChange={(e) => setTrainingCode(e.target.value)} 
+                <input type="text" value={trainingCode} style={{ color: '#000' }}
+                  onChange={(e) => setTrainingCode(e.target.value)}
                   onBlur={(e) => checkTrainingCode(e.target.value)}
                   className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3]" placeholder="Enter training code e.g. LDPB1-26" />
               </div>
@@ -1413,8 +1401,8 @@ export default function TrainingMasterPage() {
               {activeTab === "participant" && (
                 <div className="space-y-4">
                   <h3 className="text-[#2174C3] font-bold text-lg mb-4">Participant</h3>
-                  <div className="custom-scrollbar overflow-auto border border-gray-100 rounded-lg">
-                    <table className="w-full text-sm min-w-[600px]">
+                  <div className="custom-scrollbar overflow-visible border border-gray-100 rounded-lg">
+                    <table className="w-full text-sm min-w-[600px] relative">
                       <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
                         <tr>
                           <th className="p-3 w-[50px]"></th>
@@ -1436,9 +1424,9 @@ export default function TrainingMasterPage() {
                                 onChange={(e) => handleEmployeeChange(idx, e.target.value)}
                                 className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
                               >
-                                <option value="" style={{ color: '#000' }}>Select Employee</option>
-                                {employees.map(emp => (
-                                  <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>({emp.nik}) {emp.full_name}</option>
+                                <option value="">Select Employee</option>
+                                {employees.map((emp, i) => (
+                                  <option key={i} value={emp.nik}>({emp.nik}) {emp.full_name}</option>
                                 ))}
                               </select>
                             </td>

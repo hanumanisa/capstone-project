@@ -6,6 +6,7 @@ import api from '../api/axios';
 import * as XLSX from 'xlsx';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
+import YearPicker from '../components/YearPicker';
 
 const ITEMS_PER_PAGE = 50;
 
@@ -16,6 +17,7 @@ const CoursePage = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
     const [currentPage, setCurrentPage] = useState(1);
     const [showModal, setShowModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
@@ -58,6 +60,7 @@ const CoursePage = () => {
         try {
             const params = {};
             if (searchTerm) params.search = searchTerm;
+            if (selectedYear) params.year = selectedYear;
             const res = await api.get('/api/courses/', { params });
             setCourses(res.data);
         } catch (err) {
@@ -65,11 +68,11 @@ const CoursePage = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm]);
+    }, [searchTerm, selectedYear]);
 
     useEffect(() => {
         fetchCourses();
-    }, [fetchCourses]);
+    }, [fetchCourses, selectedYear]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -211,10 +214,7 @@ const CoursePage = () => {
                     </span>
                 </div>
                 <div className="flex items-center space-x-6">
-                    <div className="font-bold flex space-x-4 text-sm tracking-wide">
-                        <span className="text-[#2174C3]">2026</span>
-                        <span className="text-gray-300 cursor-pointer hover:text-gray-400 transition-colors">2025</span>
-                    </div>
+                    <YearPicker selectedYear={selectedYear} onYearChange={(y) => setSelectedYear(y)} />
                     <div className="flex items-center space-x-2">
                         {isAdmin && (
                             <button
@@ -291,7 +291,7 @@ const CoursePage = () => {
                             ) : paginatedData.length === 0 ? (
                                 <tr>
                                     <td colSpan="5" className="px-6 py-12 text-center text-gray-400">
-                                        No courses found.
+                                        No data available
                                     </td>
                                 </tr>
                             ) : (

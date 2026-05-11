@@ -8,6 +8,8 @@ import TnaMasterModal from '../components/TnaMasterModal';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 
+import YearPicker from '../components/YearPicker';
+
 const ITEMS_PER_PAGE = 50;
 
 const TnaPage = () => {
@@ -17,7 +19,7 @@ const TnaPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [divisionFilter, setDivisionFilter] = useState('All Division');
     const [courseFilter, setCourseFilter] = useState('All Course');
-    const [activeYear, setActiveYear] = useState(2026);
+    const [activeYear, setActiveYear] = useState(new Date().getFullYear().toString());
     const [currentPage, setCurrentPage] = useState(1);
 
     // Modals state
@@ -60,6 +62,7 @@ const TnaPage = () => {
             };
             if (divisionFilter && divisionFilter !== 'All Division') params.division = divisionFilter;
             if (courseFilter && courseFilter !== 'All Course') params.course_name = courseFilter;
+            if (activeYear) params.year = activeYear;
 
             const res = await api.get('/api/tna-participant/', { params });
             setParticipants(res.data);
@@ -68,7 +71,7 @@ const TnaPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, divisionFilter, courseFilter]);
+    }, [searchTerm, divisionFilter, courseFilter, activeYear]);
 
     useEffect(() => {
         fetchParticipants();
@@ -152,8 +155,8 @@ const TnaPage = () => {
                                 }}
                             >
                                 <option value="All Division">All Division</option>
-                                {divisions.map(d => (
-                                    <option key={d.division_id} value={d.division_name}>{d.division_name}</option>
+                                {divisions.map((d, i) => (
+                                    <option key={i} value={d.division_name}>{d.division_name}</option>
                                 ))}
                             </select>
                         </div>
@@ -180,16 +183,7 @@ const TnaPage = () => {
                     </div>
 
                     <div className="flex-1 flex justify-end items-center space-x-6 shrink-0">
-                        <div className="font-bold flex space-x-4 text-sm tracking-wide">
-                            <span
-                                onClick={() => setActiveYear(2026)}
-                                className={`cursor-pointer transition-colors ${activeYear === 2026 ? 'text-[#2174C3]' : 'text-gray-300 hover:text-gray-400'}`}
-                            >2026</span>
-                            <span
-                                onClick={() => setActiveYear(2025)}
-                                className={`cursor-pointer transition-colors ${activeYear === 2025 ? 'text-[#2174C3]' : 'text-gray-300 hover:text-gray-400'}`}
-                            >2025</span>
-                        </div>
+                        <YearPicker selectedYear={activeYear} onYearChange={(y) => setActiveYear(y)} />
                         {isAdmin && (
                             <div className="flex gap-2">
                                 <button
@@ -248,7 +242,7 @@ const TnaPage = () => {
                                     </tr>
                                 ) : paginatedParticipants.length === 0 ? (
                                     <tr>
-                                        <td colSpan="8" className="px-6 py-20 text-center text-gray-400 font-medium">No TNA records found for the current filter.</td>
+                                        <td colSpan="8" className="px-6 py-20 text-center text-gray-400 font-medium">No data available</td>
                                     </tr>
                                 ) : (
                                     paginatedParticipants.map((item) => (

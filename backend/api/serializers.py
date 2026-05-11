@@ -140,7 +140,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return "Employee"
 
     def get_attendance_details(self, obj):
-        events = obj.completed_events
+        year = self.context.get('year')
+        events = obj.get_completed_events(year)
         details = []
         from datetime import datetime, date
         for ep in events:
@@ -163,43 +164,63 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return details
 
     def get_attendance(self, obj):
-        return obj.attendance
+        year = self.context.get('year')
+        return len(obj.get_completed_events(year))
 
     def get_inhouse_training(self, obj):
-        return obj.training_stats['inhouse_count']
+        year = self.context.get('year')
+        return obj.get_training_stats(year)['inhouse_count']
 
     def get_public_training(self, obj):
-        return obj.training_stats['public_count']
+        year = self.context.get('year')
+        return obj.get_training_stats(year)['public_count']
 
     def get_knowledge_sharing(self, obj):
-        return obj.training_stats['ks_count']
+        year = self.context.get('year')
+        return obj.get_training_stats(year)['ks_count']
 
     def get_elearning(self, obj):
-        return obj.training_stats['elearning_count']
+        year = self.context.get('year')
+        return obj.get_training_stats(year)['elearning_count']
 
     def get_iht_plus_public(self, obj):
-        return obj.iht_plus_public
+        year = self.context.get('year')
+        return obj.get_iht_plus_public(year)
 
     def get_total_hours(self, obj):
-        return obj.total_hours
+        year = self.context.get('year')
+        return obj.get_training_stats(year)['total_hours']
 
     def get_inhouse_hours(self, obj):
-        return round(obj.training_stats['inhouse_hours'], 2)
+        year = self.context.get('year')
+        return round(obj.get_training_stats(year)['inhouse_hours'], 2)
 
     def get_public_hours(self, obj):
-        return round(obj.training_stats['public_hours'], 2)
+        year = self.context.get('year')
+        return round(obj.get_training_stats(year)['public_hours'], 2)
 
     def get_ks_hours(self, obj):
-        return round(obj.training_stats['ks_hours'], 2)
+        year = self.context.get('year')
+        return round(obj.get_training_stats(year)['ks_hours'], 2)
 
     def get_elearning_hours(self, obj):
-        return round(obj.training_stats['elearning_hours'], 2)
+        year = self.context.get('year')
+        return round(obj.get_training_stats(year)['elearning_hours'], 2)
 
     def get_tna_count(self, obj):
-        return obj.tnaparticipant_set.count()
+        year = self.context.get('year')
+        tna_qs = obj.tnaparticipant_set.all()
+        if year:
+            try:
+                y = int(year)
+                tna_qs = tna_qs.filter(tna__tna_period__year=y)
+            except (ValueError, TypeError):
+                pass
+        return tna_qs.count()
 
     def get_tna_fulfilled(self, obj):
-        return obj.tna_fulfilled
+        year = self.context.get('year')
+        return obj.get_tna_fulfilled(year)
 
 
 class EmployeeMinimalSerializer(serializers.ModelSerializer):
@@ -665,7 +686,13 @@ class EvaluationFormSerializer(serializers.ModelSerializer):
         fields = ['form_id', 'form_name', 'training_master', 'description', 'deadline', 'is_active', 'created_by', 'created_at', 'form_type', 'training_title', 'responses_count', 'questions']
 
     def get_responses_count(self, obj):
-        return EvaluationAnswer.objects.filter(form=obj).values('user').distinct().count()
+        from .models import EvaluationAnswer, EventParticipant, Profile
+        qs = EvaluationAnswer.objects.filter(form=obj)
+        if obj.training_master_id:
+            p_niks = EventParticipant.objects.filter(event__training_id=obj.training_master_id).values_list('nik_id', flat=True)
+            p_user_ids = Profile.objects.filter(employee_id__in=p_niks).values_list('user_id', flat=True)
+            qs = qs.filter(user_id__in=p_user_ids)
+        return qs.values('user').distinct().count()
 
 class EvaluationAnswerSerializer(serializers.ModelSerializer):
     class Meta:
