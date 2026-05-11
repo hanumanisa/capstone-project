@@ -639,7 +639,7 @@ export default function TrainingEvaluationPage() {
                                             onChange={e => setTplTrainingId(e.target.value)}
                                             className="w-full border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-[#2174C3] transition-all bg-gray-100 text-black outline-none"
                                         >
-                                            <option value="">-- Choose Training --</option>
+                                            <option value="">Select Training</option>
                                             {trainingMasters.map(t => (
                                                 <option key={t.training_id} value={t.training_id}>{t.training_title} ({t.training_code})</option>
                                             ))}
