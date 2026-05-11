@@ -402,7 +402,7 @@ const CoursePage = () => {
                                     className="sm:col-span-2 bg-gray-100 border-none rounded-lg p-3 focus:ring-2 focus:ring-[#2174C3]"
                                     style={{ color: '#000' }}
                                 >
-                                    <option value="">— Select Category —</option>
+                                    <option value="">Select Category</option>
                                     {categories.map((cat) => (
                                         <option key={cat.course_category_id} value={cat.course_category_id}>
                                             {cat.course_category_id} – {cat.category_name}

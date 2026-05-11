@@ -587,47 +587,37 @@ export default function TrainingEvaluationPage() {
                 </div>
 
                 {/* Pagination */}
-                {!loading && (
-                    totalPages > 1 ? (
-                        <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
-                            <div className="flex items-center space-x-1">
+                {!loading && filteredCards.length > 0 && (
+                    <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+                        <div className="flex items-center space-x-1">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${currentPage === 1 ? 'bg-[#E2E8F0] text-gray-400 cursor-not-allowed' : 'bg-[#E2E8F0] text-gray-600 hover:bg-gray-300'}`}
+                            >
+                                Previous
+                            </button>
+                            {pageNumbers.map(p => (
                                 <button
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                    className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${currentPage === 1 ? 'bg-[#E2E8F0] text-gray-400 cursor-not-allowed' : 'bg-[#E2E8F0] text-gray-600 hover:bg-gray-300'}`}
+                                    key={p}
+                                    onClick={() => setCurrentPage(p)}
+                                    className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${p === currentPage ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                                 >
-                                    Previous
+                                    {p}
                                 </button>
-                                {pageNumbers.map(p => (
-                                    <button
-                                        key={p}
-                                        onClick={() => setCurrentPage(p)}
-                                        className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${p === currentPage ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                                    >
-                                        {p}
-                                    </button>
-                                ))}
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages}
-                                    className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${currentPage === totalPages ? 'bg-white border border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                                >
-                                    Next
-                                </button>
-                            </div>
-                            <div className="text-xs text-gray-400 font-medium">
-                                Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredCards.length)} of {filteredCards.length} templates
-                            </div>
+                            ))}
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${currentPage === totalPages ? 'bg-white border border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                            >
+                                Next
+                            </button>
                         </div>
-                    ) : (
-                        filteredCards.length > 0 && (
-                            <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
-                                <div className="text-xs text-gray-400 font-medium">
-                                    Showing 1–{filteredCards.length} of {filteredCards.length} templates
-                                </div>
-                            </div>
-                        )
-                    )
+                        <div className="text-xs text-gray-400 font-medium">
+                            Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredCards.length)} of {filteredCards.length} evaluations
+                        </div>
+                    </div>
                 )}
 
                 {/* MODALS */}
