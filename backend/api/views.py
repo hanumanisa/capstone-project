@@ -623,65 +623,49 @@ class AddTrainingView(APIView):
                         instructor_name=sch.get('instructor')
                     )
 
-            # Update Participants
-            new_participants = data.get('participants', [])
-            new_niks = set()
-            for p in new_participants:
-                if p.get('employee'):
-                    try:
-                        new_niks.add(int(p.get('employee')))
-                    except: pass
+            # Update Participants (Smart Sync)
+            new_participants_data = data.get('participants', [])
+            existing_participants = {p.nik_id: p for p in event.participants.all()}
+            processed_niks = set()
             
-            # Cleanup evaluation data for removed participants
-            # (Note: signals don't fire on queryset.delete(), so we do this manually)
-            for ep in event.participants.all():
-                if ep.nik_id not in new_niks:
-                    try:
-                        profile = Profile.objects.filter(employee_id=ep.nik_id).first()
-                        if profile and profile.user:
-                            user = profile.user
-                            f_ids = EvaluationForm.objects.filter(training_master=event.training).values_list('form_id', flat=True)
-                            if f_ids:
-                                EvaluationAnswer.objects.filter(user=user, form_id__in=f_ids).delete()
-                                EvaluationResult.objects.filter(user=user, form_id__in=f_ids).delete()
-                    except Exception as e:
-                        print(f"Manual cleanup error: {e}")
-
-            event.participants.all().delete()
-            for part in data.get('participants', []):
+            for part in new_participants_data:
                 if part.get('employee'):
+                    nik = int(part.get('employee'))
+                    if nik in processed_niks:
+                        continue # Skip duplicates in payload
+                    processed_niks.add(nik)
+
                     l1_val = part.get('l1')
                     l2_val = part.get('l2')
+                    att_status = part.get('attendance', 'Present')
 
-                    # Cap L1 at 4.0
-                    if l1_val is not None and l1_val != "":
-                        try:
-                            if float(l1_val) > 4: l1_val = 4.0
-                        except: pass
+                    # Cap scores at 4.0
+                    try:
+                        if l1_val and l1_val != "" and float(l1_val) > 4: l1_val = 4.0
+                        if l2_val and l2_val != "" and float(l2_val) > 4: l2_val = 4.0
+                    except: pass
 
-                    # Cap L2 at 4.0
-                    if l2_val is not None and l2_val != "":
-                        try:
-                            if float(l2_val) > 4: l2_val = 4.0
-                        except: pass
+                    if nik in existing_participants:
+                        # Update existing
+                        p_obj = existing_participants[nik]
+                        p_obj.attendance_status = att_status
+                        p_obj.l1_score = l1_val if l1_val != "" else None
+                        p_obj.l2_score = l2_val if l2_val != "" else None
+                        p_obj.save()
+                        del existing_participants[nik]
+                    else:
+                        # Create new
+                        EventParticipant.objects.create(
+                            event=event,
+                            nik_id=nik,
+                            attendance_status=att_status,
+                            l1_score=l1_val if l1_val != "" else None,
+                            l2_score=l2_val if l2_val != "" else None
+                        )
 
-                    # Check for conflicts
-                    conflicts = EventParticipant.objects.filter(
-                        nik_id=part.get('employee'),
-                        event__start_date__lte=event.end_date,
-                        event__end_date__gte=event.start_date
-                    ).exclude(event=event)
-                    
-                    if conflicts.exists():
-                        conflict_event = conflicts.first().event
-                        raise Exception(f"Employee {part.get('employee')} already registered for other training: {conflict_event.training_topic}")
-
-                    EventParticipant.objects.create(
-                        event=event,
-                        nik_id=part.get('employee'),
-                        l1_score=l1_val if l1_val != "" else None,
-                        l2_score=l2_val if l2_val != "" else None
-                    )
+            # Delete participants that are no longer in the list
+            for p_to_del in existing_participants.values():
+                p_to_del.delete()
 
             # Update Costs
             event.costs.all().delete()
@@ -809,36 +793,68 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
             form.form_type = data['form_type']
         form.save()
 
-        # Update questions only if provided
+        # Update questions intelligently to avoid wiping existing responses
         if 'questions' in data:
-            # Wipe old questions (cascade handles options if FK is set to CASCADE, which it is)
-            form.questions.all().delete()
-            
             now = timezone.now()
             questions_data = data.get('questions', [])
+            existing_questions = {q.sequence: q for q in form.questions.all()}
+            
             for seq_idx, q_data in enumerate(questions_data):
-                question = EvaluationQuestion.objects.create(
-                    form=form,
-                    question_text=q_data.get('question_text', ''),
-                    question_type=q_data.get('question_type', 'Rating Scale'),
-                    evaluation_type=q_data.get('evaluation_type', form.form_type),
-                    sequence=seq_idx + 1,
-                    is_required=q_data.get('is_required', True),
-                    score=q_data.get('score'),
-                    is_active=q_data.get('is_active', True),
-                    created_by=request.user,
-                    created_at=now
-                )
+                sequence = seq_idx + 1
+                question_text = q_data.get('question_text', '')
+                question_type = q_data.get('question_type', 'Rating Scale')
+                evaluation_type = q_data.get('evaluation_type', form.form_type)
+                is_required = q_data.get('is_required', True)
+                score = q_data.get('score')
+                
+                if sequence in existing_questions:
+                    # Update existing question
+                    question = existing_questions[sequence]
+                    question.question_text = question_text
+                    question.question_type = question_type
+                    question.evaluation_type = evaluation_type
+                    question.is_required = is_required
+                    question.score = score
+                    question.save()
+                    # Remove from map so we know it's handled
+                    del existing_questions[sequence]
+                else:
+                    # Create new question
+                    question = EvaluationQuestion.objects.create(
+                        form=form,
+                        question_text=question_text,
+                        question_type=question_type,
+                        evaluation_type=evaluation_type,
+                        sequence=sequence,
+                        is_required=is_required,
+                        score=score,
+                        is_active=True,
+                        created_by=request.user,
+                        created_at=now
+                    )
 
+                # Sync options for the question
                 options_data = q_data.get('options', [])
+                # Wipe old options for THIS question is safer since they don't have direct answer links 
+                # (answers link to question, not option, in most models, but EvaluationAnswer has selected_option)
+                # Wait, if EvaluationAnswer has selected_option, wiping options will SET NULL or CASCADE.
+                # Let's check models.py again.
+                # EvaluationAnswer.selected_option is models.SET_NULL. So it's safe to recreate options.
+                question.options.all().delete()
                 for opt_idx, opt_data in enumerate(options_data):
                     EvaluationQuestionOption.objects.create(
                         question=question,
                         option_text=opt_data.get('option_text', ''),
                         sequence=opt_idx + 1,
                         is_correct=opt_data.get('is_correct', False),
-                        is_active=opt_data.get('is_active', True)
+                        is_active=True
                     )
+            
+            # Any remaining questions in existing_questions were removed in the new data
+            # We mark them as inactive instead of deleting to preserve historical answers
+            for q in existing_questions.values():
+                q.is_active = False
+                q.save()
 
         return Response(self.serializer_class(form).data, status=status.HTTP_200_OK)
 
@@ -1052,12 +1068,6 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
 
         # Get unique users who have submitted answers for this form
         submitted_user_ids = EvaluationAnswer.objects.filter(form=form).values_list('user_id', flat=True).distinct()
-        
-        # Filter by participants if linked to a training (ensure consistency with responses_count)
-        if form.training_master_id:
-            p_niks = EventParticipant.objects.filter(event__training_id=form.training_master_id).values_list('nik_id', flat=True)
-            p_user_ids = Profile.objects.filter(employee_id__in=p_niks).values_list('user_id', flat=True)
-            submitted_user_ids = [uid for uid in submitted_user_ids if uid in p_user_ids]
 
         # Use EvaluationResult as primary source (faster), fallback to direct query if missing
         result = []
