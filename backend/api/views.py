@@ -18,7 +18,7 @@ from .models import (
     TrainingMaster, TrainingEvent, EventLocation, EventSchedule,
     EventParticipant, EventCost, EventDocument, Division,
     EvaluationForm, EvaluationQuestion, EvaluationQuestionOption,
-    EvaluationAnswer, EvaluationResult,
+    EvaluationAnswer, EvaluationResult, Profile,
     AiAdminConfig, AiFaq, AiChatSession, AiChatLog, AiUnauthorizedAttempt,
     Budget
 )
@@ -1050,35 +1050,62 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
         if not is_admin:
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
-        # Query directly from EvaluationResult summary table
-        results = EvaluationResult.objects.filter(form=form).order_by('-created_at')
-
-        # Filter: Only show results for users who are still participants of the training
-        if form.training_master_id:
-            participant_niks = EventParticipant.objects.filter(
-                event__training_id=form.training_master_id
-            ).values_list('nik_id', flat=True)
-            
-            # Find User IDs associated with these NIKs
-            participant_user_ids = Profile.objects.filter(
-                employee_id__in=participant_niks
-            ).values_list('user_id', flat=True)
-            
-            results = results.filter(user_id__in=participant_user_ids)
+        # Get unique users who have submitted answers for this form
+        submitted_user_ids = EvaluationAnswer.objects.filter(form=form).values_list('user_id', flat=True).distinct()
         
-        result = []
-        for res in results:
-            nik_val = 'N/A'
-            if res.user:
-                if hasattr(res.user, 'profile') and hasattr(res.user.profile, 'employee'):
-                    nik_val = res.user.profile.employee.nik
-                elif hasattr(res.user, 'employee'):
-                    nik_val = res.user.employee.nik
+        # Filter by participants if linked to a training (ensure consistency with responses_count)
+        if form.training_master_id:
+            p_niks = EventParticipant.objects.filter(event__training_id=form.training_master_id).values_list('nik_id', flat=True)
+            p_user_ids = Profile.objects.filter(employee_id__in=p_niks).values_list('user_id', flat=True)
+            submitted_user_ids = [uid for uid in submitted_user_ids if uid in p_user_ids]
 
+        # Use EvaluationResult as primary source (faster), fallback to direct query if missing
+        result = []
+        
+        # Pre-fetch profiles and employees
+        profiles = Profile.objects.filter(user_id__in=submitted_user_ids).select_related('employee', 'user')
+        profile_map = {p.user_id: p for p in profiles}
+        
+        # Pre-fetch existing results summaries
+        existing_results = EvaluationResult.objects.filter(form=form, user_id__in=submitted_user_ids)
+        results_map = {res.user_id: res for res in existing_results}
+        
+        # Pre-fetch participant scores if needed
+        participant_map = {}
+        if form.training_master_id:
+            participants = EventParticipant.objects.filter(
+                event__training_id=form.training_master_id,
+                nik_id__in=[p.employee_id for p in profiles if p.employee_id]
+            )
+            for p in participants:
+                participant_map[p.nik_id] = p
+
+        form_type = form.form_type or ('L2' if '[L2]' in (form.form_name or '') else 'L1')
+
+        for user_id in submitted_user_ids:
+            profile = profile_map.get(user_id)
+            if not profile: continue
+            
+            res = results_map.get(user_id)
+            
+            nik_val = profile.employee.nik if profile.employee else 'N/A'
+            name_val = profile.employee.full_name if profile.employee else (profile.user.get_full_name() or profile.user.username)
+            
+            # Use snapshot if available
+            if res:
+                if res.user_name: name_val = res.user_name
+                score_val = float(res.score) if res.score is not None else 0.0
+            else:
+                # Fallback to EventParticipant score
+                score_val = 0.0
+                if profile.employee and profile.employee.nik in participant_map:
+                    p = participant_map[profile.employee.nik]
+                    score_val = float(p.l2_score if form_type == 'L2' else p.l1_score) if (p.l2_score if form_type == 'L2' else p.l1_score) is not None else 0.0
+            
             result.append({
                 'nik': nik_val,
-                'name': res.user_name or 'Anonymous',
-                'score': float(res.score) if res.score is not None else 0.0
+                'name': name_val,
+                'score': score_val
             })
             
         return Response(result, status=status.HTTP_200_OK)
