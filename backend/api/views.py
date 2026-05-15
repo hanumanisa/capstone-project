@@ -1,9 +1,12 @@
 import requests
 import time
 import json
+import os
+import re
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import Q, Count, Sum, Case, When, F
 from rest_framework import viewsets, permissions, exceptions, filters, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,6 +14,7 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from dotenv import load_dotenv
 
 from .models import (
     Employee, CourseCategory, Course,
@@ -19,7 +23,7 @@ from .models import (
     EventParticipant, EventCost, EventDocument, Division,
     EvaluationForm, EvaluationQuestion, EvaluationQuestionOption,
     EvaluationAnswer, EvaluationResult, Profile,
-    AiAdminConfig, AiFaq, AiChatSession, AiChatLog, AiUnauthorizedAttempt,
+    AiAdminConfig, AiChatSession, AiChatLog, AiUnauthorizedAttempt,
     Budget
 )
 from .serializers import (
@@ -32,7 +36,7 @@ from .serializers import (
     EventDocumentSerializer, DivisionSerializer, EvaluationFormSerializer, EvaluationQuestionSerializer,
     EvaluationQuestionOptionSerializer, EvaluationAnswerSerializer,
     EvaluationResultSerializer,
-    AiAdminConfigSerializer, AiFaqSerializer, AiChatSessionSerializer, 
+    AiAdminConfigSerializer, AiChatSessionSerializer, 
     AiChatLogSerializer, AiUnauthorizedAttemptSerializer,
     BudgetSerializer
 )
@@ -1201,28 +1205,10 @@ class AiAdminConfigViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class AiFaqViewSet(viewsets.ModelViewSet):
-    queryset = AiFaq.objects.all().order_by('sequence')
-    serializer_class = AiFaqSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
 
-    def get_queryset(self):
-        qs = super().get_queryset()
-        is_admin = self.request.user.is_superuser or self.request.user.groups.filter(name__in=['Super Administrator', 'Administrator']).exists()
-        if not is_admin:
-            return qs.filter(is_published=True)
-        return qs
-
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user, updated_by=self.request.user)
-
-    def perform_update(self, serializer):
-        serializer.save(updated_by=self.request.user)
 
 class AiChatSessionViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
     serializer_class = AiChatSessionSerializer
 
     def get_queryset(self):
@@ -1242,56 +1228,424 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
         if not user.is_superuser and user.groups.exists():
             group_name = user.groups.first().name
             user_role = group_role_map.get(group_name, 'employee')
-        serializer.save(user=user, role=user_role)
 
-    def get_ai_context(self, user, role, message):
+        # Ambil info tambahan agar tidak null
+        employee_nik = None
+        division_id = None
+        try:
+            profile = getattr(user, 'profile', None)
+            if profile and profile.employee:
+                employee_nik = profile.employee.nik
+                division_id = profile.employee.division_id
+        except:
+            pass
+
+        # Ambil IP Address (mendukung proxy)
+        ip_address = self.request.META.get('HTTP_X_FORWARDED_FOR')
+        if ip_address:
+            ip_address = ip_address.split(',')[0].strip()
+        else:
+            ip_address = self.request.META.get('REMOTE_ADDR')
+            
+        # Ambil User Agent
+        user_agent = self.request.META.get('HTTP_USER_AGENT')
+
+        serializer.save(
+            user=user, 
+            role=user_role,
+            nik=employee_nik,
+            division_id=division_id,
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+
+    def get_ai_context(self, user, role, message, history=[]):
+        """Kumpulkan data L&D berdasarkan role dan intent pesan pengguna."""
         context_data = {}
+        msg_lower = message.lower()
+
+        # Deteksi apakah pesan adalah permintaan kelanjutan
+        is_continuation = any(k in msg_lower for k in ['lanjut', 'teruskan', 'sambung', 'more', 'continue', 'lagi'])
+        
+        # Jika pesan sangat singkat atau kelanjutan, coba ambil konteks dari pesan terakhir di history
+        effective_message = msg_lower
+        if (len(msg_lower.split()) < 3 or is_continuation) and history:
+            # Cari pesan user terakhir yang substantif
+            for h in reversed(history):
+                is_user_msg = h.get('is_user') or h.get('role') == 'user'
+                if is_user_msg:
+                    last_msg = (h.get('content') or h.get('text') or '').lower()
+                    if len(last_msg.split()) >= 3:
+                        effective_message = f"{msg_lower} {last_msg}"
+                        break
+
+        # ── Definisi level akses ──────────────────────────────────────────
+        ADMIN_ROLES  = ['superadmin', 'admin', 'dean']
+        DIV_ROLES    = ['head_of_division', 'team_leader']
+        EMP_ROLE     = 'employee'
+
+        # ── Intent detection ─────────────────────────────────────────────
+        is_training    = any(k in effective_message for k in ['training','pelatihan','kursus','diklat','event','jadwal','schedule','program','location','certificate','hour','duration'])
+        is_cost        = any(k in effective_message for k in ['biaya','cost','anggaran','budget','dana','harga','price','sppd','hotel'])
+        is_vendor      = any(k in effective_message for k in ['vendor','provider','instruktur','instructor','coach','lembaga'])
+        is_tna         = any(k in effective_message for k in ['tna','kebutuhan','usulan','need','fulfillment'])
+        is_evaluation  = any(k in effective_message for k in ['evaluasi','nilai','score','hasil','l1','l2'])
+        is_employee    = any(k in effective_message for k in ['karyawan','anggota','peserta','siapa saja','daftar','staff','nama','email','cari','bawahan','tim','anak buah','pimpinan','data','profil','info','informasi','siapa','kepala','manager','pimpinan','kadiv','atasan','pemilik','employee','member','user','profile'])
+        is_division    = any(k in effective_message for k in ['divisi','direktorat','bagian','unit','struktur'])
+        is_summary     = any(k in effective_message for k in ['total','jumlah','berapa','rekap','rangkuman','semua','keseluruhan','statistik','ringkasan','summary','count','average','mean','rata-rata'])
+        
+        # Definisikan Greeting murni
+        greetings = ['halo', 'hai', 'selamat pagi', 'selamat siang', 'selamat sore', 'apa kabar', 'hi']
+        is_pure_greeting = any(msg_lower.strip() == g for g in greetings)
+        
+        is_evaluation = any(kw in msg_lower for kw in ['nilai', 'skor', 'evaluasi', 'hasil', 'score'])
+        is_division = any(kw in msg_lower for kw in ['divisi', 'division', 'departemen', 'unit'])
+        is_general = not any([is_training, is_cost, is_vendor, is_tna, is_evaluation, is_employee, is_division, is_summary]) or is_pure_greeting
+
+        # ── Ekstrak kata kunci pencarian dari pesan ───────────────────────
+        stop_words = {'training','pelatihan','biaya','vendor','jadwal','evaluasi','siapa',
+                      'berapa','untuk','apakah','bagaimana','yang','dari','pada','telah',
+                      'akan','saya','karyawan','anggota','peserta','daftar','total','jumlah',
+                      'semua','data','bisa','kami','kita','anda','dengan','atau','ingin',
+                      'melihat','tampilkan','tunjukkan','posisi','posisinya','sebagai',
+                      'tersedia','ada','saja','apa','tentang','informasi','info','list',
+                      'bagian','unit','sudah','lakukan','mereka','berikan','tampilkan',
+                      'bawah','pimpinan','tim','anak','buah','bawahan','pimpinannya',
+                      'berada','sebutkan','adalah','dalam','milik','punya','saat','ini',
+                      'siapakah','siapa','maupun','tersebut','secara','terkait','mengenai',
+                      'bulan','pada','di','list','berikan','tampilkan','tunjukkan','tolong',
+                      'show','give','list','tell','about','please','want','look','find','current','next'}
+        raw_words    = re.findall(r'\b\w{3,}\b', msg_lower)
+        search_terms = [w for w in raw_words if w not in stop_words]
+
+        # ── Tambahkan sinonim untuk pencarian lebih cerdas ──────────────────
+        synonyms = {
+            'head': ['kepala', 'pimpinan', 'manajer', 'manager'],
+            'division': ['divisi', 'bagian', 'unit'],
+            'training': ['pelatihan', 'kursus', 'diklat'],
+            'cost': ['biaya', 'dana', 'anggaran'],
+            'employee': ['karyawan', 'pegawai', 'staff'],
+            'participant': ['peserta', 'anggota'],
+        }
+        extended_terms = list(search_terms)
+        for term in search_terms:
+            if term in synonyms:
+                extended_terms.extend(synonyms[term])
+        search_terms = list(set(extended_terms))
+
         try:
             employee = None
             try:
-                profile = getattr(user, 'profile', None)
+                profile  = getattr(user, 'profile', None)
                 employee = profile.employee if profile else None
-            except:
+            except Exception:
                 pass
 
-            # Info personal user
-            if employee:
-                context_data['user_info'] = {
-                    'full_name': employee.full_name,
-                    'gender': employee.gender or 'Unknown',
-                    'divisi': employee.division.division_name if employee.division else 'N/A',
-                    'posisi': employee.position_name or 'N/A',
+            division_id = employee.division_id if employee else None
+
+            # ── Helper: tambahkan dynamic keyword filter ──────────────────
+            def kw_filter(qs, *fields):
+                if not search_terms:
+                    return qs
+                
+                months_map = {
+                    'januari': 1, 'februari': 2, 'maret': 3, 'april': 4, 'mei': 5, 'juni': 6,
+                    'juli': 7, 'agustus': 8, 'september': 9, 'oktober': 10, 'november': 11, 'desember': 12,
+                    'january': 1, 'february': 2, 'march': 3, 'april': 4, 'may': 5, 'june': 6,
+                    'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12
                 }
+                
+                final_q = Q()
+                for term in search_terms:
+                    term_q = Q()
+                    for f in fields:
+                        term_q |= Q(**{f'{f}__icontains': term})
+                    
+                    if term in months_map:
+                        m_num = months_map[term]
+                        for f in fields:
+                            if 'date' in f:
+                                try: term_q |= Q(**{f'{f}__month': m_num})
+                                except: pass
+                    
+                    if term.isdigit() and len(term) == 4:
+                        for f in fields:
+                            if 'date' in f or 'year' in f:
+                                try: term_q |= Q(**{f'{f}__year': int(term)})
+                                except: pass
+                    
+                    if not final_q:
+                        final_q = term_q
+                    else:
+                        final_q &= term_q
 
-            # 1. Training Info
-            trainings = TrainingMaster.objects.all()
-            if role in ['head_of_division', 'team_leader'] and employee:
-                # Relationship: TrainingMaster -> TrainingEvent (trainingevent_set) -> EventParticipant (participants) -> Employee (nik)
-                trainings = trainings.filter(trainingevent__participants__nik__division_id=employee.division_id).distinct()
-            elif role == 'employee' and employee:
-                trainings = trainings.filter(trainingevent__participants__nik=employee).distinct()
-            
-            context_data['recent_trainings'] = list(trainings.values('training_title', 'training_type', 'training_code')[:5])
+                filtered_qs = qs.filter(final_q)
+                if not filtered_qs.exists() and len(search_terms) > 1:
+                    or_q = Q()
+                    for term in search_terms:
+                        for f in fields:
+                            or_q |= Q(**{f'{f}__icontains': term})
+                    filtered_qs = qs.filter(or_q)
 
-            # 2. TNA Info
-            tnas = TnaMaster.objects.all()
-            if role in ['head_of_division', 'team_leader'] and employee:
-                # Relationship: TnaMaster -> TnaParticipant -> Employee
-                tnas = tnas.filter(tnaparticipant__nik__division_id=employee.division_id).distinct()
-            elif role == 'employee' and employee:
-                tnas = tnas.filter(tnaparticipant__nik=employee).distinct()
-            
-            context_data['tna_summary'] = list(tnas.values('tna_id')[:5]) 
+                if not filtered_qs.exists() and qs.exists():
+                    return qs
+                return filtered_qs
 
-            # 3. Vendor Info (Only for Admin/Dean)
-            if role in ['superadmin', 'admin', 'dean']:
-                context_data['vendors'] = list(Vendor.objects.all().values('vendor_name', 'provider_type')[:5])
+            # BLOK A — Profil
+            if employee:
+                if role in [EMP_ROLE, 'head_of_division', 'team_leader']:
+                    # Employee, HoD, dan TL hanya boleh lihat Nama dan Divisi (sesuai request user)
+                    context_data['profil_saya'] = {
+                        'nama'           : employee.full_name,
+                        'divisi'         : employee.division.division_name if employee.division else 'N/A',
+                        'catatan_privasi': 'Data pribadi detail hanya diketahui oleh HRD.'
+                    }
+                else:
+                    # Admin/Dean bisa lihat detail
+                    context_data['profil_saya'] = {
+                        'nama'           : employee.full_name,
+                        'posisi'         : employee.position_name or 'N/A',
+                        'level'          : employee.level or 'N/A',
+                        'divisi'         : employee.division.division_name if employee.division else 'N/A',
+                        'email'          : employee.email or 'N/A',
+                        'status'         : employee.employment_status or 'N/A',
+                        'role_akses'     : role,
+                    }
+
+            # BLOK B — Ringkasan Utama & Agregat
+            if is_general or is_summary or is_training:
+                # ── Statistik Saya (untuk semua role yang punya profil) ──
+                if employee:
+                    stats = employee.training_stats
+                    context_data['statistik_saya'] = {
+                        'total_jam_training' : round(stats['total_hours'], 2),
+                        'jam_per_tipe'       : {
+                            'Inhouse': round(stats['inhouse_hours'], 2),
+                            'Public' : round(stats['public_hours'], 2),
+                            'E-Learning': round(stats['elearning_hours'], 2),
+                            'Knowledge Sharing': round(stats['ks_hours'], 2)
+                        },
+                        'total_pelatihan_diikuti': EventParticipant.objects.filter(nik=employee).count(),
+                    }
+
+                # ── Statistik Divisi/Perusahaan (untuk Admin/Dean/HoD/TL) ──
+                if role in ADMIN_ROLES or (role in DIV_ROLES and division_id):
+                    emp_qs = Employee.objects.all() if role in ADMIN_ROLES else Employee.objects.filter(division_id=division_id)
+                    
+                    event_qs = TrainingEvent.objects.filter(is_active=True, status='completed')
+                    if role in DIV_ROLES:
+                        event_qs = event_qs.filter(participants__nik__division_id=division_id).distinct()
+                    
+                    cat_summary = event_qs.values('training__training_category').annotate(
+                        total=Count('event_id')
+                    )
+                    type_summary = event_qs.values('training__training_type').annotate(
+                        total=Count('event_id')
+                    )
+                    
+                    context_data['agregat_sistem'] = {
+                        'jumlah_per_kategori': {item['training__training_category']: item['total'] for item in cat_summary},
+                        'jumlah_per_tipe'    : {item['training__training_type']: item['total'] for item in type_summary},
+                        'total_karyawan'     : emp_qs.count(),
+                    }
+
+                if role in ADMIN_ROLES:
+                    context_data['ringkasan_admin'] = {
+                        'total_training_master': TrainingMaster.objects.count(),
+                        'total_vendor'     : Vendor.objects.count(),
+                        'total_divisi'     : Division.objects.count(),
+                    }
+                elif role in DIV_ROLES and division_id:
+                    context_data['ringkasan_divisi'] = {
+                        'total_training_divisi' : TrainingMaster.objects.filter(trainingevent__participants__nik__division_id=division_id).distinct().count(),
+                        'total_karyawan_divisi' : Employee.objects.filter(division_id=division_id).count(),
+                    }
+                
+                if is_pure_greeting:
+                    return json.dumps(context_data, default=str)
+
+            # BLOK C — Data Training
+            if is_training or is_cost:
+                qs = TrainingMaster.objects.all()
+                if role in DIV_ROLES and division_id:
+                    qs = qs.filter(trainingevent__participants__nik__division_id=division_id).distinct()
+                elif role == EMP_ROLE and employee:
+                    qs = qs.filter(trainingevent__participants__nik=employee).distinct()
+
+                context_data['total_training_tersedia'] = qs.count()
+                qs = kw_filter(qs, 'training_title', 'training_code', 'course_category__category_name', 'vendor__vendor_name', 'course__course_name')
+                context_data['trainings'] = list(qs.select_related('vendor','course','course_category').values(
+                    'training_code','training_title','training_type','training_category',
+                    'estimated_cost','vendor__vendor_name','course__course_name','course_category__category_name'
+                )[:10])
+
+            # BLOK D — Event / Jadwal
+            if is_training or is_employee:
+                # Cek filter bulan jika ada kata kunci "bulan ini"
+                if any(kw in message.lower() for kw in ['bulan ini', 'sekarang', 'current']):
+                    now = timezone.now()
+                    qs = TrainingEvent.objects.filter(is_active=True, status__in=['draft', 'completed'], start_date__month=now.month, start_date__year=now.year)
+                else:
+                    qs = TrainingEvent.objects.filter(is_active=True, status__in=['draft', 'completed'])
+
+                if role in DIV_ROLES and division_id:
+                    qs = qs.filter(participants__nik__division_id=division_id).distinct()
+                elif role == EMP_ROLE and employee:
+                    qs = qs.filter(participants__nik=employee).distinct()
+
+                context_data['total_event_jadwal'] = qs.count()
+                qs = kw_filter(qs, 'training_topic', 'training__training_title', 'status', 'start_date')
+                
+                jadwal_list = []
+                for event in qs.select_related('training').prefetch_related('schedules', 'location')[:50]:
+                    schedules = []
+                    for sch in event.schedules.all():
+                        schedules.append({
+                            'tanggal': sch.training_date.strftime('%Y-%m-%d'),
+                            'jam_mulai': sch.start_time.strftime('%H:%M'),
+                            'jam_selesai': sch.end_time.strftime('%H:%M'),
+                            'instruktur': sch.instructor_name or 'N/A'
+                        })
+                    
+                    jadwal_list.append({
+                        'topik': event.training_topic,
+                        'judul_training': event.training.training_title,
+                        'kode_training': event.training.training_code,
+                        'tanggal_mulai': event.start_date.strftime('%Y-%m-%d'),
+                        'tanggal_selesai': event.end_date.strftime('%Y-%m-%d'),
+                        'status': event.status,
+                        'lokasi_kota': event.location.city if hasattr(event, 'location') else 'N/A',
+                        'detail_jadwal_jam': schedules
+                    })
+                context_data['jadwal_training'] = jadwal_list
+
+            # BLOK E — Biaya
+            if is_cost:
+                if role in ADMIN_ROLES:
+                    qs = EventCost.objects.filter(event__is_active=True)
+                    qs = kw_filter(qs, 'event__training_topic', 'event__training__training_title')
+                    context_data['biaya_event'] = list(qs.values(
+                        'event__training__training_title','total_cost')[:20])
+                    qs_b = kw_filter(Budget.objects.all(), 'budget_name')
+                    context_data['budget_perusahaan'] = list(qs_b.values('budget_name','total_budget')[:10])
+                else:
+                    context_data['catatan_biaya'] = 'Data biaya bersifat rahasia dan hanya dapat diakses oleh Administrator.'
+
+            # BLOK F — TNA
+            if is_tna:
+                qs = TnaMaster.objects.all()
+                if role in DIV_ROLES and division_id:
+                    qs = qs.filter(tnaparticipant__nik__division_id=division_id).distinct()
+                elif role == EMP_ROLE and employee:
+                    qs = qs.filter(tnaparticipant__nik=employee).distinct()
+                qs = kw_filter(qs, 'group_name', 'course__course_name')
+                context_data['total_tna_tersedia'] = qs.count()
+                
+                tna_res = []
+                for t in qs.select_related('course','tna_period')[:20]:
+                    status_f = 'N/A'
+                    if employee:
+                        is_fulfilled = EventParticipant.objects.filter(
+                            nik=employee, 
+                            event__training__course=t.course,
+                            event__status='completed'
+                        ).exists()
+                        status_f = 'Terpenuhi' if is_fulfilled else 'Belum Terpenuhi'
+                    
+                    tna_res.append({
+                        'topik': t.course.course_name,
+                        'tahun': t.tna_period.year,
+                        'status_fulfillment': status_f
+                    })
+                context_data['tna_list'] = tna_res
+
+            # BLOK G — Vendor
+            if is_vendor:
+                if role in ADMIN_ROLES:
+                    qs = kw_filter(Vendor.objects.all(), 'vendor_name','speciality','city')
+                    context_data['vendors'] = list(qs.values('vendor_name','provider_type','speciality','city')[:20])
+                else:
+                    context_data['catatan_vendor'] = 'Data vendor hanya dapat diakses oleh Admin.'
+
+            # BLOK H — Analitik Karyawan (Admin/Dean/HoD/TL only)
+            if (is_employee or is_summary) and role in (ADMIN_ROLES + DIV_ROLES):
+                emp_qs = Employee.objects.all() if role in ADMIN_ROLES else Employee.objects.filter(division_id=division_id)
+                
+                # Karyawan belum pernah training
+                no_training = emp_qs.exclude(eventparticipant__isnull=False)[:10]
+                context_data['karyawan_belum_training'] = [e.full_name for e in no_training]
+                
+                # Sampel karyawan jam training rendah (under 36 jam)
+                low_hours = []
+                for e in emp_qs[:10]:
+                    e_stats = e.get_training_stats()
+                    if e_stats['total_hours'] < 36:
+                        low_hours.append(f"{e.full_name} ({round(e_stats['total_hours'], 1)} jam)")
+                context_data['karyawan_jam_rendah'] = low_hours
+                
+                # Luar kota check
+                context_data['catatan_lokasi'] = "Keluar kota didefinisikan sebagai lokasi selain Jakarta dan Bogor."
+
+            # BLOK H — Evaluasi
+            if is_evaluation:
+                qs = EvaluationResult.objects.all()
+                if role == EMP_ROLE:
+                    qs = qs.filter(user=user)
+                elif role in DIV_ROLES and division_id:
+                    qs = qs.filter(user__profile__employee__division_id=division_id)
+                qs = kw_filter(qs, 'evaluation_name','training_name')
+                context_data['evaluasi'] = list(qs.values('user_name','evaluation_name','training_name','score')[:20])
+
+            # BLOK I — Karyawan
+            if is_employee or is_summary:
+                if role in ADMIN_ROLES:
+                    qs = Employee.objects.select_related('division')
+                    qs = kw_filter(qs,'full_name','position_name','division__division_name','nik')
+                    
+                    employee_list = []
+                    # If few employees are found, fetch their detailed training stats
+                    found_count = qs.count()
+                    if found_count > 0 and found_count <= 5:
+                        for emp in qs:
+                            emp_data = {
+                                'nik': emp.nik,
+                                'full_name': emp.full_name,
+                                'position': emp.position_name,
+                                'division': emp.division.division_name if emp.division else 'N/A',
+                                'training_stats': emp.training_stats,
+                                'training_history': [
+                                    {
+                                        'title': ep.event.training.training_title,
+                                        'topic': ep.event.training_topic,
+                                        'date': ep.event.start_date.strftime('%Y-%m-%d'),
+                                        'status': ep.event.status,
+                                        'score_l1': str(ep.l1_score) if ep.l1_score else None,
+                                        'score_l2': str(ep.l2_score) if ep.l2_score else None,
+                                    } for ep in emp.get_completed_events()
+                                ]
+                            }
+                            employee_list.append(emp_data)
+                    else:
+                        employee_list = list(qs.values('full_name','position_name','division__division_name','nik')[:50])
+                    
+                    context_data['karyawan'] = employee_list
+                elif role in DIV_ROLES and division_id:
+                    qs = Employee.objects.filter(division_id=division_id)
+                    qs = kw_filter(qs, 'full_name','position_name','nik')
+                    context_data['karyawan_divisi'] = list(qs.values('full_name','position_name','nik')[:25])
+                elif role == EMP_ROLE and employee:
+                    qs = EventParticipant.objects.filter(nik=employee).select_related('event__training')
+                    context_data['riwayat_pelatihan_saya'] = list(qs.values('event__training__training_title','event__start_date','status')[:20])
+
+            # BLOK J — Divisi Lengkap
+            if is_division:
+                context_data['daftar_divisi_lengkap'] = list(Division.objects.values_list('division_name', flat=True))
 
         except Exception as e:
             print(f"Context Builder Error: {e}")
             context_data['error'] = str(e)
 
-        return json.dumps(context_data)
+        return json.dumps(context_data, default=str)
 
     @action(detail=True, methods=['post'])
     def chat(self, request, pk=None):
@@ -1302,9 +1656,7 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
             if not message:
                 return Response({'error': 'Message is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-            context = None 
-
-            # 1. Get User Info
+            # Get User Info
             group_role_map = {
                 'Super Administrator': 'superadmin',
                 'Administrator': 'admin',
@@ -1315,114 +1667,155 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
             }
             user_role = 'superadmin' if request.user.is_superuser else 'employee'
             if not request.user.is_superuser and request.user.groups.exists():
-                group_name = request.user.groups.first().name
-                user_role = group_role_map.get(group_name, 'employee')
+                # Prioritaskan role dengan hak akses MUTLAK
+                groups = list(request.user.groups.values_list('name', flat=True))
+                if 'Super Administrator' in groups:
+                    user_role = 'superadmin'
+                elif 'Administrator' in groups:
+                    user_role = 'admin'
+                elif 'Dean' in groups:
+                    user_role = 'dean'
+                elif 'Head of Division' in groups:
+                    user_role = 'head_of_division'
+                elif 'Team Leader' in groups:
+                    user_role = 'team_leader'
+                else:
+                    group_name = groups[0]
+                    user_role = group_role_map.get(group_name, 'employee')
 
             employee_nik = None
-            division_id = None
             try:
                 profile = getattr(request.user, 'profile', None)
                 if profile and profile.employee:
                     employee_nik = profile.employee.nik
-                    division_id = str(profile.employee.division_id) if profile.employee.division_id else None
-            except Exception as e:
-                print(f"Profile error: {e}")
+            except: pass
 
-            # 2. Scope Detection
-            scope_keywords = ['training', 'tna', 'pelatihan', 'biaya', 'vendor', 'jadwal', 'evaluasi', 'sertifikat', 'lokasi', 'peserta']
-            is_out_of_scope = False
-            
-            # 3. Check FAQ Match
-            faq_match = AiFaq.objects.filter(question__iexact=message.strip(), is_published=True).first()
-            
+            # Logic FAQ matching dihapus
             ai_response = ""
-            faq_obj = None
             is_faq = False
             is_unanswered = False
-            redirected_to_wa = False
-            intent = "unknown" # Match DB constraint (using more generic value)
             tokens_used = 0
+            context = None
+            
+            # Selalu gunakan AI untuk menjawab meskipun pertanyaan ada di FAQ (karena kolom answer dihapus)
+            history = request.data.get('history', [])
+            context = self.get_ai_context(request.user, user_role, message, history)
 
-            if faq_match:
-                ai_response = faq_match.answer
-                faq_obj = faq_match
-                is_faq = True
-                intent = "unknown"
+            # Build role-aware system prompt
+            if user_role in ['superadmin', 'admin', 'dean']:
+                system_instruction = (
+                    "Anda adalah AI Assistant cerdas untuk sistem manajemen pelatihan perusahaan (L&D). "
+                    "Anda berbicara dengan Admin atau Dean (Pimpinan tertinggi) yang memiliki akses MUTLAK ke seluruh data. "
+                    "Dilarang pakai TABEL. Gunakan format daftar nomor (1. 2. 3.) untuk menyajikan data. "
+                    "Gunakan TEKS BIASA (plain text) tanpa simbol khusus markdown seperti bintang-bintang (**) atau garis bawah (_). "
+                    "Jika Anda tidak menemukan data yang diminta di Konteks Data, katakan: 'Mohon maaf saat ini SMI Assistant memiliki keterbatasan untuk jawaban/data tersebut'. "
+                    "Jawablah dengan bahasa Indonesia yang natural, profesional, dan ramah."
+                )
+            elif user_role in ['head_of_division', 'team_leader']:
+                system_instruction = (
+                    "Anda adalah AI Assistant cerdas untuk sistem manajemen pelatihan perusahaan (L&D). "
+                    "Anda berbicara dengan Pimpinan Divisi (Head/Team Leader). "
+                    "Akses Anda terbatas: Hanya boleh memberikan data TNA, Training Master, dan daftar Karyawan dari divisi Anda sendiri. "
+                    "Jika user menanyakan data pribadinya sendiri (email, telepon, dll), katakan bahwa detail tersebut hanya diketahui oleh HRD. Anda hanya boleh menyebutkan Nama dan Divisi saja. "
+                    "Dilarang memberikan data biaya (cost), anggaran (budget), hotel, atau data sensitif lainnya. "
+                    "Dilarang pakai TABEL. Gunakan daftar nomor (1. 2. 3.). "
+                    "Gunakan TEKS BIASA (plain text) tanpa simbol markdown (** atau _). "
+                    "Jika user bertanya di luar topik sistem L&D atau menanyakan data yang dilarang, arahkan user untuk menghubungi Administrator dengan cara KLIK IKON TELEPON di pojok kiri bawah layar chat."
+                )
             else:
-                # 4. Gather Context and Call n8n
-                context = self.get_ai_context(request.user, user_role, message)
-                n8n_url = "http://localhost:5678/webhook/smi-ai-chat"
-                history = request.data.get('history', [])
-                payload = {
-                    "message": message,
-                    "role": user_role,
-                    "nik": str(employee_nik) if employee_nik else None,
-                    "division_id": division_id,
-                    "context": context,
-                    "history": history
-                }
-                
+                system_instruction = (
+                    "Anda adalah AI Assistant cerdas untuk sistem manajemen pelatihan perusahaan (L&D). "
+                    "Anda berbicara dengan Karyawan. "
+                    "Akses Anda sangat terbatas: Hanya boleh memberikan data TNA dan Training Master diri Anda sendiri. "
+                    "Jika user menanyakan data pribadinya (email, telepon, dll), katakan bahwa detail tersebut hanya diketahui oleh HRD. Anda hanya boleh menyebutkan Nama dan Divisi saja. "
+                    "Dilarang memberikan data karyawan lain, data biaya, hotel, atau data strategis perusahaan. "
+                    "Dilarang pakai TABEL. Gunakan daftar nomor (1. 2. 3.). "
+                    "Gunakan TEKS BIASA (plain text) tanpa simbol markdown (** atau _). "
+                    "Jika user bertanya di luar topik sistem L&D atau menanyakan data yang dilarang, arahkan user untuk menghubungi Administrator dengan cara KLIK IKON TELEPON di pojok kiri bawah layar chat."
+                )
+
+            messages = [
+                {"role": "system", "content": system_instruction}
+            ]
+            for h in history[-5:]:
+                role_val = h.get('role') or ('user' if h.get('is_user') else 'assistant')
+                text_val = h.get('content') or h.get('text') or ''
+                if text_val: messages.append({"role": role_val, "content": text_val})
+            messages.append({"role": "user", "content": f"Konteks Data: {context}\n\n Pertanyaan: {message}"})
+
+            from openai import OpenAI
+            from django.conf import settings
+            
+            def call_ai(client_instance, model_name):
+                res = client_instance.chat.completions.create(
+                    model=model_name, 
+                    messages=messages, 
+                    max_tokens=2000, 
+                    temperature=0.3,
+                    timeout=30.0 # Add timeout to prevent hanging
+                )
+                return res.choices[0].message.content, (res.usage.total_tokens if res.usage else 0)
+
+            try:
+                if not settings.OPENAI_API_KEY: raise ValueError("OpenAI API Key is empty")
+                client = OpenAI(api_key=settings.OPENAI_API_KEY)
+                ai_response, tokens_used = call_ai(client, "gpt-3.5-turbo")
+            except Exception as openai_err:
+                print(f"OpenAI Error: {str(openai_err)}. Switching to OpenRouter...")
                 try:
-                    n8n_res = requests.post(n8n_url, json=payload, timeout=60)
-                    if n8n_res.status_code == 200:
+                    if not settings.OPENROUTER_API_KEY: raise ValueError("OpenRouter API Key is empty")
+                    client_or = OpenAI(
+                        base_url="https://openrouter.ai/api/v1", 
+                        api_key=settings.OPENROUTER_API_KEY
+                    )
+                    
+                    # List of fallback models to try in order (More Robust List)
+                    fallback_models = [
+                        "google/gemini-2.0-flash-001",
+                        "google/gemini-2.0-flash-lite-preview-02-05:free",
+                        "google/gemini-flash-1.5", 
+                        "deepseek/deepseek-r1:free",
+                        "meta-llama/llama-3.1-8b-instruct:free",
+                        "qwen/qwen-2-7b-instruct:free",
+                        "mistralai/mistral-7b-instruct:free",
+                        "microsoft/phi-3-medium-128k-instruct:free",
+                        "openrouter/auto", # Final fallback: OpenRouter automatically picks a working model
+                    ]
+                    
+                    success = False
+                    last_err = ""
+                    for model_name in fallback_models:
                         try:
-                            data = n8n_res.json()
-                            ai_response = data.get('response', '')
-                            if not ai_response or ai_response.strip() == '':
-                                ai_response = 'Maaf, saya tidak dapat memproses permintaan tersebut. Silakan coba dengan pertanyaan yang lebih spesifik.'
-                                is_unanswered = True
-                            tokens_used = data.get('tokens_used', 0)
-                            raw_intent = data.get('intent', 'unknown')
-                            valid_intents = ['training_history', 'tna_status', 'training_cost', 'vendor_info', 'event_schedule', 'evaluation_result', 'employee_info', 'division_summary', 'out_of_scope', 'unknown']
-                            intent = raw_intent if raw_intent in valid_intents else 'unknown'
-                        except:
-                            ai_response = n8n_res.text if n8n_res.text else "Respon AI kosong."
-                    else:
-                        ai_response = "Maaf, sistem AI sedang sibuk. Silakan coba lagi nanti."
-                        is_unanswered = True
-                except Exception as e:
-                    print(f"n8n Connection Error: {str(e)}")
-                    ai_response = "Maaf, terjadi kendala koneksi ke sistem AI."
+                            print(f"OpenRouter: Trying model {model_name}...")
+                            ai_response, tokens_used = call_ai(client_or, model_name)
+                            if ai_response and len(ai_response.strip()) > 0:
+                                success = True
+                                print(f"OpenRouter: Success with {model_name}")
+                                break
+                        except Exception as e:
+                            last_err = str(e)
+                            print(f"OpenRouter: Model {model_name} failed ({e})")
+                            continue
+                    
+                    if not success:
+                        raise ValueError(f"All OpenRouter models failed. Last error: {last_err}")
+                        
+                except Exception as or_err:
+                    print(f"Total AI Failure: {str(or_err)}")
+                    ai_response = "Maaf, sistem sedang sibuk."
                     is_unanswered = True
 
-            # 5. Save Chat Log
-            response_time = int((time.time() - start_time) * 1000)
-            
-            # Set intent to None for AI Query to avoid DB constraint issues
-            # Only use intent if it's a known FAQ or Out of Scope match, otherwise None is safer
-            valid_intents = ['training_history', 'tna_status', 'training_cost', 'vendor_info', 'event_schedule', 'evaluation_result', 'employee_info', 'division_summary', 'out_of_scope', 'unknown']
-            final_intent = intent if intent in valid_intents else None
-
             AiChatLog.objects.create(
-                session=session,
-                user=request.user,
-                nik=employee_nik,
-                role=user_role,
-                user_message=message,
-                ai_response=ai_response,
-                intent=final_intent,
-                faq=faq_obj,
-                is_faq_triggered=is_faq,
-                is_out_of_scope=is_out_of_scope,
-                is_unanswered=is_unanswered,
-                redirected_to_wa=redirected_to_wa,
-                response_time_ms=response_time,
-                tokens_used=tokens_used,
-                context_sent=context
+                session=session, user=request.user, nik=employee_nik, role=user_role,
+                user_message=message, ai_response=ai_response, is_faq_triggered=is_faq,
+                is_unanswered=is_unanswered, response_time_ms=int((time.time() - start_time) * 1000),
+                tokens_used=tokens_used, context_sent=context
             )
 
-            return Response({
-                'response': ai_response,
-                'is_faq': is_faq,
-                'is_out_of_scope': is_out_of_scope,
-                'redirected_to_wa': redirected_to_wa
-            })
-
+            return Response({'response': ai_response, 'is_faq': is_faq})
         except Exception as e:
-            import traceback
-            print("CHAT ACTION ERROR:")
-            traceback.print_exc()
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class AiChatLogViewSet(viewsets.ModelViewSet):
@@ -1437,14 +1830,13 @@ class AiChatLogViewSet(viewsets.ModelViewSet):
         unanswered = AiChatLog.objects.filter(is_unanswered=True).count()
         wa_redirects = AiChatLog.objects.filter(redirected_to_wa=True).count()
         out_of_scope = AiChatLog.objects.filter(is_out_of_scope=True).count()
-        faq_count = AiFaq.objects.count()
+
 
         return Response({
             'total_chats': total_chats,
             'unanswered': unanswered,
             'wa_redirects': wa_redirects,
-            'out_of_scope': out_of_scope,
-            'faq_count': faq_count
+            'out_of_scope': out_of_scope
         })
 
     @action(detail=False, methods=['get'])
@@ -1466,13 +1858,24 @@ class AiChatLogViewSet(viewsets.ModelViewSet):
             data = []
             for log in logs:
                 try:
-                    user = log.session.user if log.session else None
-                    name = user.get_full_name() or user.username if user else 'N/A'
+                    name = 'User'
+                    nik_val = str(log.nik) if log.nik else ''
+                    div_name = ''
+                    
+                    if log.nik:
+                        emp = Employee.objects.filter(nik=log.nik).select_related('division').first()
+                        if emp:
+                            name = emp.full_name
+                            div_name = emp.division.division_name if emp.division else ''
+                    
+                    if name == 'User' and log.user:
+                        name = log.user.get_full_name() or log.user.username
+
                     data.append({
                         'id': log.log_id,
-                        'nik': 'N/A',
+                        'nik': nik_val,
                         'name': name,
-                        'division': 'N/A',
+                        'division': div_name,
                         'message': log.user_message,
                         'date': log.created_at.strftime('%Y-%m-%d') if log.created_at else '',
                         'full_date': log.created_at.isoformat() if log.created_at else ''

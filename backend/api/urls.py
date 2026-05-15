@@ -41,7 +41,7 @@ router.register(r'event-documents', EventDocumentViewSet, basename='event-docume
 from .views import (
     EvaluationFormViewSet, EvaluationQuestionViewSet,
     EvaluationQuestionOptionViewSet, EvaluationAnswerViewSet,
-    EvaluationResultViewSet, AiAdminConfigViewSet, AiFaqViewSet, 
+    EvaluationResultViewSet, AiAdminConfigViewSet, 
     AiChatSessionViewSet, AiChatLogViewSet, AiUnauthorizedAttemptViewSet
 )
 router.register(r'evaluation-forms', EvaluationFormViewSet, basename='evaluation-forms')
@@ -52,7 +52,7 @@ router.register(r'evaluation-results', EvaluationResultViewSet, basename='evalua
 
 # AI Assistant Endpoints
 router.register(r'ai-admin-config', AiAdminConfigViewSet, basename='ai-admin-config')
-router.register(r'ai-faq', AiFaqViewSet, basename='ai-faq')
+
 router.register(r'ai-sessions', AiChatSessionViewSet, basename='ai-sessions')
 router.register(r'ai-logs', AiChatLogViewSet, basename='ai-logs')
 router.register(r'ai-unauthorized', AiUnauthorizedAttemptViewSet, basename='ai-unauthorized')

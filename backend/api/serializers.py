@@ -9,7 +9,7 @@ from .models import (
     EventParticipant, EventCost, EventDocument, Division,
     EvaluationForm, EvaluationQuestion, EvaluationQuestionOption,
     EvaluationAnswer, EvaluationResult,
-    AiAdminConfig, AiFaq, AiChatSession, AiChatLog, AiUnauthorizedAttempt,
+    AiAdminConfig, AiChatSession, AiChatLog, AiUnauthorizedAttempt,
     Budget
 )
 
@@ -706,13 +706,9 @@ class EvaluationResultSerializer(serializers.ModelSerializer):
 class AiAdminConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = AiAdminConfig
-        fields = ['config_id', 'config_key', 'config_value', 'description', 'is_active', 'updated_by', 'updated_at']
+        fields = ['config_id', 'config_key', 'config_value', 'is_active', 'updated_by', 'updated_at']
 
-class AiFaqSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AiFaq
-        fields = ['faq_id', 'question', 'answer', 'sequence', 'is_published', 'created_by', 'updated_by', 'created_at', 'updated_at']
-        read_only_fields = ['created_by', 'updated_by', 'created_at', 'updated_at']
+
 
 class AiChatLogSerializer(serializers.ModelSerializer):
     class Meta:

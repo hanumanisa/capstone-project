@@ -36,7 +36,7 @@ Buat file bernama `.env` di **folder root backend** (sejajar dengan file `manage
 
 ```env
 # Konfigurasi Database PostgreSQL
-DB_NAME=lndcapstone
+DB_NAME=capstone
 DB_USER=postgres
 DB_PASSWORD=PasswordPostgresKamu
 DB_HOST=localhost
@@ -54,7 +54,7 @@ DEBUG=True
 JWT_ACCESS_TOKEN_MINUTES=60
 JWT_REFRESH_TOKEN_DAYS=1
 ```
-> **Penting**: Pastikan database `lndcapstone` sudah terbuat di dalam PostgreSQL milikmu. (Bisa menggunakan pgAdmin atau psql `CREATE DATABASE lndcapstone;`)
+> **Penting**: Pastikan database `capstone` sudah terbuat di dalam PostgreSQL milikmu. (Bisa menggunakan pgAdmin atau psql `CREATE DATABASE capstone;`)
 
 ### 5. Menjalankan Migrations Database
 Setelah koneksi database di `.env` sudah benar, lakukan migrasi untuk membuat tabel-tabel di database (termasuk Auth, Employee, Profile, dan TrainingData).

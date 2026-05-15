@@ -11,6 +11,10 @@ import TrainingMasterPage from './pages/TrainingMasterPage';
 import EmployeePage from './pages/EmployeePage';
 import TrainingEvaluationPage from './pages/TrainingEvaluationPage';
 import TrainingEvaluationEmployeePage from './pages/TrainingEvaluationEmployeePage';
+import AiDashboard from './pages/AiDashboard';
+import AiChatPage from './pages/AiChatPage';
+import AiAdminPage from './pages/AiAdminPage';
+import AiStartChatPage from './pages/AiStartChatPage';
 
 function App() {
   return (
@@ -30,6 +34,12 @@ function App() {
       <Route path="/courses" element={<CoursePage />} />
       <Route path="/vendor" element={<VendorPage />} />
       <Route path="/tna" element={<TnaPage />} />
+      
+      {/* AI Assistant pages */}
+      <Route path="/ai-dashboard" element={<AiDashboard />} />
+      <Route path="/ai-chat" element={<AiChatPage />} />
+      <Route path="/ai-admin" element={<AiAdminPage />} />
+      <Route path="/ai-start" element={<AiStartChatPage />} />
       
       {/* Default redirect to login or dashboard */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

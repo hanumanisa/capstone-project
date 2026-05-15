@@ -738,7 +738,6 @@ class AiAdminConfig(models.Model):
     config_id = models.AutoField(primary_key=True)
     config_key = models.CharField(max_length=100, unique=True)
     config_value = models.TextField()
-    description = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, db_column='updated_by')
     updated_at = models.DateTimeField(auto_now=True)
@@ -750,22 +749,7 @@ class AiAdminConfig(models.Model):
         return self.config_key
 
 
-class AiFaq(models.Model):
-    faq_id = models.AutoField(primary_key=True)
-    question = models.TextField()
-    answer = models.TextField()
-    sequence = models.IntegerField(default=0)
-    is_published = models.BooleanField(default=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='faq_created_by', db_column='created_by')
-    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='faq_updated_by', db_column='updated_by')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        db_table = 'ai_faq'
-
-    def __str__(self):
-        return self.question[:50]
 
 
 import uuid as uuid_module
@@ -797,7 +781,7 @@ class AiChatLog(models.Model):
     user_message = models.TextField()
     ai_response = models.TextField(null=True, blank=True)
     intent = models.CharField(max_length=100, null=True, blank=True)
-    faq = models.ForeignKey(AiFaq, on_delete=models.SET_NULL, null=True, blank=True)
+
     is_faq_triggered = models.BooleanField(default=False)
     is_out_of_scope = models.BooleanField(default=False)
     is_unanswered = models.BooleanField(default=False)
@@ -847,6 +831,3 @@ class Budget(models.Model):
 
     def __str__(self):
         return f"{self.budget_name} ({self.start_date_budget} - {self.end_date_budget})"
-
-    def __str__(self):
-        return f"Attempt {self.attempt_id} by user {self.user_id}"

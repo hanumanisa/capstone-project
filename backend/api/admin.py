@@ -5,16 +5,14 @@ from .models import (
     Employee, Profile, Directorate, Division, 
     CourseCategory, Course, Hotel, Vendor, TnaPeriod, TnaMaster,
     TrainingMaster, TrainingEvent, EventLocation, EventSchedule,
-    EventParticipant, EventCost, EventDocument, AiAdminConfig, AiFaq, AiChatSession, AiChatLog, AiUnauthorizedAttempt
+    EventParticipant, EventCost, EventDocument, Budget, AiAdminConfig, AiChatSession, AiChatLog, AiUnauthorizedAttempt
 )
 
 @admin.register(AiAdminConfig)
 class AiAdminConfigAdmin(admin.ModelAdmin):
     list_display = ('config_key', 'config_value', 'updated_at')
 
-@admin.register(AiFaq)
-class AiFaqAdmin(admin.ModelAdmin):
-    list_display = ('question', 'is_published', 'sequence', 'created_at')
+
 
 @admin.register(AiChatSession)
 class AiChatSessionAdmin(admin.ModelAdmin):

@@ -148,3 +148,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# AI Assistant Settings
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
+OPENROUTER_API_KEY = config('OPENROUTER_API_KEY', default='')
