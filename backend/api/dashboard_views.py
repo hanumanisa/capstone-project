@@ -26,25 +26,36 @@ class DashboardCardsAPIView(APIView):
         except Exception as e:
             return Response({"error": f"Profile not found: {str(e)}"}, status=404)
 
-        # Base filters
-        events = TrainingEvent.objects.exclude(status='cancelled').filter(start_date__year=year)
-        
+        # Determine employee scope (target_niks) based on role
         if role in ['Head of Division', 'Team Leader']:
-            # Scope to entire division
+            # Scope to entire division (includes self)
             division = employee.division
             target_niks = Employee.objects.filter(division=division).values_list('nik', flat=True)
-            participants = EventParticipant.objects.filter(nik__in=target_niks).exclude(attendance_status='Absent')
             employee_count = len(target_niks)
         elif role in ['Super Administrator', 'Administrator', 'Dean']:
             # Admin sees everything
-            participants = EventParticipant.objects.exclude(attendance_status='Absent')
+            target_niks = Employee.objects.all().values_list('nik', flat=True)
             employee_count = Employee.objects.count()
         else:
             # Role Employee - scope to self only
-            participants = EventParticipant.objects.filter(nik=employee).exclude(attendance_status='Absent')
+            target_niks = [employee.nik]
             employee_count = 1
 
-        # Final filtered events for this scope
+        # Base filters: Exclude cancelled events
+        events = TrainingEvent.objects.exclude(status='cancelled').filter(start_date__year=year)
+        
+        # Participants filter: Exclude Absent, scope to target_niks, and MUST exclude cancelled events
+        participants = EventParticipant.objects.filter(
+            nik__in=target_niks
+        ).exclude(
+            attendance_status='Absent'
+        ).exclude(
+            event__status='cancelled'
+        ).filter(
+            event__start_date__year=year
+        )
+
+        # Final filtered events for this scope (only events where target employees actually participated and were not absent)
         event_ids = participants.values_list('event_id', flat=True).distinct()
         events = events.filter(event_id__in=event_ids)
 
@@ -79,10 +90,12 @@ class DashboardCardsAPIView(APIView):
         l1_val = float(l1_agg) if l1_agg else 0.0
         l2_val = float(l2_agg) if l2_agg else 0.0
 
-        tna_parts = TnaParticipant.objects.filter(nik__in=participants.values_list('nik', flat=True))
+        # TNA Coverage Logic: Based on requirements (TnaParticipant) for the target_niks in the selected year
+        tna_parts = TnaParticipant.objects.filter(nik__in=target_niks, tna__tna_period__year=year)
         total_tna = tna_parts.count()
         matched_tna = 0
         if total_tna > 0:
+            # Attended courses in this year by the target employees (already filtered by year and status)
             attended_courses = set(events.values_list('training__course_id', flat=True))
             for tp in tna_parts:
                 if tp.tna.course_id in attended_courses:

@@ -184,21 +184,6 @@ const Navbar = () => {
                                                 TNA
                                             </Link>
                                         </li>
-                                        {!isRestricted && (
-                                            <>
-                                                <li className="border-t border-gray-100 my-1"></li>
-                                                <li>
-                                                    <Link to="/ai-dashboard" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full font-medium ${currentPath === 'ai-dashboard' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
-                                                        AI Dashboard
-                                                    </Link>
-                                                </li>
-                                                <li>
-                                                    <Link to="/ai-admin" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full font-medium ${currentPath === 'ai-admin' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
-                                                        AI Config
-                                                    </Link>
-                                                </li>
-                                            </>
-                                        )}
                                     </ul>
                                 </div>
                             )}

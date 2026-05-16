@@ -352,10 +352,16 @@ class TnaParticipantSerializer(serializers.ModelSerializer):
         ]
 
     def get_iht_plus_public(self, obj):
-        return obj.nik.iht_plus_public
+        # Return count of IHT + Public for the specific year of the TNA period
+        year = obj.tna.tna_period.year
+        return obj.nik.get_iht_plus_public(year)
 
     def get_tna_fulfilled(self, obj):
-        return obj.nik.tna_fulfilled
+        # Binary fulfillment for the specific course and year
+        year = obj.tna.tna_period.year
+        events = obj.nik.get_completed_events(year)
+        attended_course_ids = [ep.event.training.course_id for ep in events]
+        return 1 if obj.tna.course_id in attended_course_ids else 0
 
 
 
