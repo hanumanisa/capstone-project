@@ -375,15 +375,27 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
         elif "Head of Division" in user_groups or "Team Leader" in user_groups:
             if hasattr(user, 'profile') and user.profile.employee:
                 div_id = user.profile.employee.division_id
-                # Only show trainings that have at least one participant from their division
-                qs = qs.filter(trainingevent__participants__nik__division_id=div_id).distinct()
+                # Only show trainings that have at least one valid participant from their division
+                qs = qs.filter(
+                    trainingevent__participants__nik__division_id=div_id
+                ).exclude(
+                    trainingevent__status='cancelled'
+                ).exclude(
+                    trainingevent__participants__attendance_status='Absent'
+                ).distinct()
             else:
                 qs = qs.none()
         elif "Employee" in user_groups:
             if hasattr(user, 'profile') and user.profile.employee:
                 emp = user.profile.employee
-                # Only show trainings that they participated in
-                qs = qs.filter(trainingevent__participants__nik=emp).distinct()
+                # Only show trainings that they participated in and were not absent/cancelled
+                qs = qs.filter(
+                    trainingevent__participants__nik=emp
+                ).exclude(
+                    trainingevent__status='cancelled'
+                ).exclude(
+                    trainingevent__participants__attendance_status='Absent'
+                ).distinct()
             else:
                 qs = qs.none()
         else:
@@ -1413,7 +1425,7 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
                     }
 
             # BLOK B — Ringkasan Utama & Agregat
-            if is_general or is_summary or is_training or is_tna:
+            if is_general or is_summary or is_training or is_tna or is_cost:
                 # ── Statistik Saya (untuk semua role) ──
                 if employee:
                     stats = employee.training_stats
@@ -1425,8 +1437,7 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
                         fulfilled = EventParticipant.objects.filter(
                             nik=employee, 
                             event__training__course=t.course,
-                            event__status='completed'
-                        ).exclude(attendance_status='Absent').exists()
+                        ).exclude(event__status='cancelled').exclude(attendance_status='Absent').exists()
                         item = {'topik': t.course.course_name, 'tahun': t.tna_period.year}
                         if fulfilled: tna_fulfilled.append(item)
                         else: tna_unfulfilled.append(item)
@@ -1450,8 +1461,8 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
                     
                     # Filter bulan ini
                     now = timezone.now()
-                    event_qs_month = TrainingEvent.objects.filter(is_active=True, status='completed', start_date__month=now.month, start_date__year=now.year)
-                    event_qs_all = TrainingEvent.objects.filter(is_active=True, status='completed')
+                    event_qs_month = TrainingEvent.objects.filter(is_active=True, start_date__month=now.month, start_date__year=now.year).exclude(status='cancelled')
+                    event_qs_all = TrainingEvent.objects.filter(is_active=True).exclude(status='cancelled')
                     
                     if role in DIV_ROLES:
                         event_qs_month = event_qs_month.filter(participants__nik__division_id=division_id).distinct()
@@ -1486,7 +1497,7 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
                     avg_hours = total_hours_all / emp_qs.count() if emp_qs.count() > 0 else 0
                     
                     context_data['agregat_divisi_perusahaan'] = {
-                        'total_training_completed': event_qs_all.count(),
+                        'total_training_terselenggara': event_qs_all.count(),
                         'rata_rata_jam_training': round(avg_hours, 2),
                         'total_jam_training_akumulasi': round(total_hours_all, 2),
                         'total_jam_bulan_ini': round(total_hours_month, 2),
@@ -1494,34 +1505,84 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
                         'total_karyawan_scope': emp_qs.count(),
                     }
 
+                    # Add detailed division breakdown if asked
+                    if role in ADMIN_ROLES and any(kw in message.lower() for kw in ['divisi', 'setiap divisi', 'tiap divisi']):
+                        breakdown = []
+                        for div in Division.objects.all():
+                            d_emps = Employee.objects.filter(division=div)
+                            d_events = event_qs_all.filter(participants__nik__in=d_emps).distinct()
+                            d_hours = 0
+                            for ev in d_events.prefetch_related('schedules'):
+                                ev_hours = 0
+                                for sch in ev.schedules.all():
+                                    if sch.start_time and sch.end_time:
+                                        t1 = datetime.combine(date(2000,1,1), sch.start_time)
+                                        t2 = datetime.combine(date(2000,1,1), sch.end_time)
+                                        ev_hours += (t2 - t1).total_seconds() / 3600
+                                part_count = ev.participants.filter(nik__in=d_emps).exclude(attendance_status='Absent').count()
+                                d_hours += ev_hours * part_count
+                            d_part_count = EventParticipant.objects.filter(event__in=d_events, nik__in=d_emps).exclude(attendance_status='Absent').values('nik').distinct().count()
+                            if d_hours > 0 or d_part_count > 0:
+                                breakdown.append({
+                                    'nama_divisi': div.division_name,
+                                    'total_jam_training': round(d_hours, 2),
+                                    'jumlah_karyawan_yang_mengikuti_training': d_part_count
+                                })
+                        context_data['rincian_per_divisi'] = breakdown
+
                 if role in ADMIN_ROLES:
                     now = timezone.now()
-                    realization_all = EventCost.objects.filter(event__is_active=True, event__status='completed')
-                    realization_month = realization_all.filter(event__start_date__month=now.month, event__start_date__year=now.year)
-                    realization_year = realization_all.filter(event__start_date__year=now.year)
+                    target_month = now.month
+                    target_year = now.year
+                    
+                    months_map = {
+                        'januari': 1, 'februari': 2, 'maret': 3, 'april': 4, 'mei': 5, 'juni': 6,
+                        'juli': 7, 'agustus': 8, 'september': 9, 'oktober': 10, 'november': 11, 'desember': 12,
+                        'january': 1, 'february': 2, 'march': 3, 'april': 4, 'may': 5, 'june': 6,
+                        'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12
+                    }
+                    for term in search_terms:
+                        if term in months_map:
+                            target_month = months_map[term]
+                        if term.isdigit() and len(term) == 4:
+                            target_year = int(term)
+
+                    realization_all = EventCost.objects.filter(
+                        event__is_active=True, 
+                        cost_type='Actual Cost', 
+                        status_cost__iexact='Paid'
+                    ).exclude(event__status='cancelled').annotate(
+                        total_cost=F('room_cost') + F('training_cost') + F('sppd_cost')
+                    )
+                    realization_month = realization_all.filter(event__start_date__month=target_month, event__start_date__year=target_year)
+                    realization_year = realization_all.filter(event__start_date__year=target_year)
                     
                     total_realization_all = realization_all.aggregate(total=Sum('total_cost'))['total'] or 0
                     total_realization_month = realization_month.aggregate(total=Sum('total_cost'))['total'] or 0
                     total_realization_year = realization_year.aggregate(total=Sum('total_cost'))['total'] or 0
                     
                     budget_qs = Budget.objects.all()
-                    budget_month = budget_qs.filter(start_date_budget__month=now.month, start_date_budget__year=now.year).first()
-                    total_budget_year = budget_qs.filter(start_date_budget__year=now.year).aggregate(total=Sum('total_budget'))['total'] or 0
+                    budget_month = budget_qs.filter(start_date_budget__month=target_month, start_date_budget__year=target_year).first()
+                    total_budget_year = budget_qs.filter(start_date_budget__year=target_year).aggregate(total=Sum('total_budget'))['total'] or 0
                     total_budget_akumulasi = budget_qs.aggregate(total=Sum('total_budget'))['total'] or 0
+
+                    total_anggaran_bulan = budget_month.total_budget if budget_month else 0
 
                     context_data['ringkasan_sistem'] = {
                         'total_training_master': TrainingMaster.objects.count(),
                         'total_vendor'     : Vendor.objects.count(),
                         'total_divisi'     : Division.objects.count(),
                         'analitik_anggaran': {
-                            'total_anggaran_bulan_ini': budget_month.total_budget if budget_month else 0,
-                            'realisasi_biaya_bulan_ini': total_realization_month,
-                            'total_anggaran_tahun_ini': total_budget_year,
-                            'realisasi_biaya_tahun_ini': total_realization_year,
-                            'sisa_anggaran_tahun_ini': total_budget_year - total_realization_year,
+                            'informasi_periode': f'Bulan {target_month} Tahun {target_year}',
+                            'total_anggaran_bulan_diminta': total_anggaran_bulan,
+                            'realisasi_biaya_bulan_diminta': total_realization_month,
+                            'sisa_anggaran_bulan_diminta': float(total_anggaran_bulan) - float(total_realization_month),
+                            'total_anggaran_tahun_diminta': total_budget_year,
+                            'realisasi_biaya_tahun_diminta': total_realization_year,
+                            'sisa_anggaran_tahun_diminta': float(total_budget_year) - float(total_realization_year),
                             'total_anggaran_sampai_saat_ini': total_budget_akumulasi,
                             'total_realisasi_sampai_saat_ini': total_realization_all,
-                            'sisa_anggaran_akumulasi': total_budget_akumulasi - total_realization_all
+                            'sisa_anggaran_akumulasi': float(total_budget_akumulasi) - float(total_realization_all)
                         }
                     }
                 
@@ -1586,7 +1647,13 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
             # BLOK E — Biaya & Sampel Anggaran
             if is_cost:
                 if role in ADMIN_ROLES:
-                    qs = EventCost.objects.filter(event__is_active=True)
+                    qs = EventCost.objects.filter(
+                        event__is_active=True,
+                        cost_type='Actual Cost',
+                        status_cost__iexact='Paid'
+                    ).exclude(event__status='cancelled').annotate(
+                        total_cost=F('room_cost') + F('training_cost') + F('sppd_cost')
+                    )
                     qs = kw_filter(qs, 'event__training_topic', 'event__training__training_title')
                     context_data['biaya_event_sampel'] = list(qs.values('event__training__training_title','total_cost')[:10])
                 else:
@@ -1813,7 +1880,9 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
             # Build role-aware system prompt with strict context boundary
             base_instruction = (
                 "PENTING: Anda HANYA diperbolehkan menjawab pertanyaan yang berkaitan dengan sistem manajemen pelatihan (L&D) dan data yang ada di database perusahaan. "
-                "Jika pertanyaan di luar topik tersebut (contoh: matematika, pengetahuan umum, ramalan cuaca, dll), Anda WAJIB menjawab: "
+                "CATATAN: Pertanyaan tentang anggaran (budget), biaya (cost), realisasi, atau uang yang sudah digunakan terkait pelatihan ADALAH bagian dari topik L&D. "
+                "Istilah 'realisasi' atau 'biaya_event' berarti 'anggaran yang sudah digunakan'. "
+                "Jika pertanyaan benar-benar di luar topik (contoh: matematika, ramalan cuaca, dll), Anda WAJIB menjawab: "
                 "'Maaf, SMI Assistant hanya dapat menjawab pertanyaan yang berkaitan dengan sistem manajemen pelatihan (L&D). Silakan ajukan pertanyaan seputar pelatihan. Jika ada pertanyaan lain, Anda bisa menghubungi Admin melalui whatsapp.' "
                 "Dilarang pakai TABEL. Gunakan daftar nomor (1. 2. 3.). "
                 "Gunakan TEKS BIASA (plain text) tanpa simbol markdown (** atau _). "
@@ -1824,21 +1893,21 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
                 system_instruction = (
                     f"Anda adalah AI Assistant cerdas untuk sistem manajemen pelatihan perusahaan (L&D). {base_instruction} "
                     "Anda berbicara dengan Admin atau Dean yang memiliki akses MUTLAK ke seluruh data. "
-                    "Jika Anda tidak menemukan data numerik spesifik yang diminta di Konteks Data, katakan bahwa data tersebut belum tercatat atau belum ada realisasi di sistem untuk periode tersebut."
+                    "Jika Anda menemukan data bernilai 0 di Konteks Data (seperti realisasi=0 atau anggaran=0), sampaikan bahwa nilainya adalah Rp0 atau belum ada pengeluaran/anggaran, BUKAN mengatakan data belum tercatat."
                 )
             elif user_role in ['head_of_division', 'team_leader']:
                 system_instruction = (
                     f"Anda adalah AI Assistant cerdas untuk sistem manajemen pelatihan perusahaan (L&D). {base_instruction} "
                     "Anda berbicara dengan Pimpinan Divisi. Akses terbatas: Hanya boleh memberikan data TNA, Training Master, dan daftar Karyawan dari divisi Anda sendiri. "
                     "Dilarang memberikan data biaya (cost), anggaran (budget), hotel, atau data sensitif lainnya. "
-                    "Jika user bertanya di luar topik atau data dilarang, berikan pesan penolakan standar: 'Maaf, SMI Assistant hanya dapat menjawab pertanyaan yang berkaitan dengan sistem manajemen pelatihan (L&D). Silakan ajukan pertanyaan seputar pelatihan. Jika ada pertanyaan lain, Anda bisa menghubungi Admin melalui whatsapp.'"
+                    "Jika user bertanya tentang biaya atau anggaran, berikan pesan penolakan: 'Maaf, data anggaran dan biaya hanya dapat diakses oleh Admin dan Dean.'"
                 )
             else:
                 system_instruction = (
                     f"Anda adalah AI Assistant cerdas untuk sistem manajemen pelatihan perusahaan (L&D). {base_instruction} "
                     "Anda berbicara dengan Karyawan. Akses sangat terbatas: Hanya boleh memberikan data TNA dan Training Master diri sendiri. "
-                    "Dilarang memberikan data karyawan lain, biaya, atau data strategis. "
-                    "Jika user bertanya di luar topik atau data dilarang, berikan pesan penolakan standar: 'Maaf, SMI Assistant hanya dapat menjawab pertanyaan yang berkaitan dengan sistem manajemen pelatihan (L&D). Silakan ajukan pertanyaan seputar pelatihan. Jika ada pertanyaan lain, Anda bisa menghubungi Admin melalui whatsapp.'"
+                    "Dilarang memberikan data karyawan lain, biaya, anggaran, atau data strategis. "
+                    "Jika user bertanya tentang biaya atau anggaran, berikan pesan penolakan: 'Maaf, data anggaran dan biaya hanya dapat diakses oleh Admin dan Dean.'"
                 )
 
             messages = [
