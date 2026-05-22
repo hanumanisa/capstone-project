@@ -84,7 +84,8 @@ def execute_ai_query(user, message: str, history: list = None) -> tuple:
                     api_key=settings.OPENAI_API_KEY,
                     temperature=0.3,
                     max_tokens=8192,
-                    timeout=90.0
+                    timeout=30.0,
+                    max_retries=0
                 )
             )
 
@@ -107,7 +108,8 @@ def execute_ai_query(user, message: str, history: list = None) -> tuple:
                         base_url="https://openrouter.ai/api/v1",
                         temperature=0.3,
                         max_tokens=8192,
-                        timeout=90.0
+                        timeout=90.0,
+                        max_retries=0
                     )
                 )
 
@@ -196,7 +198,14 @@ def execute_ai_query(user, message: str, history: list = None) -> tuple:
                 elif role_val in ['assistant', 'ai']:
                     messages.append(AIMessage(content=text_val))
 
-        user_content = f"Waktu Lokal Saat Ini (Real-time): {current_time_str}\n\nPertanyaan: {message}"
+        user_name = employee.full_name if employee else (user.first_name or user.username)
+        div_name_str = division_name if division_name else "Tidak Ada Divisi"
+        
+        user_content = (
+            f"Waktu Lokal Saat Ini (Real-time): {current_time_str}\n"
+            f"Konteks Pengguna Login: Nama = {user_name}, Role = {role}, Divisi = {div_name_str}\n\n"
+            f"Pertanyaan: {message}"
+        )
         messages.append(HumanMessage(content=user_content))
 
         # 8. Jalankan Agent

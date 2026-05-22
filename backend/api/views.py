@@ -1344,18 +1344,6 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
                 if "menghubungi Admin melalui whatsapp" in ai_response:
                     redirected_to_wa = True
 
-            # Enforce clean text formatting via post-processing
-            if ai_response:
-                ai_response = ai_response.replace("```json", "").replace("```", "").replace("`", "")
-                ai_response = re.sub(r'\*\*(.*?)\*\*', r'\1', ai_response)
-                ai_response = re.sub(r'\*(.*?)\*', r'\1', ai_response)
-                ai_response = re.sub(r'_(.*?)_', r'\1', ai_response)
-                lines = ai_response.split('\n')
-                cleaned_lines = []
-                for line in lines:
-                    cleaned_line = re.sub(r'^\s*[\*\-\_\#\•\-\—]\s*', '', line)
-                    cleaned_lines.append(cleaned_line)
-                ai_response = '\n'.join(cleaned_lines)
 
             # Log execution
             AiChatLog.objects.create(
