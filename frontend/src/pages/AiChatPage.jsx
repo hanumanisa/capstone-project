@@ -8,6 +8,19 @@ import ReactMarkdown from 'react-markdown';
 
 const WELCOME_MSG = { role: 'assistant', content: 'Halo! Saya SMI Assistant 👋 Ada yang bisa saya bantu hari ini?' };
 
+// Normalize phone number to international format for wa.me
+// Handles: '088xxx' → '6288xxx', '+6288xxx' → '6288xxx', '6288xxx' → '6288xxx'
+const normalizeWaNumber = (number) => {
+    if (!number) return '';
+    let n = String(number).replace(/\D/g, ''); // remove non-digits
+    if (n.startsWith('0')) {
+        n = '62' + n.slice(1);
+    } else if (n.startsWith('+')) {
+        n = n.slice(1);
+    }
+    return n;
+};
+
 const AiChatPage = () => {
     const navigate = useNavigate();
     const [messages, setMessages] = useState([WELCOME_MSG]);
@@ -116,7 +129,8 @@ const AiChatPage = () => {
     };
 
     const handleWAContinue = () => {
-        window.open(`https://wa.me/${waNumber}`, '_blank');
+        const normalizedNumber = normalizeWaNumber(waNumber);
+        window.open(`https://wa.me/${normalizedNumber}`, '_blank');
         setShowAdminModal(false);
     };
 

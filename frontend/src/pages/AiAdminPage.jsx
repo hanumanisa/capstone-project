@@ -18,6 +18,19 @@ import api from '../api/axios';
 import { getUserFromToken } from '../utils/auth';
 import { notify } from '../utils/swal';
 
+// Normalize phone number to international format for wa.me
+// Handles: '088xxx' → '6288xxx', '+6288xxx' → '6288xxx', '6288xxx' → '6288xxx'
+const normalizeWaNumber = (number) => {
+    if (!number) return '';
+    let n = String(number).replace(/\D/g, '');
+    if (n.startsWith('0')) {
+        n = '62' + n.slice(1);
+    } else if (n.startsWith('+')) {
+        n = n.slice(1);
+    }
+    return n;
+};
+
 const AiAdminPage = () => {
     const navigate = useNavigate();
     const [stats, setStats] = useState({ total_chats: 0, wa_redirects: 0, unanswered: 0, out_of_scope: 0 });
@@ -286,7 +299,7 @@ const AiAdminPage = () => {
                                 className="flex-1 bg-white border border-[#D0E8F8] rounded-lg p-2 text-xs outline-none focus:border-[#25D366] transition-all font-semibold"
                             />
                         </div>
-                        <p className="text-[9px] text-gray-400 mb-4 px-1">🔗 Link: <a href={`https://wa.me/${waNumber}`} target="_blank" className="text-[#075e54] font-bold">wa.me/{waNumber}</a></p>
+                        <p className="text-[9px] text-gray-400 mb-4 px-1">🔗 Link: <a href={`https://wa.me/${normalizeWaNumber(waNumber)}`} target="_blank" className="text-[#075e54] font-bold">wa.me/{normalizeWaNumber(waNumber)}</a></p>
                         <button onClick={saveWaConfig} className="w-full bg-[#075e54] text-white text-xs font-bold py-3 rounded-xl hover:bg-[#054d44] transition-all tracking-wide">
                             Save Number
                         </button>
