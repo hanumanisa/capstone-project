@@ -14,6 +14,7 @@ import {
     Info, 
     Save 
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import api from '../api/axios';
 import { getUserFromToken } from '../utils/auth';
 import { notify } from '../utils/swal';
@@ -323,16 +324,19 @@ const AiAdminPage = () => {
                     <div className="flex-1 p-5 overflow-y-auto space-y-4 custom-scrollbar">
                         {chatMessages.map((msg, idx) => (
                             <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div 
-                                    className={`max-w-[85%] px-4 py-3 rounded-2xl text-[13px] leading-relaxed shadow-xs ${
+                                <div 
+                                    className={`chat-bubble max-w-[85%] px-4 py-3 rounded-2xl text-[13px] leading-relaxed shadow-xs word-wrap break-word ${
                                         msg.role === 'user' 
                                         ? 'bg-[#1E5084] text-white rounded-tr-none' 
                                         : 'bg-gray-50 text-gray-700 border border-gray-100 rounded-tl-none'
                                     }`}
                                 >
-                                    {msg.content.split('\n').map((line, i) => (
-                                        <span key={i}>{line}{i < msg.content.split('\n').length - 1 && <br />}</span>
-                                    ))}
+                                    {msg.role === 'ai' || msg.role === 'assistant'
+                                        ? <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                        : msg.content.split('\n').map((line, i) => (
+                                            <span key={i}>{line}{i < msg.content.split('\n').length - 1 && <br />}</span>
+                                        ))
+                                    }
                                 </div>
                             </div>
                         ))}

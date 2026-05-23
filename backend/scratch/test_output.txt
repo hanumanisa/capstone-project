@@ -1,0 +1,31 @@
+Berikut daftar nama karyawan **sedivisi Sumber Daya Manusia**:
+
+1. **Maya Kusuma Hartono** – Kepala Divisi  
+2. **Vina Ramadhan Saputra** – Team Leader  
+3. **Andi Kurniawan Kusuma** – Team Leader  
+4. **Hendra Lestari Handoko** – Staff  
+5. **Nanda Wijaya Syahputra** – Staff  
+6. **Taufik Kusuma Nugroho** – Staff  
+7. **Bagas Ramadhan Firmansyah** – Staff  
+8. **Farhan Kurniawan Febrianto** – Staff  
+9. **Dewi Lestari Putri** – Staff  
+10. **Indah Wijaya Permata** – Staff  
+11. **Putri Kusuma Gunawan** – Staff  
+12. **Yuni Ramadhan Wibowo** – Staff  
+13. **Budi Kurniawan Pratama** – Staff  
+14. **Joko Lestari Utama** – Staff  
+15. **Wahyu Kusuma Prasetyo** – Staff  
+16. **Chandra Ramadhan Hidayat** – Staff  
+17. **Galih Kurniawan Siregar** – Staff  
+18. **Citra Lestari Susanto** – Staff  
+19. **Kartika Wijaya Wijaya** – Staff  
+20. **Sari Kusuma Mahendra** – Staff  
+21. **Aulia Ramadhan Purnama** – Staff  
+22. **Fajar Kurniawan Ananda** – Staff  
+23. **Rizky Wijaya Ramadhan** – Staff  
+24. **Zaki Kusuma Hartono** – Staff  
+25. **Dimas Ramadhan Saputra** – Staff  
+26. **Oka Wijaya Kurniawan** – Staff  
+27. **Lukman Lestari Lestari** – Staff  
+
+_SMI Assistant telah menampilkan seluruh data dengan lengkap. Jika ada hal lain yang ingin ditanyakan, silakan beri tahu saya!_

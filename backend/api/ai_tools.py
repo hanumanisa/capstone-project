@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, date
+from typing import Optional
 from django.contrib.auth.models import User
 from django.db.models import Q, Sum, Count
 from api.models import (
@@ -593,8 +594,8 @@ def get_hotel_and_vendor_data(query: str = "", requester_user_id: int = None) ->
 
 
 @tool
-def search_employees(query: str, division_id: str = None, requester_user_id: int = None) -> str:
-    """(ADMIN/HOD ONLY) Search for employee information by name, NIK, or position (e.g., 'Kepala Divisi'). Can be filtered by division_id."""
+def search_employees(query: str = "", division_name: Optional[str] = None, only_my_division: bool = False, requester_user_id: Optional[int] = None) -> str:
+    """(ADMIN/HOD ONLY) Search for employee information by name, NIK, or position (e.g., 'Kepala Divisi'). Can be filtered by division_name. Set only_my_division=True jika pengguna meminta data karyawan 'sedivisi' atau divisi mereka sendiri."""
     try:
         actual_requester_user_id = current_user_id_var.get() or requester_user_id
         if not actual_requester_user_id:
@@ -605,23 +606,23 @@ def search_employees(query: str, division_id: str = None, requester_user_id: int
         is_admin = role in ['superadmin', 'admin', 'dean']
         is_leader = role in ['head_of_division', 'team_leader']
         
-        if not is_admin and not is_leader:
-            return "Akses ditolak: Pencarian data karyawan hanya dapat diakses oleh Admin atau Leader."
-            
         qs = Employee.objects.all()
         
-        # Divisional restriction
-        if not is_admin and is_leader:
-            division_id = actual_division_id
-            
-        if division_id:
-            qs = qs.filter(division_id=division_id)
-        
-        qs = qs.filter(
-            Q(full_name__icontains=query) | 
-            Q(nik__icontains=query) |
-            Q(position_name__icontains=query)
-        )
+        # Divisional restriction for non-admins, OR if specifically requested
+        if not is_admin or only_my_division:
+            if not actual_division_id:
+                return "Akses ditolak: Anda tidak memiliki divisi sehingga tidak dapat melihat data karyawan sedivisi."
+            qs = qs.filter(division_id=actual_division_id)
+        elif division_name:
+            # For admin searching OTHER divisions
+            qs = qs.filter(division__division_name__icontains=division_name)
+                
+        if query:
+            qs = qs.filter(
+                Q(full_name__icontains=query) | 
+                Q(nik__icontains=query) |
+                Q(position_name__icontains=query)
+            )
         data = list(qs.values('full_name', 'position_name', 'division__division_name'))
         return json.dumps(data)
     except Exception as e:
