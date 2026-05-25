@@ -3,6 +3,7 @@ import MainLayout from '../components/MainLayout';
 import api from '../api/axios';
 import * as XLSX from 'xlsx';
 import YearPicker from '../components/YearPicker';
+import { getUserFromToken } from '../utils/auth';
 
 
 const ITEMS_PER_PAGE = 50;
@@ -13,6 +14,20 @@ const EmployeePage = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDivision, setSelectedDivision] = useState('All Division');
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const userData = getUserFromToken();
+        if (userData) {
+            setUser(userData);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (employees.length > 0 && user && ['Head of Division', 'Team Leader'].includes(user.role) && selectedDivision === 'All Division') {
+            setSelectedDivision(employees[0].division_name);
+        }
+    }, [employees, user, selectedDivision]);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -202,23 +217,25 @@ const EmployeePage = () => {
                 </div>
 
                 {/* Search bar all division samakan dengan dashboard style */}
-                <div className="relative w-full sm:w-60">
-                    <select
-                        value={selectedDivision}
-                        onChange={(e) => { setSelectedDivision(e.target.value); setCurrentPage(1); }}
-                        className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
-                        style={{
-                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
-                            backgroundSize: '20px 20px',
-                            backgroundPosition: 'right 12px center'
-                        }}
-                    >
-                        <option value="All Division">All Division</option>
-                        {divisions.map((div, i) => (
-                            <option key={i} value={div.division_name}>{div.division_name}</option>
-                        ))}
-                    </select>
-                </div>
+                {(!user || !['Head of Division', 'Team Leader'].includes(user.role)) && (
+                    <div className="relative w-full sm:w-60">
+                        <select
+                            value={selectedDivision}
+                            onChange={(e) => { setSelectedDivision(e.target.value); setCurrentPage(1); }}
+                            className="w-full border-none rounded-lg px-4 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                                backgroundSize: '20px 20px',
+                                backgroundPosition: 'right 12px center'
+                            }}
+                        >
+                            <option value="All Division">All Division</option>
+                            {divisions.map((div, i) => (
+                                <option key={i} value={div.division_name}>{div.division_name}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
                 <div className="flex-1 flex items-center justify-end gap-6">
                     <YearPicker selectedYear={selectedYear} onYearChange={(y) => { setSelectedYear(y); setCurrentPage(1); }} />
@@ -229,12 +246,14 @@ const EmployeePage = () => {
                         >
                             Employee Report
                         </button>
-                        <button
-                            onClick={handleDivisionExport}
-                            className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer whitespace-nowrap"
-                        >
-                            Division Report
-                        </button>
+                        {(!user || !['Head of Division', 'Team Leader'].includes(user.role)) && (
+                            <button
+                                onClick={handleDivisionExport}
+                                className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer whitespace-nowrap"
+                            >
+                                Division Report
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

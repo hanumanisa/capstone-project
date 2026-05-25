@@ -289,6 +289,9 @@ class HotelViewSet(viewsets.ModelViewSet):
 
 class EmployeeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
+        user = self.request.user
+        user_groups = list(user.groups.values_list('name', flat=True))
+
         queryset = Employee.objects.all().select_related(
             'division'
         ).prefetch_related(
@@ -298,9 +301,21 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             'profile_set__user__groups'
         ).order_by('nik')
         
-        division = self.request.query_params.get('division')
-        if division:
-            queryset = queryset.filter(division__division_name__icontains=division)
+        # RBAC Logic
+        if user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
+            division = self.request.query_params.get('division')
+            if division:
+                queryset = queryset.filter(division__division_name__icontains=division)
+        elif "Head of Division" in user_groups or "Team Leader" in user_groups:
+            if hasattr(user, 'profile') and user.profile.employee:
+                queryset = queryset.filter(division_id=user.profile.employee.division_id)
+            else:
+                return Employee.objects.none()
+        else:
+            if hasattr(user, 'profile') and user.profile.employee:
+                queryset = queryset.filter(nik=user.profile.employee.nik)
+            else:
+                return Employee.objects.none()
             
         return queryset
 

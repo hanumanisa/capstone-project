@@ -23,6 +23,7 @@ const Navbar = () => {
 
     const restrictedRoles = ['Employee', 'Team Leader', 'Head of Division'];
     const isRestricted = user && restrictedRoles.includes(user.role);
+    const canViewEmployee = user && (!isRestricted || ['Head of Division', 'Team Leader'].includes(user.role));
 
     const isTrainingActive = () => {
         const paths = ['/training-master', '/evaluation', '/evaluation-employee', '/employee', '/hotel'];
@@ -107,19 +108,19 @@ const Navbar = () => {
                                                 </Link>
                                             )}
                                         </li>
+                                        {canViewEmployee && (
+                                            <li>
+                                                <Link to="/employee" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full text-left font-medium ${location.pathname === '/employee' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
+                                                    Employee
+                                                </Link>
+                                            </li>
+                                        )}
                                         {!isRestricted && (
-                                            <>
-                                                <li>
-                                                    <Link to="/employee" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full text-left font-medium ${location.pathname === '/employee' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
-                                                        Employee
-                                                    </Link>
-                                                </li>
-                                                <li>
-                                                    <Link to="/hotel" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full text-left font-medium ${location.pathname === '/hotel' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
-                                                        Hotel
-                                                    </Link>
-                                                </li>
-                                            </>
+                                            <li>
+                                                <Link to="/hotel" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full text-left font-medium ${location.pathname === '/hotel' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
+                                                    Hotel
+                                                </Link>
+                                            </li>
                                         )}
                                     </ul>
                                 </div>
@@ -251,15 +252,15 @@ const Navbar = () => {
                                         Training Evaluation
                                     </Link>
                                 )}
+                                {canViewEmployee && (
+                                    <Link to="/employee" className={`block p-3 pl-8 rounded-xl ${location.pathname === '/employee' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
+                                        Employee
+                                    </Link>
+                                )}
                                 {!isRestricted && (
-                                    <>
-                                        <Link to="/employee" className={`block p-3 pl-8 rounded-xl ${location.pathname === '/employee' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
-                                            Employee
-                                        </Link>
-                                        <Link to="/hotel" className={`block p-3 pl-8 rounded-xl ${location.pathname === '/hotel' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
-                                            Hotel
-                                        </Link>
-                                    </>
+                                    <Link to="/hotel" className={`block p-3 pl-8 rounded-xl ${location.pathname === '/hotel' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
+                                        Hotel
+                                    </Link>
                                 )}
                             </div>
 
