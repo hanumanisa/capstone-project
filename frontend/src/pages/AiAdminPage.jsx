@@ -172,20 +172,64 @@ const AiAdminPage = () => {
         setAdminInput('');
         setAdminLoading(true);
 
-        console.log('Sending to session:', adminSession?.session_id);
         try {
-            const res = await api.post(`/api/ai-sessions/${adminSession.session_id}/chat/`, {
-                message: text,
-                history: chatMessages.slice(-4).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }))
+            const token = localStorage.getItem('access_token');
+            const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${baseURL}/api/ai-sessions/${adminSession.session_id}/chat/?stream=true`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ 
+                    message: text,
+                    history: chatMessages.slice(-4).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }))
+                })
             });
-            console.log('Response status:', res.status);
-            console.log('Response data:', res.data);
-            const aiText = res.data.response || 'Tidak ada respons.';
-            setChatMessages(prev => [...prev, { role: 'ai', content: aiText }]);
+
+            if (!res.ok) throw new Error('API Error');
+
+            setAdminLoading(false);
+            setChatMessages(prev => [...prev, { role: 'ai', content: '' }]);
+            
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let done = false;
+
+            while (!done) {
+                const { value, done: readerDone } = await reader.read();
+                done = readerDone;
+                if (value) {
+                    const chunkStr = decoder.decode(value, { stream: true });
+                    const lines = chunkStr.split('\n');
+                    for (const line of lines) {
+                        if (line.trim()) {
+                            try {
+                                const parsed = JSON.parse(line);
+                                if (parsed.chunk) {
+                                    setChatMessages(prev => {
+                                        const newMsgs = [...prev];
+                                        const lastIdx = newMsgs.length - 1;
+                                        newMsgs[lastIdx] = {
+                                            ...newMsgs[lastIdx],
+                                            content: newMsgs[lastIdx].content + parsed.chunk
+                                        };
+                                        return newMsgs;
+                                    });
+                                } else if (parsed.error) {
+                                    setChatMessages(prev => {
+                                        const newMsgs = [...prev];
+                                        const lastIdx = newMsgs.length - 1;
+                                        newMsgs[lastIdx] = {
+                                            ...newMsgs[lastIdx],
+                                            content: parsed.error
+                                        };
+                                        return newMsgs;
+                                    });
+                                }
+                            } catch(e) {}
+                        }
+                    }
+                }
+            }
         } catch (err) {
-            console.error('Chat error status:', err.response?.status);
-            console.error('Chat error data:', err.response?.data);
-            console.error('Chat error message:', err.message);
             setChatMessages(prev => [...prev, { role: 'ai', content: 'Maaf, terjadi kendala koneksi ke sistem AI.' }]);
         } finally {
             setAdminLoading(false);

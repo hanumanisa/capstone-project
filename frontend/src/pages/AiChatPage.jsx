@@ -80,8 +80,59 @@ const AiChatPage = () => {
                     setLoading(true);
                     
                     try {
-                        const r = await api.post(`/api/ai-sessions/${sid}/chat/`, { message: autoQuestion });
-                        setMessages(prev => [...prev, { role: 'assistant', content: r.data.response }]);
+                        const token = localStorage.getItem('access_token');
+                        const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                        const res = await fetch(`${baseURL}/api/ai-sessions/${sid}/chat/?stream=true`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ message: autoQuestion, history: [] })
+                        });
+                        
+                        if (!res.ok) throw new Error('API Error');
+                        
+                        setLoading(false);
+                        setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+                        
+                        const reader = res.body.getReader();
+                        const decoder = new TextDecoder("utf-8");
+                        let done = false;
+
+                        while (!done) {
+                            const { value, done: readerDone } = await reader.read();
+                            done = readerDone;
+                            if (value) {
+                                const chunkStr = decoder.decode(value, { stream: true });
+                                const lines = chunkStr.split('\n');
+                                for (const line of lines) {
+                                    if (line.trim()) {
+                                        try {
+                                            const parsed = JSON.parse(line);
+                                            if (parsed.chunk) {
+                                                setMessages(prev => {
+                                                    const newMsgs = [...prev];
+                                                    const lastIdx = newMsgs.length - 1;
+                                                    newMsgs[lastIdx] = {
+                                                        ...newMsgs[lastIdx],
+                                                        content: newMsgs[lastIdx].content + parsed.chunk
+                                                    };
+                                                    return newMsgs;
+                                                });
+                                            } else if (parsed.error) {
+                                                setMessages(prev => {
+                                                    const newMsgs = [...prev];
+                                                    const lastIdx = newMsgs.length - 1;
+                                                    newMsgs[lastIdx] = {
+                                                        ...newMsgs[lastIdx],
+                                                        content: parsed.error
+                                                    };
+                                                    return newMsgs;
+                                                });
+                                            }
+                                        } catch(e) {}
+                                    }
+                                }
+                            }
+                        }
                     } catch {
                         setMessages(prev => [...prev, { role: 'assistant', content: 'Maaf, saya sedang mengalami kendala. Silakan coba lagi nanti.' }]);
                     } finally {
@@ -115,11 +166,62 @@ const AiChatPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.post(`/api/ai-sessions/${sid}/chat/`, { 
-                message: messageText,
-                history: messages.slice(-4).map(m => ({ role: m.role, content: m.content.substring(0, 200) }))
+            const token = localStorage.getItem('access_token');
+            const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${baseURL}/api/ai-sessions/${sid}/chat/?stream=true`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ 
+                    message: messageText,
+                    history: messages.slice(-4).map(m => ({ role: m.role, content: m.content.substring(0, 200) }))
+                })
             });
-            setMessages(prev => [...prev, { role: 'assistant', content: res.data.response }]);
+
+            if (!res.ok) throw new Error('API Error');
+
+            setLoading(false);
+            setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+            
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let done = false;
+
+            while (!done) {
+                const { value, done: readerDone } = await reader.read();
+                done = readerDone;
+                if (value) {
+                    const chunkStr = decoder.decode(value, { stream: true });
+                    const lines = chunkStr.split('\n');
+                    for (const line of lines) {
+                        if (line.trim()) {
+                            try {
+                                const parsed = JSON.parse(line);
+                                if (parsed.chunk) {
+                                    setMessages(prev => {
+                                        const newMsgs = [...prev];
+                                        const lastIdx = newMsgs.length - 1;
+                                        newMsgs[lastIdx] = {
+                                            ...newMsgs[lastIdx],
+                                            content: newMsgs[lastIdx].content + parsed.chunk
+                                        };
+                                        return newMsgs;
+                                    });
+                                } else if (parsed.error) {
+                                    setMessages(prev => {
+                                        const newMsgs = [...prev];
+                                        const lastIdx = newMsgs.length - 1;
+                                        newMsgs[lastIdx] = {
+                                            ...newMsgs[lastIdx],
+                                            content: parsed.error
+                                        };
+                                        return newMsgs;
+                                    });
+                                }
+                            } catch(e) {}
+                        }
+                    }
+                }
+            }
         } catch (err) {
             setMessages(prev => [...prev, { role: 'assistant', content: 'Maaf, saya sedang mengalami kendala koneksi. Silakan coba lagi nanti.' }]);
         } finally {

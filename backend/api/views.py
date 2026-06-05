@@ -1333,6 +1333,65 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
             # Call LangGraph Agent
             from api.ai_agent import execute_ai_query
             history_data = request.data.get('history', [])
+
+            stream_requested = request.query_params.get('stream', 'false').lower() == 'true' or request.data.get('stream') == True
+            if stream_requested:
+                from api.ai_agent import execute_ai_query_stream
+                from django.http import StreamingHttpResponse
+                import json
+                
+                def event_stream():
+                    ai_response_text = ""
+                    tokens_used = 0
+                    is_unanswered = False
+                    is_out_of_scope = False
+                    redirected_to_wa = False
+                    
+                    try:
+                        for chunk_json in execute_ai_query_stream(request.user, message, history_data):
+                            if not chunk_json.strip(): continue
+                            chunk_data = json.loads(chunk_json.strip())
+                            if chunk_data.get("done"):
+                                ai_response_text = chunk_data.get("full_response", "")
+                                tokens_used = chunk_data.get("tokens_used", 0)
+                                yield chunk_json
+                                break
+                            elif chunk_data.get("error"):
+                                ai_response_text = "Maaf, SMI Assistant saat ini belum memiliki datanya dan hanya dapat menjawab pertanyaan yang berkaitan dengan sistem manajemen pelatihan (L&D)."
+                                if user_role not in ['superadmin', 'admin']:
+                                    ai_response_text += " Jika ada pertanyaan lain, Anda bisa menghubungi Admin melalui whatsapp."
+                                is_unanswered = True
+                                yield chunk_json
+                                break
+                            else:
+                                yield chunk_json
+                    except Exception as e:
+                        print(f"Streaming Error: {e}")
+                        is_unanswered = True
+                        ai_response_text = "Maaf, terjadi kendala."
+                        yield json.dumps({"error": str(e)}) + "\n\n"
+                    
+                    # Determine flags
+                    if "SMI Assistant hanya dapat menjawab pertanyaan" in ai_response_text:
+                        is_unanswered = True
+                        if "Silakan ajukan pertanyaan seputar pelatihan" in ai_response_text:
+                            is_out_of_scope = True
+                    elif "SMI Assistant saat ini belum memiliki datanya" in ai_response_text:
+                        is_unanswered = True
+                        if "menghubungi Admin melalui whatsapp" in ai_response_text:
+                            redirected_to_wa = True
+
+                    # Save Log
+                    AiChatLog.objects.create(
+                        session=session, user=request.user, nik=employee_nik, role=user_role,
+                        user_message=message, ai_response=ai_response_text, is_faq_triggered=False,
+                        is_unanswered=is_unanswered, is_out_of_scope=is_out_of_scope,
+                        redirected_to_wa=redirected_to_wa,
+                        response_time_ms=int((time.time() - start_time) * 1000),
+                        tokens_used=tokens_used, context_sent="LangGraph React Agent Stream"
+                    )
+                
+                return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
             
             try:
                 ai_response, tokens_used = execute_ai_query(request.user, message, history_data)
