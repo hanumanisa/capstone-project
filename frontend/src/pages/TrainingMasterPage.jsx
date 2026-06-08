@@ -1529,7 +1529,7 @@ export default function TrainingMasterPage() {
                             <th className="p-3">Cost Center</th>
                             <th className="p-3 w-[100px]">Currency</th>
                             <th className="p-3">Training Cost</th>
-                            <th className="p-3">Room Cost</th>
+                            <th className="p-3">Venue Cost</th>
                             <th className="p-3">SPPD Cost</th>
                             <th className="p-3 w-[120px]">Status</th>
                           </tr>

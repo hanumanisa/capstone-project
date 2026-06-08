@@ -26,7 +26,8 @@ const HotelPage = () => {
         hotel_id: '',
         hotel_city: '',
         hotel_name: '',
-        hotel_phone: '',
+        sales_name: '',
+        sales_phone_number: '',
         price_estimation: '',
         hotel_star: 1,
     });
@@ -95,7 +96,8 @@ const HotelPage = () => {
             hotel_id: '',
             hotel_city: '',
             hotel_name: '',
-            hotel_phone: '',
+            sales_name: '',
+            sales_phone_number: '',
             price_estimation: '',
             hotel_star: 1
         });
@@ -109,7 +111,8 @@ const HotelPage = () => {
             hotel_id: item.hotel_id,
             hotel_city: item.hotel_city || '',
             hotel_name: item.hotel_name || '',
-            hotel_phone: item.hotel_phone || '',
+            sales_name: item.sales_name || '',
+            sales_phone_number: item.sales_phone_number || '',
             price_estimation: item.price_estimation || '',
             hotel_star: item.hotel_star || 1,
         });
@@ -167,7 +170,8 @@ const HotelPage = () => {
             'Hotel ID': h.hotel_id,
             'City': h.hotel_city,
             'Hotel Name': h.hotel_name,
-            'Phone Number': h.hotel_phone,
+            'Sales Name': h.sales_name,
+            'Sales Number': h.sales_phone_number,
             'Price Estimated': h.price_estimation,
             'Hotel Star': h.hotel_star
         }));
@@ -231,7 +235,8 @@ const HotelPage = () => {
                                 <th className="px-4 py-3 text-center">Hotel ID</th>
                                 <th className="px-4 py-3">City</th>
                                 <th className="px-4 py-3">Hotel Name</th>
-                                <th className="px-4 py-3">Phone Number</th>
+                                <th className="px-4 py-3">Sales Name</th>
+                                <th className="px-4 py-3">Sales Number</th>
                                 <th className="px-4 py-3">Estimated Price per Night</th>
                                 <th className="px-4 py-3 text-center">Hotel Star</th>
                             </tr>
@@ -258,7 +263,8 @@ const HotelPage = () => {
                                         </td>
                                         <td className="px-4 py-4 text-gray-600">{item.hotel_city}</td>
                                         <td className="px-4 py-4 text-gray-800">{item.hotel_name}</td>
-                                        <td className="px-4 py-4 text-gray-600">{item.hotel_phone}</td>
+                                        <td className="px-4 py-4 text-gray-600">{item.sales_name}</td>
+                                        <td className="px-4 py-4 text-gray-600">{item.sales_phone_number}</td>
                                         <td className="px-4 py-4 text-gray-600">{formatCurrency(item.price_estimation)}</td>
                                         <td className="px-4 py-4 text-center">
                                             <div className="flex justify-center space-x-0.5">
@@ -367,14 +373,25 @@ const HotelPage = () => {
                                 />
                             </div>
                             <div className="grid grid-cols-3 items-center">
-                                <label className="text-[#495057] font-semibold">Phone Number</label>
+                                <label className="text-[#495057] font-semibold">Sales Name</label>
                                 <input
                                     type="text"
-                                    value={formData.hotel_phone}
+                                    value={formData.sales_name}
                                     style={{ color: '#000' }}
-                                    onChange={(e) => setFormData({ ...formData, hotel_phone: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, sales_name: e.target.value })}
                                     className="col-span-2 bg-[#F1F3F5] rounded-lg p-3 outline-none focus:ring-2 focus:ring-[#2174C3]"
-                                    placeholder="Enter hotel phone number"
+                                    placeholder="Enter sales name"
+                                />
+                            </div>
+                            <div className="grid grid-cols-3 items-center">
+                                <label className="text-[#495057] font-semibold">Sales Number</label>
+                                <input
+                                    type="text"
+                                    value={formData.sales_phone_number}
+                                    style={{ color: '#000' }}
+                                    onChange={(e) => setFormData({ ...formData, sales_phone_number: e.target.value })}
+                                    className="col-span-2 bg-[#F1F3F5] rounded-lg p-3 outline-none focus:ring-2 focus:ring-[#2174C3]"
+                                    placeholder="Enter sales phone number"
                                 />
                             </div>
                             <div className="grid grid-cols-3 items-center">

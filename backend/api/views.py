@@ -281,7 +281,7 @@ class HotelViewSet(viewsets.ModelViewSet):
     """
     Super Administrator & Administrator → full CRUD, yang lain read-only
     """
-    queryset = Hotel.objects.all().order_by('hotel_city', 'hotel_name')
+    queryset = Hotel.objects.all().order_by('hotel_id')
     serializer_class = HotelSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter]

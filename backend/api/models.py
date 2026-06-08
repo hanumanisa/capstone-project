@@ -240,12 +240,14 @@ class Hotel(models.Model):
     hotel_id = models.CharField(max_length=10, primary_key=True)
     hotel_city = models.CharField(max_length=50, null=True, blank=True)
     hotel_name = models.CharField(max_length=100, null=True, blank=True)
-    hotel_phone = models.CharField(max_length=50, null=True, blank=True)
+    sales_name = models.CharField(max_length=100, null=True, blank=True)
+    sales_phone_number = models.CharField(max_length=50, null=True, blank=True)
     price_estimation = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     hotel_star = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = 'hotels'
+        ordering = ['hotel_id']
 
     def __str__(self):
         return f"{self.hotel_id} - {self.hotel_name}"
