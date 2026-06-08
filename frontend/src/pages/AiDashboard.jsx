@@ -20,7 +20,7 @@ const AiDashboard = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-linear-to-b from-[#5389BA] to-[#B8D3E9] flex flex-col items-center justify-center p-6 relative overflow-hidden font-['Lexend']">
+        <div className="min-h-screen bg-linear-to-b from-[#5389BA] to-[#B8D3E9] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
             {/* Logo Section */}
             <div className="absolute top-6 left-6">
                 <img src={logoSmi} alt="SMI Logo" className="w-24 h-auto drop-shadow-lg" />
@@ -62,7 +62,7 @@ const AiDashboard = () => {
             </div>
 
             <style dangerouslySetInnerHTML={{ __html: `
-                @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
                 
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 4px;

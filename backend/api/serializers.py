@@ -13,6 +13,21 @@ from .models import (
     Budget
 )
 
+def get_highest_role(user):
+    if not user:
+        return "Employee"
+    groups = list(user.groups.values_list('name', flat=True)) if user.groups.exists() else []
+    if user.is_superuser or 'Super Administrator' in groups:
+        return "Super Administrator"
+    elif 'Administrator' in groups:
+        return "Administrator"
+    elif 'Dean' in groups:
+        return "Dean"
+    elif 'Head of Division' in groups:
+        return "Head of Division"
+    elif 'Team Leader' in groups:
+        return "Team Leader"
+    return "Employee"
 
 class BudgetSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,12 +52,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         user = self.user
         
         # Logic role
-        if user.is_superuser:
-            user_role = "Super Administrator"
-        elif user.groups.exists():
-            user_role = user.groups.first().name
-        else:
-            user_role = "Employee"
+        user_role = get_highest_role(user)
             
         data['user'] = {
             'email': user.email,
@@ -59,12 +69,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         token['email'] = user.email
 
-        if user.is_superuser:
-            user_role = "Super Administrator"
-        elif user.groups.exists():
-            user_role = user.groups.first().name
-        else:
-            user_role = "Employee"
+        user_role = get_highest_role(user)
 
         token['role'] = user_role
 
@@ -88,11 +93,7 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
     def get_role(self, obj):
-        if obj.is_superuser:
-            return "Super Administrator"
-        elif obj.groups.exists():
-            return obj.groups.first().name
-        return "Employee"
+        return get_highest_role(obj)
 
 
 
@@ -131,10 +132,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     def get_role(self, obj):
         try:
             user = obj.profile_set.first().user
-            if user.is_superuser:
-                return "Super Administrator"
-            elif user.groups.exists():
-                return user.groups.first().name
+            return get_highest_role(user)
         except Exception:
             pass
         return "Employee"
@@ -234,10 +232,7 @@ class EmployeeMinimalSerializer(serializers.ModelSerializer):
     def get_role(self, obj):
         try:
             user = obj.profile_set.first().user
-            if user.is_superuser:
-                return "Super Administrator"
-            elif user.groups.exists():
-                return user.groups.first().name
+            return get_highest_role(user)
         except Exception:
             pass
         return "Employee"
@@ -352,10 +347,16 @@ class TnaParticipantSerializer(serializers.ModelSerializer):
         ]
 
     def get_iht_plus_public(self, obj):
-        return obj.nik.iht_plus_public
+        # Return count of IHT + Public for the specific year of the TNA period
+        year = obj.tna.tna_period.year
+        return obj.nik.get_iht_plus_public(year)
 
     def get_tna_fulfilled(self, obj):
-        return obj.nik.tna_fulfilled
+        # Binary fulfillment for the specific course and year
+        year = obj.tna.tna_period.year
+        events = obj.nik.get_completed_events(year)
+        attended_course_ids = [ep.event.training.course_id for ep in events]
+        return 1 if obj.tna.course_id in attended_course_ids else 0
 
 
 

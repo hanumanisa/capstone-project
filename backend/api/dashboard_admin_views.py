@@ -89,7 +89,7 @@ class DashboardAdminAPIView(APIView):
         # 6. Budget Used (Actual Cost where status is Paid/Settled)
         costs = EventCost.objects.filter(event_id__in=event_ids)
         actual_costs = costs.filter(cost_type='Actual Cost')
-        paid_costs = actual_costs.filter(status_cost__in=['Paid', 'Settled'])
+        paid_costs = actual_costs.filter(status_cost__iexact='Paid')
         total_actual_cost_paid = sum_costs(paid_costs)
         
         # Online Training - ESG counts: distinct training count
@@ -146,7 +146,7 @@ class DashboardAdminAPIView(APIView):
         budget_obj = Budget.objects.filter(start_date_budget__year=year).order_by('-created_at').first()
         budget_val = float(budget_obj.total_budget) if budget_obj else 0.0
 
-        total_actual_cost_unpaid = sum_costs(actual_costs.exclude(status_cost__in=['Paid', 'Settled']))
+        total_actual_cost_unpaid = sum_costs(actual_costs.exclude(status_cost__iexact='Paid'))
         realisation = total_actual_cost_paid + total_actual_cost_unpaid
         budget_remaining = budget_val - realisation
 
@@ -225,7 +225,7 @@ class DashboardAdminAPIView(APIView):
             totalEmployeeMonthly[m-1] = m_employee_count
             
             # Monthly Budget Used (Paid)
-            m_costs_paid = costs.filter(event_id__in=m_event_ids, cost_type='Actual Cost', status_cost__in=['Paid', 'Settled'])
+            m_costs_paid = costs.filter(event_id__in=m_event_ids, cost_type='Actual Cost', status_cost__iexact='Paid')
             budgetUsed[m-1] = sum_costs(m_costs_paid) / 1000000.0 # in Millions
             
             # Monthly Type Hours
@@ -316,8 +316,8 @@ class DashboardAdminAPIView(APIView):
             m_ids = m_events.values_list('event_id', flat=True)
             m_costs = EventCost.objects.filter(event_id__in=m_ids, cost_type='Actual Cost')
             
-            m_paid = sum_costs(m_costs.filter(status_cost__in=['Paid', 'Settled']))
-            m_unpaid = sum_costs(m_costs.exclude(status_cost__in=['Paid', 'Settled']))
+            m_paid = sum_costs(m_costs.filter(status_cost__iexact='Paid'))
+            m_unpaid = sum_costs(m_costs.exclude(status_cost__iexact='Paid'))
             m_realization = m_paid + m_unpaid
             
             running_total_realization += m_realization
@@ -345,22 +345,29 @@ class DashboardAdminAPIView(APIView):
                 g_events = queryset.filter(**{group_field: val})
                 if group_field.startswith('nik__'):
                     # For participants grouping
-                    g_learners = g_events.values('nik').distinct().count()
+                    g_learners = g_events.count()
                     g_event_ids = g_events.values_list('event_id', flat=True)
                     g_actual_events = events.filter(event_id__in=g_event_ids)
                     g_title_count = g_actual_events.count()
                     g_scheds = EventSchedule.objects.filter(event_id__in=g_event_ids)
+                    
+                    # Count participants per event only for this specific group
+                    g_part_counts = {
+                        item['event_id']: item['c']
+                        for item in g_events.values('event_id').annotate(c=Count('event_participant_id'))
+                    }
                 else:
                     # For events grouping
-                    g_learners = EventParticipant.objects.filter(event__in=g_events).exclude(attendance_status='Absent').values('nik').distinct().count()
+                    g_learners = participants.filter(event__in=g_events).count()
                     g_title_count = g_events.count()
                     g_scheds = EventSchedule.objects.filter(event__in=g_events)
+                    g_part_counts = part_counts_dict
                 
                 g_hours = 0
                 for sch in g_scheds:
                     if sch.start_time and sch.end_time:
                         dur = (sch.end_time.hour - sch.start_time.hour) + (sch.end_time.minute - sch.start_time.minute) / 60.0
-                        g_hours += dur * part_counts_dict.get(sch.event_id, 0)
+                        g_hours += dur * g_part_counts.get(sch.event_id, 0)
                 
                 data.append({
                     label_name: val,

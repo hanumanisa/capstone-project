@@ -23,7 +23,7 @@ const MainLayout = ({ children }) => {
             notify.alert('Akses Terbatas', 'Silakan login terlebih dahulu untuk mengakses AI Assistant.');
             return;
         }
-        
+
         if (adminRoles.includes(user.role)) {
             navigate('/ai-admin');
         } else if (userRoles.includes(user.role)) {
@@ -43,7 +43,7 @@ const MainLayout = ({ children }) => {
             </main>
 
             {/* Chat Floating Button */}
-            <div 
+            <div
                 onClick={handleChatClick}
                 className="fixed bottom-8 right-8 bg-[#215A92] w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl cursor-pointer hover:scale-110 transition-transform z-50 group"
             >

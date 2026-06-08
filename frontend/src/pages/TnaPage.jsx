@@ -107,8 +107,8 @@ const TnaPage = () => {
             'Name of Employee': item.employee_name,
             'Division': item.division_name,
             'Position': item.position_name,
-            'TNA Fulfillment': 1,
-            'IHT + Public': 0
+            'TNA Fulfillment': item.tna_fulfilled,
+            'IHT + Public': item.iht_plus_public
         }));
         const ws = XLSX.utils.json_to_sheet(exportData);
         // Column widths

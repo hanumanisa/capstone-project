@@ -34,6 +34,8 @@ const CourseCategoryPage = () => {
 
     // ─── Role Check ─────────────────────────────────────────────────────
     const isAdmin = user?.role === 'Super Administrator' || user?.role === 'Administrator';
+    const isDean = user?.role === 'Dean';
+    const canReport = isAdmin || isDean;
 
     // ─── Fetch User ─────────────────────────────────────────────────────
     useEffect(() => {
@@ -202,10 +204,11 @@ const CourseCategoryPage = () => {
                 <div className="flex items-center space-x-6">
                     <YearPicker selectedYear={selectedYear} onYearChange={(y) => setSelectedYear(y)} />
                     <div className="flex items-center space-x-2">
-                        {isAdmin && (
+                        {canReport && (
                             <button
                                 onClick={handleExport}
-                                className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-2 rounded-lg font-medium text-sm transition-all shadow-sm cursor-pointer"
+                                disabled={categories.length === 0}
+                                className={`w-28 py-2 rounded-lg font-medium text-sm transition-all shadow-sm outline-none border-none ${categories.length === 0 ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-[#2174C3] hover:bg-[#1A5E9D] text-white cursor-pointer'}`}
                             >
                                 Report
                             </button>

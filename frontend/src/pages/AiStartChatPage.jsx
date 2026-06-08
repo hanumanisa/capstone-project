@@ -18,7 +18,7 @@ const AiStartChatPage = () => {
     }, [navigate]);
 
     return (
-        <div className="bg-[#D6EFFF] h-screen flex flex-col font-['Lexend']">
+        <div className="bg-[#D6EFFF] h-screen flex flex-col font-sans">
             {/* Header Biru Gelap */}
             <header className="bg-[#1E5084] h-[60px] flex items-center px-5 relative shrink-0 shadow-md">
                 <img src={logoImg} alt="SMI Logo" className="h-[40px] absolute left-5" />
@@ -47,7 +47,7 @@ const AiStartChatPage = () => {
             </main>
             
             <style dangerouslySetInnerHTML={{ __html: `
-                @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
             `}} />
         </div>
     );

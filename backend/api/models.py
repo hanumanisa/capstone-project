@@ -1,4 +1,5 @@
 from datetime import datetime, date
+# pyrefly: ignore [missing-import]
 from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_save, post_delete
@@ -86,7 +87,7 @@ class Employee(models.Model):
     def get_completed_events(self, year=None):
         events = [
             ep for ep in self.attended_events
-            if ep.event.status.lower() != 'cancelled' and ep.attendance_status != 'Absent'
+            if ep.event.status.lower() in ['draft', 'completed'] and ep.attendance_status == 'Present'
         ]
         if year:
             try:
