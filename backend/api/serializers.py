@@ -118,6 +118,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     tna_fulfilled = serializers.SerializerMethodField()
 
     attendance_details = serializers.SerializerMethodField()
+    tna_details = serializers.SerializerMethodField()
     
     class Meta:
         model = Employee
@@ -126,7 +127,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'level', 'position_name', 'special_position', 'role', 'is_active',
             'attendance', 'inhouse_training', 'public_training', 'knowledge_sharing', 'elearning', 'iht_plus_public',
             'total_hours', 'inhouse_hours', 'public_hours', 'ks_hours', 'elearning_hours',
-            'tna_count', 'tna_fulfilled', 'attendance_details'
+            'tna_count', 'tna_fulfilled', 'attendance_details', 'tna_details'
         ]
 
     def get_role(self, obj):
@@ -137,9 +138,88 @@ class EmployeeSerializer(serializers.ModelSerializer):
             pass
         return "Employee"
 
+    def _get_filtered_events(self, obj):
+        if hasattr(obj, '_filtered_events_cache'):
+            return obj._filtered_events_cache
+            
+        year = self.context.get('year')
+        start_date = self.context.get('start_date')
+        end_date = self.context.get('end_date')
+        status_filter = self.context.get('status')
+        category_filter = self.context.get('category')
+        type_filter = self.context.get('type')
+
+        events = obj.get_completed_events(year)
+        
+        if start_date:
+            events = [ep for ep in events if ep.event.start_date and ep.event.start_date.isoformat() >= start_date]
+        if end_date:
+            events = [ep for ep in events if ep.event.end_date and ep.event.end_date.isoformat() <= end_date]
+        if status_filter and status_filter != 'all':
+            events = [ep for ep in events if ep.event.status.lower() == status_filter.lower()]
+        if category_filter and category_filter != 'all':
+            events = [ep for ep in events if ep.event.training.training_category == category_filter]
+        if type_filter and type_filter != 'all':
+            events = [ep for ep in events if ep.event.training.training_type == type_filter]
+            
+        obj._filtered_events_cache = events
+        return events
+
+    def _get_filtered_stats(self, obj):
+        if hasattr(obj, '_filtered_stats_cache'):
+            return obj._filtered_stats_cache
+            
+        stats = {
+            'inhouse_count': 0, 'public_count': 0, 'ks_count': 0, 'elearning_count': 0,
+            'inhouse_hours': 0, 'public_hours': 0, 'ks_hours': 0, 'elearning_hours': 0,
+            'total_hours': 0
+        }
+        
+        events = self._get_filtered_events(obj)
+        from datetime import datetime, date
+        for ep in events:
+            tt = (ep.event.training.training_type or '').strip()
+            
+            event_hours = 0
+            for sch in ep.event.schedules.all():
+                if sch.start_time and sch.end_time:
+                    dummy_date = date(2000, 1, 1)
+                    t1 = datetime.combine(dummy_date, sch.start_time)
+                    t2 = datetime.combine(dummy_date, sch.end_time)
+                    event_hours += (t2 - t1).total_seconds() / 3600
+            
+            if tt == 'Inhouse Training':
+                stats['inhouse_count'] += 1
+                stats['inhouse_hours'] += event_hours
+            elif tt == 'Public Training':
+                stats['public_count'] += 1
+                stats['public_hours'] += event_hours
+            elif tt == 'Knowledge Sharing':
+                stats['ks_count'] += 1
+                stats['ks_hours'] += event_hours
+            elif tt == 'E-Learning':
+                stats['elearning_count'] += 1
+                stats['elearning_hours'] += event_hours
+            
+            stats['total_hours'] += event_hours
+            
+        obj._filtered_stats_cache = stats
+        return stats
+
     def get_attendance_details(self, obj):
         year = self.context.get('year')
-        events = obj.get_completed_events(year)
+        events = self._get_filtered_events(obj)
+        
+        # Pre-fetch TNA course IDs for this employee
+        tna_qs = obj.tnaparticipant_set.all()
+        if year:
+            try:
+                y = int(year)
+                tna_qs = tna_qs.filter(tna__tna_period__year=y)
+            except (ValueError, TypeError):
+                pass
+        tna_course_ids = set(tp.tna.course_id for tp in tna_qs if tp.tna.course_id)
+
         details = []
         from datetime import datetime, date
         for ep in events:
@@ -157,53 +237,46 @@ class EmployeeSerializer(serializers.ModelSerializer):
             
             details.append({
                 'title': training.training_title,
-                'hours': round(event_hours, 2)
+                'category': training.training_category or '',
+                'hours': round(event_hours, 2),
+                'tna': training.course.course_name if training.course_id in tna_course_ids else '-',
+                'type': training.training_type or ''
             })
         return details
 
     def get_attendance(self, obj):
-        year = self.context.get('year')
-        return len(obj.get_completed_events(year))
+        return len(self._get_filtered_events(obj))
 
     def get_inhouse_training(self, obj):
-        year = self.context.get('year')
-        return obj.get_training_stats(year)['inhouse_count']
+        return self._get_filtered_stats(obj)['inhouse_count']
 
     def get_public_training(self, obj):
-        year = self.context.get('year')
-        return obj.get_training_stats(year)['public_count']
+        return self._get_filtered_stats(obj)['public_count']
 
     def get_knowledge_sharing(self, obj):
-        year = self.context.get('year')
-        return obj.get_training_stats(year)['ks_count']
+        return self._get_filtered_stats(obj)['ks_count']
 
     def get_elearning(self, obj):
-        year = self.context.get('year')
-        return obj.get_training_stats(year)['elearning_count']
+        return self._get_filtered_stats(obj)['elearning_count']
 
     def get_iht_plus_public(self, obj):
-        year = self.context.get('year')
-        return obj.get_iht_plus_public(year)
+        stats = self._get_filtered_stats(obj)
+        return stats['inhouse_count'] + stats['public_count']
 
     def get_total_hours(self, obj):
-        year = self.context.get('year')
-        return obj.get_training_stats(year)['total_hours']
+        return round(self._get_filtered_stats(obj)['total_hours'], 2)
 
     def get_inhouse_hours(self, obj):
-        year = self.context.get('year')
-        return round(obj.get_training_stats(year)['inhouse_hours'], 2)
+        return round(self._get_filtered_stats(obj)['inhouse_hours'], 2)
 
     def get_public_hours(self, obj):
-        year = self.context.get('year')
-        return round(obj.get_training_stats(year)['public_hours'], 2)
+        return round(self._get_filtered_stats(obj)['public_hours'], 2)
 
     def get_ks_hours(self, obj):
-        year = self.context.get('year')
-        return round(obj.get_training_stats(year)['ks_hours'], 2)
+        return round(self._get_filtered_stats(obj)['ks_hours'], 2)
 
     def get_elearning_hours(self, obj):
-        year = self.context.get('year')
-        return round(obj.get_training_stats(year)['elearning_hours'], 2)
+        return round(self._get_filtered_stats(obj)['elearning_hours'], 2)
 
     def get_tna_count(self, obj):
         year = self.context.get('year')
@@ -218,7 +291,48 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     def get_tna_fulfilled(self, obj):
         year = self.context.get('year')
-        return obj.get_tna_fulfilled(year)
+        tna_qs = obj.tnaparticipant_set.all()
+        if year:
+            try:
+                y = int(year)
+                tna_qs = tna_qs.filter(tna__tna_period__year=y)
+            except (ValueError, TypeError):
+                pass
+        
+        tna_list = list(tna_qs)
+        if not tna_list:
+            return 0
+            
+        events = self._get_filtered_events(obj)
+        attended_course_ids = set(ep.event.training.course_id for ep in events)
+        fulfilled_count = 0
+        for tp in tna_list:
+            if tp.tna.course_id in attended_course_ids:
+                fulfilled_count += 1
+        return fulfilled_count
+
+    def get_tna_details(self, obj):
+        year = self.context.get('year')
+        tna_qs = obj.tnaparticipant_set.all()
+        if year:
+            try:
+                y = int(year)
+                tna_qs = tna_qs.filter(tna__tna_period__year=y)
+            except (ValueError, TypeError):
+                pass
+        
+        events = self._get_filtered_events(obj)
+        attended_course_ids = set(ep.event.training.course_id for ep in events if ep.event.training.course_id)
+        
+        details = []
+        for tp in tna_qs:
+            course_name = tp.tna.course.course_name if tp.tna.course else "-"
+            fulfilled = 1 if tp.tna.course_id in attended_course_ids else 0
+            details.append({
+                'course_name': course_name,
+                'fulfilled': fulfilled
+            })
+        return details
 
 
 class EmployeeMinimalSerializer(serializers.ModelSerializer):

@@ -33,12 +33,18 @@ const EmployeePage = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+    const [showTnaModal, setShowTnaModal] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [exporting, setExporting] = useState(false);
 
     const openAttendanceDetail = (emp) => {
         setSelectedEmployee(emp);
         setShowAttendanceModal(true);
+    };
+
+    const openTnaDetail = (emp) => {
+        setSelectedEmployee(emp);
+        setShowTnaModal(true);
     };
 
     const fetchData = useCallback(async () => {
@@ -65,118 +71,6 @@ const EmployeePage = () => {
             setLoading(false);
         }
     }, [currentPage, searchTerm, selectedDivision, selectedYear]);
-
-    const handleExport = async () => {
-        setExporting(true);
-        try {
-            const res = await api.get(`/api/employee/?nopage=true&report=true&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}&year=${selectedYear}`);
-            const dataToExport = res.data;
-
-            if (!dataToExport.length) {
-                alert('No data available to export.');
-                return;
-            }
-            const exportData = dataToExport.map(emp => ({
-                'NIK': emp.nik,
-                'Nama': emp.full_name,
-                'Division': emp.division_name,
-                'Level': emp.level,
-                'Position': emp.position_name,
-                'Special Position': emp.special_position || '-',
-                'Attendance': emp.attendance,
-                'Inhouse Training': emp.inhouse_training,
-                'Public Training': emp.public_training,
-                'Knowledge Sharing': emp.knowledge_sharing,
-                'E-Learning': emp.elearning,
-                'IHT + Public': emp.iht_plus_public,
-                'Hours': emp.total_hours,
-                'Inhouse Tr. Hours': emp.inhouse_hours,
-                'Public Tr. Hours': emp.public_hours,
-                'KS Hours': emp.ks_hours,
-                'E-Learning Hours': emp.elearning_hours,
-                'TNA Count': emp.tna_count,
-                'TNA Fulfilled': emp.tna_fulfilled
-            }));
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wscols = [
-                { wch: 10 }, { wch: 30 }, { wch: 25 }, { wch: 10 },
-                { wch: 25 }, { wch: 20 }, { wch: 12 }, { wch: 18 },
-                { wch: 18 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
-                { wch: 10 }, { wch: 18 }, { wch: 18 }, { wch: 15 },
-                { wch: 18 }, { wch: 12 }, { wch: 15 }
-            ];
-            ws['!cols'] = wscols;
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Employee Report');
-            XLSX.writeFile(wb, 'Employee Report.xlsx');
-        } catch (err) {
-            console.error('Export failed:', err);
-            alert('Failed to export data.');
-        } finally {
-            setExporting(false);
-        }
-    };
-
-    const handleDivisionExport = async () => {
-        setExporting(true);
-        try {
-            const res = await api.get(`/api/employee/?nopage=true&report=true&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}&year=${selectedYear}`);
-            const dataToExport = res.data;
-
-            if (!dataToExport.length) {
-                alert('No data available to export.');
-                return;
-            }
-
-            const wb = XLSX.utils.book_new();
-            const header = [['NIK', 'Nama', 'Total Hours', 'Training Title']];
-            const rows = [];
-            const merges = [];
-
-            let currentRow = 1; // Start after header
-
-            dataToExport.forEach(emp => {
-                const details = emp.attendance_details || [];
-                const numRows = details.length || 1;
-
-                if (details.length === 0) {
-                    rows.push([emp.nik, emp.full_name, emp.total_hours, '-']);
-                    currentRow++;
-                } else {
-                    details.forEach((d, idx) => {
-                        rows.push([
-                            emp.nik,
-                            emp.full_name,
-                            emp.total_hours,
-                            d.title
-                        ]);
-                    });
-
-                    if (numRows > 1) {
-                        merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow + numRows - 1, c: 0 } }); // NIK
-                        merges.push({ s: { r: currentRow, c: 1 }, e: { r: currentRow + numRows - 1, c: 1 } }); // Nama
-                        merges.push({ s: { r: currentRow, c: 2 }, e: { r: currentRow + numRows - 1, c: 2 } }); // Total Hours
-                    }
-                    currentRow += numRows;
-                }
-            });
-
-            const ws = XLSX.utils.aoa_to_sheet([...header, ...rows]);
-            ws['!merges'] = merges;
-
-            ws['!cols'] = [
-                { wch: 12 }, { wch: 35 }, { wch: 15 }, { wch: 70 }
-            ];
-
-            XLSX.utils.book_append_sheet(wb, ws, 'Division Report');
-            XLSX.writeFile(wb, `Division Report_${selectedDivision}.xlsx`);
-        } catch (err) {
-            console.error('Division Export failed:', err);
-            alert('Failed to export division report.');
-        } finally {
-            setExporting(false);
-        }
-    };
 
     useEffect(() => {
         fetchData();
@@ -240,20 +134,6 @@ const EmployeePage = () => {
                 <div className="flex-1 flex items-center justify-end gap-6">
                     <YearPicker selectedYear={selectedYear} onYearChange={(y) => { setSelectedYear(y); setCurrentPage(1); }} />
                     <div className="flex gap-2">
-                        <button
-                            onClick={handleExport}
-                            className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer whitespace-nowrap"
-                        >
-                            Employee Report
-                        </button>
-                        {(!user || !['Head of Division', 'Team Leader'].includes(user.role)) && (
-                            <button
-                                onClick={handleDivisionExport}
-                                className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer whitespace-nowrap"
-                            >
-                                Division Report
-                            </button>
-                        )}
                     </div>
                 </div>
             </div>
@@ -276,21 +156,19 @@ const EmployeePage = () => {
                                 <th className="px-4 py-3 text-center">Public Training</th>
                                 <th className="px-4 py-3 text-center">Knowledge Sharing</th>
                                 <th className="px-4 py-3 text-center">E-Learning</th>
-                                <th className="px-4 py-3 text-center">IHT + Public</th>
-                                <th className="px-4 py-3 text-center">Hours</th>
+                                <th className="px-4 py-3 text-center">Total Hours</th>
                                 <th className="px-4 py-3 text-center">Inhouse Tr. Hours</th>
                                 <th className="px-4 py-3 text-center">Public Tr. Hours</th>
                                 <th className="px-4 py-3 text-center">KS Hours</th>
                                 <th className="px-4 py-3 text-center">E-Learning Hours</th>
-                                <th className="px-4 py-3 text-center">TNA Count</th>
-                                <th className="px-4 py-3 text-center">TNA Fulfilled</th>
+                                <th className="px-4 py-3 text-center">TNA</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 bg-white">
                             {loading ? (
-                                <tr><td colSpan="19" className="px-6 py-12 text-center text-gray-400">Loading...</td></tr>
+                                <tr><td colSpan="17" className="px-6 py-12 text-center text-gray-400">Loading...</td></tr>
                             ) : paginatedData.length === 0 ? (
-                                <tr><td colSpan="19" className="px-6 py-12 text-center text-gray-400 font-medium">No data available</td></tr>
+                                <tr><td colSpan="17" className="px-6 py-12 text-center text-gray-400 font-medium">No data available</td></tr>
                             ) : (
                                 paginatedData.map((item) => (
                                     <tr key={item.nik} className="hover:bg-blue-50/30 transition-colors">
@@ -304,25 +182,30 @@ const EmployeePage = () => {
                                             <button
                                                 onClick={() => openAttendanceDetail(item)}
                                                 className="text-[#2174C3] cursor-pointer"
-                                            >
-                                                {item.attendance}
-                                            </button>
-                                        </td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{item.inhouse_training}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{item.public_training}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{item.knowledge_sharing}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{item.elearning}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{item.iht_plus_public}</td>
-                                        <td className="px-4 py-3 text-center font-bold text-gray-600">{item.total_hours}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{item.inhouse_hours}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{item.public_hours}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{item.ks_hours}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{item.elearning_hours}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{item.tna_count}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{item.tna_fulfilled}</td>
-                                    </tr>
-                                ))
-                            )}
+                                             >
+                                                 {item.attendance}
+                                             </button>
+                                         </td>
+                                         <td className="px-4 py-3 text-center text-gray-600">{item.inhouse_training}</td>
+                                         <td className="px-4 py-3 text-center text-gray-600">{item.public_training}</td>
+                                         <td className="px-4 py-3 text-center text-gray-600">{item.knowledge_sharing}</td>
+                                         <td className="px-4 py-3 text-center text-gray-600">{item.elearning}</td>
+                                         <td className="px-4 py-3 text-center font-bold text-gray-600">{item.total_hours}</td>
+                                         <td className="px-4 py-3 text-center text-gray-600">{item.inhouse_hours}</td>
+                                         <td className="px-4 py-3 text-center text-gray-600">{item.public_hours}</td>
+                                         <td className="px-4 py-3 text-center text-gray-600">{item.ks_hours}</td>
+                                         <td className="px-4 py-3 text-center text-gray-600">{item.elearning_hours}</td>
+                                         <td className="px-4 py-3 text-center font-bold">
+                                             <button
+                                                 onClick={() => openTnaDetail(item)}
+                                                 className="text-[#2174C3] cursor-pointer"
+                                             >
+                                                 {item.tna_count}
+                                             </button>
+                                         </td>
+                                     </tr>
+                                 ))
+                             )}
                         </tbody>
                     </table>
                 </div>
@@ -415,6 +298,58 @@ const EmployeePage = () => {
                         </div>
                         <div className="px-6 py-4 border-t border-gray-100 flex justify-end bg-gray-50">
                             <button onClick={() => setShowAttendanceModal(false)} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* TNA Detail Modal */}
+            {showTnaModal && selectedEmployee && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300">
+                        <div className="px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <div className="flex flex-col">
+                                <h3 className="font-bold text-gray-800 text-lg">TNA Details</h3>
+                                <p className="text-sm text-[#2174C3] font-semibold">{selectedEmployee.full_name} ({selectedEmployee.nik})</p>
+                            </div>
+                        </div>
+                        <div className="p-6 max-h-[60vh] overflow-y-auto">
+                            {selectedEmployee.tna_details?.length > 0 ? (
+                                <table className="w-full text-sm">
+                                    <thead className="bg-gray-50 text-gray-500 uppercase text-[10px] font-bold">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left">Nama TNA</th>
+                                            <th className="px-4 py-2 text-center w-28">Fulfillment</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {selectedEmployee.tna_details.map((detail, idx) => (
+                                            <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-4 py-4 text-gray-700 font-bold leading-relaxed">{detail.course_name}</td>
+                                                <td className="px-4 py-4 text-center">
+                                                    <span className={`px-3 py-1 rounded-full font-bold text-xs ${
+                                                        detail.fulfilled === 1 
+                                                            ? 'bg-green-50 text-green-600' 
+                                                            : 'bg-red-50 text-red-600'
+                                                    }`}>
+                                                        {detail.fulfilled}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                                    <svg className="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <p className="font-medium">No TNA records found.</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="px-6 py-4 border-t border-gray-100 flex justify-end bg-gray-50">
+                            <button onClick={() => setShowTnaModal(false)} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">
                                 Close
                             </button>
                         </div>

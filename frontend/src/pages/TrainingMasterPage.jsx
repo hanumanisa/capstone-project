@@ -36,7 +36,7 @@ export default function TrainingMasterPage() {
   const [showEventModal, setShowEventModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [activeTab, setActiveTab] = useState("location");
-  const [activeReportTab, setActiveReportTab] = useState("monthly");
+  const [activeReportTab, setActiveReportTab] = useState("master");
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
@@ -512,6 +512,133 @@ export default function TrainingMasterPage() {
     const reportType = reportTypeOverride || activeReportTab;
 
     try {
+
+
+      if (reportType === "employee") {
+        const divisionFilter = formData ? formData.get('division') : "";
+        const statusFilter = formData ? formData.get('status') : "";
+        const categoryFilter = formData ? formData.get('category') : "";
+        const startDate = formData ? formData.get('start_date') : "";
+        const endDate = formData ? formData.get('end_date') : "";
+        let yearFilter = "";
+        if (startDate) {
+          yearFilter = new Date(startDate).getFullYear().toString();
+        } else {
+          yearFilter = selectedYear;
+        }
+
+        const params = new URLSearchParams();
+        params.append("nopage", "true");
+        params.append("report", "true");
+        if (divisionFilter) params.append("division", divisionFilter);
+        if (statusFilter) params.append("status", statusFilter);
+        if (categoryFilter) params.append("category", categoryFilter);
+        if (startDate) params.append("start_date", startDate);
+        if (endDate) params.append("end_date", endDate);
+        if (yearFilter) params.append("year", yearFilter);
+
+        setToast({ message: "Generating Employee Report...", type: "success" });
+        const res = await api.get(`/api/employee/?${params.toString()}`);
+        const dataToExport = res.data;
+
+        if (!dataToExport || !dataToExport.length) {
+          setToast({ message: "No data available to export.", type: "error" });
+          return;
+        }
+
+        const wb = XLSX.utils.book_new();
+        const header = [[
+          'NIK', 'Nama', 'Division', 'Level', 'Position', 'Special Position',
+          'Training Title', 'Training Category', 'Inhouse Training', 'Public Training',
+          'Knowledge Sharing', 'E-Learning', 'Total Hours', 'Inhouse Tr. Hours',
+          'Public Tr. Hours', 'KS Hours', 'E-Learning Hours', 'TNA', 'TNA Fulfilled'
+        ]];
+
+        const rows = [];
+        const merges = [];
+        let currentRow = 1;
+
+        dataToExport.forEach(emp => {
+          const details = emp.attendance_details || [];
+          const numRows = details.length || 1;
+
+          if (details.length === 0) {
+            rows.push([
+              emp.nik,
+              emp.full_name,
+              emp.division_name || '',
+              emp.level || '',
+              emp.position_name || '',
+              emp.special_position || '-',
+              '-',
+              '-',
+              0,
+              0,
+              0,
+              0,
+              emp.total_hours,
+              emp.inhouse_hours,
+              emp.public_hours,
+              emp.ks_hours,
+              emp.elearning_hours,
+              '-',
+              emp.tna_fulfilled > 0 ? emp.tna_fulfilled : '-'
+            ]);
+            currentRow++;
+          } else {
+            details.forEach((d, idx) => {
+              const tType = d.type || "";
+              rows.push([
+                emp.nik,
+                emp.full_name,
+                emp.division_name || '',
+                emp.level || '',
+                emp.position_name || '',
+                emp.special_position || '-',
+                d.title || '-',
+                d.category || '-',
+                tType === 'Inhouse Training' ? 1 : 0,
+                tType === 'Public Training' ? 1 : 0,
+                tType === 'Knowledge Sharing' ? 1 : 0,
+                tType === 'E-Learning' ? 1 : 0,
+                emp.total_hours,
+                emp.inhouse_hours,
+                emp.public_hours,
+                emp.ks_hours,
+                emp.elearning_hours,
+                d.tna || '-',
+                emp.tna_fulfilled > 0 ? emp.tna_fulfilled : '-'
+              ]);
+            });
+
+            if (numRows > 1) {
+              for (let c = 0; c <= 5; c++) {
+                merges.push({ s: { r: currentRow, c: c }, e: { r: currentRow + numRows - 1, c: c } });
+              }
+              for (let c = 12; c <= 16; c++) {
+                merges.push({ s: { r: currentRow, c: c }, e: { r: currentRow + numRows - 1, c: c } });
+              }
+              merges.push({ s: { r: currentRow, c: 18 }, e: { r: currentRow + numRows - 1, c: 18 } });
+            }
+            currentRow += numRows;
+          }
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet([...header, ...rows]);
+        ws['!merges'] = merges;
+        ws['!cols'] = [
+          { wch: 15 }, { wch: 30 }, { wch: 25 }, { wch: 10 }, { wch: 25 }, { wch: 20 },
+          { wch: 45 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 },
+          { wch: 12 }, { wch: 18 }, { wch: 18 }, { wch: 15 }, { wch: 18 }, { wch: 25 }, { wch: 15 }
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, "Employee Report");
+        XLSX.writeFile(wb, `Employee_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+        setToast({ message: "Employee Report exported successfully", type: "success" });
+        setShowReportModal(false);
+        return;
+      }
+
       setToast({ message: "Generating Report...", type: "success" });
       const response = await api.get(`/api/export-report/?${params.toString()}`);
       const { realisasi_training, total_employees } = response.data;
@@ -584,7 +711,7 @@ export default function TrainingMasterPage() {
         return;
       }
 
-      // ─── Case 3: Master Report (Full dump sorted by date) ────────────
+      // ─── Case 3: Annual Report (Full dump sorted by date) ────────────
       if (reportType === "master") {
         const sortedData = [...realisasi_training].sort((a, b) => {
           const dA = a.start_date ? new Date(a.start_date) : new Date(0);
@@ -630,9 +757,9 @@ export default function TrainingMasterPage() {
         }
 
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Master Report");
-        XLSX.writeFile(wb, `Master_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
-        setToast({ message: "Master Report exported successfully", type: "success" });
+        XLSX.utils.book_append_sheet(wb, ws, "Annual Report");
+        XLSX.writeFile(wb, `Annual_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+        setToast({ message: "Annual Report exported successfully", type: "success" });
         setShowReportModal(false);
         return;
       }
@@ -684,7 +811,7 @@ export default function TrainingMasterPage() {
         XLSX.utils.book_append_sheet(wb, ws1, "Realisasi Training");
 
         // Sheet 2: Accumulation
-        const monthsMap = {};
+        const monthlyData = {};
         realisasi_training.forEach(item => {
           if (!item.start_date) return;
           try {
@@ -693,24 +820,33 @@ export default function TrainingMasterPage() {
             const monthName = d.toLocaleString('default', { month: 'long' });
             const year = d.getFullYear();
             const key = `${monthName} ${year}`;
-            if (!monthsMap[key]) monthsMap[key] = 0;
-            monthsMap[key] += (Number(item.hours) || 0);
+            
+            if (!monthlyData[key]) {
+              monthlyData[key] = {
+                hours: 0,
+                niks: new Set()
+              };
+            }
+            monthlyData[key].hours += (Number(item.hours) || 0);
+            if (item.nik) {
+              monthlyData[key].niks.add(item.nik);
+            }
           } catch (e) {
             console.warn("Date parsing error for item", item);
           }
         });
 
         const slide2AoA = [];
-        const sortedMonthKeys = Object.keys(monthsMap).sort((a, b) => new Date(a) - new Date(b));
+        const sortedMonthKeys = Object.keys(monthlyData).sort((a, b) => new Date(a) - new Date(b));
 
-        let runningTotal = 0;
         if (sortedMonthKeys.length > 0) {
           sortedMonthKeys.forEach(key => {
-            const monthlyHours = monthsMap[key];
-            runningTotal += monthlyHours;
-            const avg = total_employees > 0 ? (runningTotal / total_employees) : 0;
-            slide2AoA.push([key, "Jumlah Jam Training (Kumulatif)", Number(runningTotal.toFixed(2))]);
-            slide2AoA.push(["", `Jumlah Karyawan per ${key}`, total_employees]);
+            const monthlyHours = monthlyData[key].hours;
+            const activeEmployees = monthlyData[key].niks.size;
+            const avg = activeEmployees > 0 ? (monthlyHours / activeEmployees) : 0;
+            
+            slide2AoA.push([key, "Jumlah Jam Training", Number(monthlyHours.toFixed(2))]);
+            slide2AoA.push(["", `Jumlah Karyawan per ${key}`, activeEmployees]);
             slide2AoA.push(["", "Rata-rata jam training", Number(avg.toFixed(2))]);
             slide2AoA.push([]);
           });
@@ -1024,9 +1160,10 @@ export default function TrainingMasterPage() {
             {/* Redesigned Tabs */}
             <div className="flex space-x-8 border-b border-gray-200 mb-8">
               {[
+                { id: 'master', label: 'Annual Report' },
                 { id: 'monthly', label: 'Monthly Report' },
                 { id: 'division', label: 'Division Report' },
-                { id: 'master', label: 'Master Report' }
+                { id: 'employee', label: 'Employee Report' }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1143,6 +1280,39 @@ export default function TrainingMasterPage() {
                       <option value="Hard Skill">Hard Skill</option>
                       <option value="Soft Skill">Soft Skill</option>
                       <option value="ESG">ESG</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+
+
+              {activeReportTab === "employee" && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                    <label className="text-black font-semibold">Training Event Status</label>
+                    <select name="status" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black">
+                      <option value="all">All Status</option>
+                      <option value="Draft">Draft</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                    <label className="text-black font-semibold">Training Category</label>
+                    <select name="category" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black">
+                      <option value="all">All Category</option>
+                      <option value="Hard Skill">Hard Skill</option>
+                      <option value="Soft Skill">Soft Skill</option>
+                      <option value="ESG">ESG</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                    <label className="text-black font-semibold">Division</label>
+                    <select name="division" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black">
+                      <option value="">All Division</option>
+                      {divisions.map((d, i) => (
+                        <option key={i} value={d.division_name}>{d.division_name}</option>
+                      ))}
                     </select>
                   </div>
                 </>

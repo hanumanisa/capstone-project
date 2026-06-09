@@ -338,6 +338,11 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['year'] = self.request.query_params.get('year')
+        context['start_date'] = self.request.query_params.get('start_date')
+        context['end_date'] = self.request.query_params.get('end_date')
+        context['status'] = self.request.query_params.get('status')
+        context['category'] = self.request.query_params.get('category')
+        context['type'] = self.request.query_params.get('type')
         return context
 
 
