@@ -29,6 +29,7 @@ const EmployeePage = () => {
         }
     }, [employees, user, selectedDivision]);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+    const [activeView, setActiveView] = useState("admin");
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
@@ -51,7 +52,7 @@ const EmployeePage = () => {
         setLoading(true);
         try {
             const [empRes, divRes] = await Promise.all([
-                api.get(`/api/employee/?page=${currentPage}&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}&year=${selectedYear}`),
+                api.get(`/api/employee/?page=${currentPage}&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}&year=${selectedYear}&view_mode=${activeView}`),
                 api.get('/api/divisions/')
             ]);
 
@@ -70,7 +71,7 @@ const EmployeePage = () => {
         } finally {
             setLoading(false);
         }
-    }, [currentPage, searchTerm, selectedDivision, selectedYear]);
+    }, [currentPage, searchTerm, selectedDivision, selectedYear, activeView]);
 
     useEffect(() => {
         fetchData();
@@ -92,8 +93,32 @@ const EmployeePage = () => {
         return pages;
     };
 
+    const isManagerialRole = user && ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(user.role);
+
     return (
         <MainLayout>
+            {isManagerialRole && (
+                <div className="flex space-x-8 border-b border-gray-300 mb-6 px-4 sm:px-0 mt-4">
+                    <button
+                        onClick={() => setActiveView('admin')}
+                        className={`pb-3 px-1 font-bold text-xl transition-colors ${activeView === 'admin'
+                            ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                            : 'text-gray-400 hover:text-[#2174C3]'
+                            }`}
+                    >
+                        {['Super Administrator', 'Administrator', 'Dean'].includes(user?.role) ? 'Company Employees' : 'Division Employees'}
+                    </button>
+                    <button
+                        onClick={() => setActiveView('employee')}
+                        className={`pb-3 px-1 font-bold text-xl transition-colors ${activeView === 'employee'
+                            ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                            : 'text-gray-400 hover:text-[#2174C3]'
+                            }`}
+                    >
+                        My Data
+                    </button>
+                </div>
+            )}
             <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-8 sticky top-0 z-30">
                 <div className="relative w-full sm:w-1/3">
                     <input

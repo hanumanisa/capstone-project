@@ -20,6 +20,7 @@ const TnaPage = () => {
     const [divisionFilter, setDivisionFilter] = useState('All Division');
     const [courseFilter, setCourseFilter] = useState('All Course');
     const [activeYear, setActiveYear] = useState(new Date().getFullYear().toString());
+    const [activeView, setActiveView] = useState("admin");
     const [currentPage, setCurrentPage] = useState(1);
 
     // Modals state
@@ -63,6 +64,7 @@ const TnaPage = () => {
             if (divisionFilter && divisionFilter !== 'All Division') params.division = divisionFilter;
             if (courseFilter && courseFilter !== 'All Course') params.course_name = courseFilter;
             if (activeYear) params.year = activeYear;
+            params.view_mode = activeView;
 
             const res = await api.get('/api/tna-participant/', { params });
             setParticipants(res.data);
@@ -71,13 +73,14 @@ const TnaPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, divisionFilter, courseFilter, activeYear]);
+    }, [searchTerm, divisionFilter, courseFilter, activeYear, activeView]);
 
     useEffect(() => {
         fetchParticipants();
     }, [fetchParticipants]);
 
-    const isAdmin = user?.role === 'Super Administrator' || user?.role === 'Administrator';
+    const isManagerialRole = user && ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(user.role);
+    const isAdmin = user && ['Super Administrator', 'Administrator'].includes(user.role) && activeView === 'admin';
 
     // ─── Filter Logic ─────────────────────────────────────────────────────
     const filteredParticipants = participants;
@@ -124,6 +127,28 @@ const TnaPage = () => {
 
     return (
         <MainLayout>
+            {isManagerialRole && (
+                <div className="flex space-x-8 border-b border-gray-300 mb-6 px-4 sm:px-0">
+                    <button
+                        onClick={() => setActiveView('admin')}
+                        className={`pb-3 px-1 font-bold text-xl transition-colors ${activeView === 'admin'
+                            ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                            : 'text-gray-400 hover:text-[#2174C3]'
+                            }`}
+                    >
+                        {['Super Administrator', 'Administrator', 'Dean'].includes(user?.role) ? 'Company TNA' : 'Division TNA'}
+                    </button>
+                    <button
+                        onClick={() => setActiveView('employee')}
+                        className={`pb-3 px-1 font-bold text-xl transition-colors ${activeView === 'employee'
+                            ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                            : 'text-gray-400 hover:text-[#2174C3]'
+                            }`}
+                    >
+                        My TNA
+                    </button>
+                </div>
+            )}
             <div className="animate-in fade-in duration-500">
                 {/* ─── Toolbar ─────────────────────────────────────────────── */}
                 <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-3 mb-8 transition-all hover:shadow-md sticky top-0 z-30">

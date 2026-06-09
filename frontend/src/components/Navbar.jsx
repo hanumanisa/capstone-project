@@ -27,6 +27,7 @@ const Navbar = () => {
 
     const isTrainingActive = () => {
         const paths = ['/training-master', '/evaluation', '/evaluation-employee', '/employee', '/hotel'];
+        if (isRestricted) paths.push('/tna');
         return paths.some(path => location.pathname.startsWith(path));
     };
 
@@ -35,7 +36,8 @@ const Navbar = () => {
     };
 
     const isSettingsActive = () => {
-        const paths = ['/category', '/courses', '/vendor', '/tna'];
+        const paths = ['/category', '/courses', '/vendor'];
+        if (!isRestricted) paths.push('/tna');
         return paths.some(path => location.pathname.startsWith(path));
     };
 
@@ -122,6 +124,13 @@ const Navbar = () => {
                                                 </Link>
                                             </li>
                                         )}
+                                        {isRestricted && (
+                                            <li>
+                                                <Link to="/tna" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full text-left font-medium ${location.pathname === '/tna' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
+                                                    TNA
+                                                </Link>
+                                            </li>
+                                        )}
                                     </ul>
                                 </div>
                             )}
@@ -143,52 +152,50 @@ const Navbar = () => {
                         </Link>
                         
                         {/* Settings Dropdown */}
-                        <div className="relative">
-                            <button 
-                                onClick={() => { setOpenSettings(!openSettings); setOpenTraining(false); }}
-                                className={`px-4 xl:px-5 py-1.5 rounded-full flex items-center transition-all duration-200 font-semibold tracking-wide focus:outline-none ${
-                                    isSettingsActive() 
-                                    ? 'bg-white/30 ring-1 ring-white/50 shadow-sm' 
-                                    : 'bg-transparent hover:bg-white/10'
-                                }`}
-                            >
-                                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                    <path fill="white" d="M19.14,12.94a7.43,7.43,0,0,0,.05-.94,7.43,7.43,0,0,0-.05-.94l2.11-1.65a.5.5,0,0,0,.12-.64l-2-3.46a.5.5,0,0,0-.62-.22l-2.49,1a7.28,7.28,0,0,0-1.63-.94l-.38-2.65A.5.5,0,0,0,13.76,2H10.24a.5.5,0,0,0-.49.41L9.37,5.06a7.28,7.28,0,0,0-1.63.94l-2.49-1a.5.5,0,0,0-.6.22l-2,3.46a.5.5,0,0,0,.12.64L4.86,11.06a7.43,7.43,0,0,0-.05.94,7.43,7.43,0,0,0,.05.94L2.75,14.59a.5.5,0,0,0-.12.64l2,3.46a.5.5,0,0,0,.6.22l2.49-1a7.28,7.28,0,0,0,1.63.94l.38,2.65a.5.5,0,0,0,.49.41h3.52a.5.5,0,0,0,.49-.41l.38-2.65a7.28,7.28,0,0,0,1.63-.94l2.49,1a.5.5,0,0,0,.6-.22l2-3.46a.5.5,0,0,0-.12-.64ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
-                                </svg>
-                                Settings
-                                <svg className={`w-4 h-4 ml-2 transition-transform duration-200 ${openSettings ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </button>
-                            {openSettings && (
-                                <div 
-                                    className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden py-2 px-2 text-gray-700 animate-fade-in"
-                                    onMouseLeave={() => setOpenSettings(false)}
+                        {!isRestricted && (
+                            <div className="relative">
+                                <button 
+                                    onClick={() => { setOpenSettings(!openSettings); setOpenTraining(false); }}
+                                    className={`px-4 xl:px-5 py-1.5 rounded-full flex items-center transition-all duration-200 font-semibold tracking-wide focus:outline-none ${
+                                        isSettingsActive() 
+                                        ? 'bg-white/30 ring-1 ring-white/50 shadow-sm' 
+                                        : 'bg-transparent hover:bg-white/10'
+                                    }`}
                                 >
-                                    <ul className="text-sm font-semibold space-y-1 text-left">
-                                        {!isRestricted && (
-                                            <>
-                                                <li>
-                                                    <Link to="/category" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full font-medium ${currentPath === 'category' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
-                                                        Training Category
-                                                    </Link>
-                                                </li>
-                                                <li>
-                                                    <Link to="/vendor" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full font-medium ${currentPath === 'vendor' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
-                                                        Training Vendor
-                                                    </Link>
-                                                </li>
-                                            </>
-                                        )}
-                                        <li>
-                                            <Link to="/tna" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full font-medium ${currentPath === 'tna' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
-                                                TNA
-                                            </Link>
-                                        </li>
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
+                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                        <path fill="white" d="M19.14,12.94a7.43,7.43,0,0,0,.05-.94,7.43,7.43,0,0,0-.05-.94l2.11-1.65a.5.5,0,0,0,.12-.64l-2-3.46a.5.5,0,0,0-.62-.22l-2.49,1a7.28,7.28,0,0,0-1.63-.94l-.38-2.65A.5.5,0,0,0,13.76,2H10.24a.5.5,0,0,0-.49.41L9.37,5.06a7.28,7.28,0,0,0-1.63.94l-2.49-1a.5.5,0,0,0-.6.22l-2,3.46a.5.5,0,0,0,.12.64L4.86,11.06a7.43,7.43,0,0,0-.05.94,7.43,7.43,0,0,0,.05.94L2.75,14.59a.5.5,0,0,0-.12.64l2,3.46a.5.5,0,0,0,.6.22l2.49-1a7.28,7.28,0,0,0,1.63.94l.38,2.65a.5.5,0,0,0,.49.41h3.52a.5.5,0,0,0,.49-.41l.38-2.65a7.28,7.28,0,0,0,1.63-.94l2.49,1a.5.5,0,0,0,.6-.22l2-3.46a.5.5,0,0,0-.12-.64ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
+                                    </svg>
+                                    Settings
+                                    <svg className={`w-4 h-4 ml-2 transition-transform duration-200 ${openSettings ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                {openSettings && (
+                                    <div 
+                                        className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden py-2 px-2 text-gray-700 animate-fade-in"
+                                        onMouseLeave={() => setOpenSettings(false)}
+                                    >
+                                        <ul className="text-sm font-semibold space-y-1 text-left">
+                                            <li>
+                                                <Link to="/category" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full font-medium ${currentPath === 'category' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
+                                                    Training Category
+                                                </Link>
+                                            </li>
+                                            <li>
+                                                <Link to="/vendor" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full font-medium ${currentPath === 'vendor' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
+                                                    Training Vendor
+                                                </Link>
+                                            </li>
+                                            <li>
+                                                <Link to="/tna" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full font-medium ${currentPath === 'tna' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
+                                                    TNA
+                                                </Link>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="flex items-center space-x-3 ml-4">
                             <span className="hidden xl:inline text-white font-semibold">Welcome, {user?.full_name || 'Guest'}</span>
@@ -262,24 +269,27 @@ const Navbar = () => {
                                         Hotel
                                     </Link>
                                 )}
+                                {isRestricted && (
+                                    <Link to="/tna" className={`block p-3 pl-8 rounded-xl ${currentPath === 'tna' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
+                                        TNA
+                                    </Link>
+                                )}
                             </div>
 
-                            <div className="space-y-1">
-                                <div className="px-3 py-2 text-xs font-bold uppercase text-white/50 tracking-wider">Settings</div>
-                                {!isRestricted && (
-                                    <>
-                                        <Link to="/category" className={`block p-3 pl-8 rounded-xl ${currentPath === 'category' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
-                                            Training Category
-                                        </Link>
-                                        <Link to="/vendor" className={`block p-3 pl-8 rounded-xl ${currentPath === 'vendor' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
-                                            Training Vendor
-                                        </Link>
-                                    </>
-                                )}
-                                <Link to="/tna" className={`block p-3 pl-8 rounded-xl ${currentPath === 'tna' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
-                                    TNA
-                                </Link>
-                            </div>
+                            {!isRestricted && (
+                                <div className="space-y-1">
+                                    <div className="px-3 py-2 text-xs font-bold uppercase text-white/50 tracking-wider">Settings</div>
+                                    <Link to="/category" className={`block p-3 pl-8 rounded-xl ${currentPath === 'category' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
+                                        Training Category
+                                    </Link>
+                                    <Link to="/vendor" className={`block p-3 pl-8 rounded-xl ${currentPath === 'vendor' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
+                                        Training Vendor
+                                    </Link>
+                                    <Link to="/tna" className={`block p-3 pl-8 rounded-xl ${currentPath === 'tna' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
+                                        TNA
+                                    </Link>
+                                </div>
+                            )}
                             
                             <div className="pt-4 border-t border-white/10">
                                 <button 

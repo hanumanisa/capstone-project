@@ -198,8 +198,29 @@ const CoursePage = () => {
 
     return (
         <MainLayout>
+            <div className="flex space-x-8 border-b border-gray-300 mb-6 px-4 sm:px-0 mt-4">
+                <Link
+                    to="/category"
+                    className={`pb-3 px-1 font-bold text-xl transition-colors ${location.pathname === '/category'
+                        ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                        : 'text-gray-400 hover:text-[#2174C3]'
+                        }`}
+                >
+                    Category
+                </Link>
+                <Link
+                    to="/courses"
+                    className={`pb-3 px-1 font-bold text-xl transition-colors ${location.pathname === '/courses'
+                        ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                        : 'text-gray-400 hover:text-[#2174C3]'
+                        }`}
+                >
+                    Course
+                </Link>
+            </div>
+
             {/* ─── Toolbar ─────────────────────────────────────────────── */}
-            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-10 sticky top-0 z-30">
+            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3 mb-8 sticky top-0 z-30">
                 <div className="relative w-full sm:w-1/3">
                     <input
                         id="search-course"
@@ -240,30 +261,7 @@ const CoursePage = () => {
                 </div>
             </div>
 
-            {/* ─── Header + Tabs ───────────────────────────────────────── */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
-                <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Course</h1>
-                <div className="flex space-x-8 border-b border-gray-300">
-                    <Link
-                        to="/category"
-                        className={`pb-3 px-1 font-bold text-xl transition-colors ${location.pathname === '/category'
-                            ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
-                            : 'text-gray-400 hover:text-[#2174C3]'
-                            }`}
-                    >
-                        Category
-                    </Link>
-                    <Link
-                        to="/courses"
-                        className={`pb-3 px-1 font-bold text-xl transition-colors ${location.pathname === '/courses'
-                            ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
-                            : 'text-gray-400 hover:text-[#2174C3]'
-                            }`}
-                    >
-                        Course
-                    </Link>
-                </div>
-            </div>
+            <h1 className="text-4xl font-bold text-gray-800 tracking-tight mb-6">Course</h1>
 
             {/* ─── Table ───────────────────────────────────────────────── */}
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden transition-all h-[calc(100vh-350px)] flex flex-col">

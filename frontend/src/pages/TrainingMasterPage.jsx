@@ -23,6 +23,7 @@ export default function TrainingMasterPage() {
   const [division, setDivision] = useState("");
   const [month, setMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [activeView, setActiveView] = useState("admin");
 
   // Lookup tables
   const [divisions, setDivisions] = useState([]);
@@ -96,14 +97,15 @@ export default function TrainingMasterPage() {
     return text.split(" ").filter(w => w.length > 0).map(w => w[0].toUpperCase()).join("");
   };
 
-  const isAdmin = user?.role === 'Super Administrator' || user?.role === 'Administrator' || user?.role === 'Dean';
+  const isManagerialRole = user && ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(user.role);
+  const isAdmin = user && ['Super Administrator', 'Administrator', 'Dean'].includes(user.role) && activeView === 'admin';
 
   // ================= FETCH DATA =================
   const fetchTrainings = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get(
-        `/api/training-master/?page=${page}&search=${search}&division=${division}&month=${month}&year=${selectedYear}`
+        `/api/training-master/?page=${page}&search=${search}&division=${division}&month=${month}&year=${selectedYear}&view_mode=${activeView}`
       );
       if (res && res.data) {
         // Handling both DRF results object and raw list
@@ -118,7 +120,7 @@ export default function TrainingMasterPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, division, month, selectedYear]);
+  }, [page, search, division, month, selectedYear, activeView]);
 
   const fetchData = async () => {
     try {
@@ -874,6 +876,29 @@ export default function TrainingMasterPage() {
 
   return (
     <MainLayout>
+      {isManagerialRole && (
+        <div className="flex space-x-8 border-b border-gray-300 mb-6 px-4 sm:px-0 mt-4">
+          <button
+            onClick={() => setActiveView('admin')}
+            className={`pb-3 px-1 font-bold text-xl transition-colors ${activeView === 'admin'
+              ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+              : 'text-gray-400 hover:text-[#2174C3]'
+              }`}
+          >
+            {['Super Administrator', 'Administrator', 'Dean'].includes(user?.role) ? 'Company Training Master' : 'Division Training Master'}
+          </button>
+          <button
+            onClick={() => setActiveView('employee')}
+            className={`pb-3 px-1 font-bold text-xl transition-colors ${activeView === 'employee'
+              ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+              : 'text-gray-400 hover:text-[#2174C3]'
+              }`}
+          >
+            My Training
+          </button>
+        </div>
+      )}
+
       {/* ─── Toolbar ─────────────────────────────────────────────── */}
       <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-3 mb-10 transition-all hover:shadow-md sticky top-0 z-30">
         {/* Search */}

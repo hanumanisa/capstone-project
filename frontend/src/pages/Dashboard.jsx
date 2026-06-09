@@ -65,6 +65,7 @@ const Dashboard = () => {
     const [division, setDivision] = useState("");
     const [course, setCourse] = useState("");
     const [year, setYear] = useState(new Date().getFullYear().toString());
+    const [activeTab, setActiveTab] = useState('admin');
 
     const [divisionsList, setDivisionsList] = useState([]);
     const [coursesList, setCoursesList] = useState([]);
@@ -91,10 +92,9 @@ const Dashboard = () => {
             navigate('/login');
         } else {
             setUser(userData);
-            // Administrator, Super Administrator, and Dean see the full dashboard
-            const isAdminDashboardRole = ['Administrator', 'Super Administrator', 'Dean'].includes(userData.role);
+            const isAdminDashboardRole = ['Administrator', 'Super Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(userData.role);
 
-            if (!isAdminDashboardRole) {
+            if (!isAdminDashboardRole || activeTab === 'employee') {
                 const params = new URLSearchParams();
                 params.append('year', year);
                 api.get(`/api/dashboard/cards/?${params.toString()}`)
@@ -114,9 +114,10 @@ const Dashboard = () => {
                     .catch(err => console.error("Error fetching admin dashboard", err));
             }
         }
-    }, [navigate, search, division, course, year]);
+    }, [navigate, search, division, course, year, activeTab]);
 
-    const isRestrictedRole = user && !['Administrator', 'Super Administrator', 'Dean'].includes(user.role);
+    const isAdminDashboardRole = user && ['Administrator', 'Super Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(user.role);
+    const isRestrictedRole = !isAdminDashboardRole || activeTab === 'employee';
 
     const stats = isRestrictedRole ? (cardData?.stats ? [
         { title: 'Total Training', val: cardData.stats.total_training, icon: BookOpen, bgIcon: '#F59E0B' },
@@ -351,6 +352,29 @@ const Dashboard = () => {
 
     return (
         <MainLayout>
+            {isAdminDashboardRole && (
+                <div className="flex space-x-8 border-b border-gray-300 mb-6 px-4 sm:px-0">
+                    <button
+                        onClick={() => setActiveTab('admin')}
+                        className={`pb-3 px-1 font-bold text-xl transition-colors ${activeTab === 'admin'
+                            ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                            : 'text-gray-400 hover:text-[#2174C3]'
+                            }`}
+                    >
+                        {['Super Administrator', 'Administrator', 'Dean'].includes(user?.role) ? 'Company Dashboard' : 'Division Dashboard'}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('employee')}
+                        className={`pb-3 px-1 font-bold text-xl transition-colors ${activeTab === 'employee'
+                            ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
+                            : 'text-gray-400 hover:text-[#2174C3]'
+                            }`}
+                    >
+                        My Dashboard
+                    </button>
+                </div>
+            )}
+
             {/* Filter Section */}
             <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center mb-8 gap-3 transition-all duration-300 sticky top-0 z-30">
                 <div className="relative w-full sm:w-1/3">

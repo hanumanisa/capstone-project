@@ -24,4 +24,8 @@ class Migration(migrations.Migration):
                 'db_table': 'budgets',
             },
         ),
+        migrations.RemoveField(
+            model_name='trainingevent',
+            name='documentation_url',
+        ),
     ]

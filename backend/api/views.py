@@ -185,16 +185,23 @@ class TnaMasterViewSet(viewsets.ModelViewSet):
         user_groups = list(user.groups.values_list('name', flat=True))
         qs = TnaMaster.objects.all().order_by('course_category__category_name', 'course__course_name')
 
+        view_mode = self.request.query_params.get('view_mode', 'admin')
+
         # RBAC Logic
-        if user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
+        if view_mode == 'employee':
+            if hasattr(user, 'profile') and user.profile.employee:
+                qs = qs.filter(tnaparticipant__nik=user.profile.employee).distinct()
+            else:
+                return TnaMaster.objects.none()
+        elif user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
             pass
         elif "Head of Division" in user_groups or "Team Leader" in user_groups:
-            if hasattr(user, 'profile'):
+            if hasattr(user, 'profile') and user.profile.employee:
                 qs = qs.filter(tnaparticipant__nik__division_id=user.profile.employee.division_id).distinct()
             else:
                 return TnaMaster.objects.none()
         else:
-            if hasattr(user, 'profile'):
+            if hasattr(user, 'profile') and user.profile.employee:
                 qs = qs.filter(tnaparticipant__nik=user.profile.employee).distinct()
             else:
                 return TnaMaster.objects.none()
@@ -237,16 +244,23 @@ class TnaParticipantViewSet(viewsets.ModelViewSet):
             'nik__tnaparticipant_set__tna__course'
         ).order_by('tna__course_category__category_name', 'tna__course__course_name')
 
+        view_mode = self.request.query_params.get('view_mode', 'admin')
+
         # RBAC Logic
-        if user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
+        if view_mode == 'employee':
+            if hasattr(user, 'profile') and user.profile.employee:
+                qs = qs.filter(nik=user.profile.employee)
+            else:
+                return TnaParticipant.objects.none()
+        elif user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
             pass
         elif "Head of Division" in user_groups or "Team Leader" in user_groups:
-            if hasattr(user, 'profile'):
+            if hasattr(user, 'profile') and user.profile.employee:
                 qs = qs.filter(nik__division_id=user.profile.employee.division_id)
             else:
                 return TnaParticipant.objects.none()
         else:
-            if hasattr(user, 'profile'):
+            if hasattr(user, 'profile') and user.profile.employee:
                 qs = qs.filter(nik=user.profile.employee)
             else:
                 return TnaParticipant.objects.none()
@@ -301,8 +315,15 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             'profile_set__user__groups'
         ).order_by('nik')
         
+        view_mode = self.request.query_params.get('view_mode', 'admin')
+        
         # RBAC Logic
-        if user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
+        if view_mode == 'employee':
+            if hasattr(user, 'profile') and user.profile.employee:
+                queryset = queryset.filter(nik=user.profile.employee.nik)
+            else:
+                return Employee.objects.none()
+        elif user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
             division = self.request.query_params.get('division')
             if division:
                 queryset = queryset.filter(division__division_name__icontains=division)
@@ -376,7 +397,21 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
             
         user_groups = list(user.groups.values_list('name', flat=True))
         
-        if user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
+        view_mode = self.request.query_params.get('view_mode', 'admin')
+
+        if view_mode == 'employee':
+            if hasattr(user, 'profile') and user.profile.employee:
+                emp = user.profile.employee
+                qs = qs.filter(
+                    trainingevent__participants__nik=emp
+                ).exclude(
+                    trainingevent__status='cancelled'
+                ).exclude(
+                    trainingevent__participants__attendance_status='Absent'
+                ).distinct()
+            else:
+                qs = qs.none()
+        elif user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
             # Apply standard filters
             division_filter = self.request.query_params.get('division')
             month_filter = self.request.query_params.get('month')

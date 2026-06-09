@@ -23,10 +23,6 @@ class Migration(migrations.Migration):
             old_name='hotel_phone',
             new_name='sales_phone_number',
         ),
-        migrations.RemoveField(
-            model_name='trainingevent',
-            name='documentation_url',
-        ),
         migrations.AddField(
             model_name='hotel',
             name='sales_name',
