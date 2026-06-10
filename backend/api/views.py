@@ -68,7 +68,7 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         if request.user.is_superuser:
             return True
         user_groups = list(request.user.groups.values_list('name', flat=True))
-        return 'Administrator' in user_groups
+        return 'Administrator' in user_groups or 'Super Administrator' in user_groups
 
 
 class BudgetViewSet(viewsets.ModelViewSet):
@@ -399,16 +399,20 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
         
         view_mode = self.request.query_params.get('view_mode', 'admin')
 
+        # If purely an Employee role, force employee mode to avoid race conditions/incorrect views
+        is_employee_user = "Employee" in user_groups and not any(r in user_groups for r in ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'])
+        if is_employee_user:
+            view_mode = 'employee'
+
         if view_mode == 'employee':
             if hasattr(user, 'profile') and user.profile.employee:
                 emp = user.profile.employee
-                qs = qs.filter(
-                    trainingevent__participants__nik=emp
-                ).exclude(
-                    trainingevent__status='cancelled'
-                ).exclude(
-                    trainingevent__participants__attendance_status='Absent'
-                ).distinct()
+                active_events = TrainingEvent.objects.filter(
+                    participants__nik=emp,
+                    participants__attendance_status='Present',
+                    status='completed'
+                )
+                qs = qs.filter(trainingevent__in=active_events).distinct()
             else:
                 qs = qs.none()
         elif user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
@@ -431,26 +435,24 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
             if hasattr(user, 'profile') and user.profile.employee:
                 div_id = user.profile.employee.division_id
                 # Only show trainings that have at least one valid participant from their division
-                qs = qs.filter(
-                    trainingevent__participants__nik__division_id=div_id
-                ).exclude(
-                    trainingevent__status='cancelled'
-                ).exclude(
-                    trainingevent__participants__attendance_status='Absent'
-                ).distinct()
+                # who is Present, and the event is not cancelled
+                active_events = TrainingEvent.objects.filter(
+                    participants__nik__division_id=div_id,
+                    participants__attendance_status='Present'
+                ).exclude(status='cancelled')
+                qs = qs.filter(trainingevent__in=active_events).distinct()
             else:
                 qs = qs.none()
         elif "Employee" in user_groups:
             if hasattr(user, 'profile') and user.profile.employee:
                 emp = user.profile.employee
-                # Only show trainings that they participated in and were not absent/cancelled
-                qs = qs.filter(
-                    trainingevent__participants__nik=emp
-                ).exclude(
-                    trainingevent__status='cancelled'
-                ).exclude(
-                    trainingevent__participants__attendance_status='Absent'
-                ).distinct()
+                # Only show trainings that they participated in and were completed/Present
+                active_events = TrainingEvent.objects.filter(
+                    participants__nik=emp,
+                    participants__attendance_status='Present',
+                    status='completed'
+                )
+                qs = qs.filter(trainingevent__in=active_events).distinct()
             else:
                 qs = qs.none()
         else:

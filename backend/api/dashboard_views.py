@@ -26,31 +26,35 @@ class DashboardCardsAPIView(APIView):
         except Exception as e:
             return Response({"error": f"Profile not found: {str(e)}"}, status=404)
 
-        # Determine employee scope (target_niks) based on role
-        if role in ['Head of Division', 'Team Leader']:
-            # Scope to entire division (includes self)
-            division = employee.division
-            target_niks = Employee.objects.filter(division=division).values_list('nik', flat=True)
-            employee_count = len(target_niks)
-        elif role in ['Super Administrator', 'Administrator', 'Dean']:
-            # Admin sees everything
-            target_niks = Employee.objects.all().values_list('nik', flat=True)
-            employee_count = Employee.objects.count()
-        else:
-            # Role Employee - scope to self only
+        # Determine employee scope (target_niks) based on role and view_mode
+        view_mode = request.query_params.get('view_mode', 'admin')
+
+        if view_mode == 'employee':
             target_niks = [employee.nik]
             employee_count = 1
+        else:
+            if role in ['Head of Division', 'Team Leader']:
+                # Scope to entire division (includes self)
+                division = employee.division
+                target_niks = Employee.objects.filter(division=division).values_list('nik', flat=True)
+                employee_count = len(target_niks)
+            elif role in ['Super Administrator', 'Administrator', 'Dean']:
+                # Admin sees everything
+                target_niks = Employee.objects.all().values_list('nik', flat=True)
+                employee_count = Employee.objects.count()
+            else:
+                # Role Employee - scope to self only
+                target_niks = [employee.nik]
+                employee_count = 1
 
-        # Base filters: Exclude cancelled events
-        events = TrainingEvent.objects.exclude(status='cancelled').filter(start_date__year=year)
+        # Base filters: Completed and Draft events
+        events = TrainingEvent.objects.filter(status__in=['completed', 'draft']).filter(start_date__year=year)
         
-        # Participants filter: Exclude Absent, scope to target_niks, and MUST exclude cancelled events
+        # Participants filter: Attendance Present, scope to target_niks, and completed/draft events
         participants = EventParticipant.objects.filter(
-            nik__in=target_niks
-        ).exclude(
-            attendance_status='Absent'
-        ).exclude(
-            event__status='cancelled'
+            nik__in=target_niks,
+            attendance_status='Present',
+            event__status__in=['completed', 'draft']
         ).filter(
             event__start_date__year=year
         )
@@ -76,8 +80,8 @@ class DashboardCardsAPIView(APIView):
                 if duration > 0:
                     total_hours_val += duration * part_counts_dict.get(sched.event_id, 0)
         
-        # Determine divisor for Average Hours based on role
-        if role == 'Employee':
+        # Determine divisor for Average Hours based on role or view_mode
+        if view_mode == 'employee' or role == 'Employee':
             divisor = total_training
         else:
             # For Head of Division, Team Leader, and Admins in this view

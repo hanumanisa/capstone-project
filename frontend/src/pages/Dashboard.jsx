@@ -92,11 +92,16 @@ const Dashboard = () => {
             navigate('/login');
         } else {
             setUser(userData);
-            const isAdminDashboardRole = ['Administrator', 'Super Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(userData.role);
+            const isRestrictedRole = !['Super Administrator', 'Administrator', 'Dean'].includes(userData.role) || activeTab === 'employee';
 
-            if (!isAdminDashboardRole || activeTab === 'employee') {
+            if (isRestrictedRole) {
                 const params = new URLSearchParams();
                 params.append('year', year);
+                if (activeTab === 'admin') {
+                    params.append('view_mode', 'admin');
+                } else {
+                    params.append('view_mode', 'employee');
+                }
                 api.get(`/api/dashboard/cards/?${params.toString()}`)
                     .then(res => {
                         if (res.data) setCardData(res.data);
@@ -117,7 +122,7 @@ const Dashboard = () => {
     }, [navigate, search, division, course, year, activeTab]);
 
     const isAdminDashboardRole = user && ['Administrator', 'Super Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(user.role);
-    const isRestrictedRole = !isAdminDashboardRole || activeTab === 'employee';
+    const isRestrictedRole = !['Super Administrator', 'Administrator', 'Dean'].includes(user?.role) || activeTab === 'employee';
 
     const stats = isRestrictedRole ? (cardData?.stats ? [
         { title: 'Total Training', val: cardData.stats.total_training, icon: BookOpen, bgIcon: '#F59E0B' },
@@ -412,25 +417,27 @@ const Dashboard = () => {
                     </div>
                 )}
 
-                <div className="relative w-full sm:w-48">
-                    <select
-                        value={course}
-                        onChange={(e) => setCourse(e.target.value)}
-                        className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4 outline-none"
-                        style={{
-                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
-                            backgroundSize: '20px 20px',
-                            backgroundPosition: 'right 12px center'
-                        }}
-                    >
-                        <option value="">All Course</option>
-                        {Array.from(new Set(coursesList.map(c => c.course_name)))
-                            .sort()
-                            .map((name, i) => (
-                                <option key={i} value={name}>{name}</option>
-                            ))}
-                    </select>
-                </div>
+                {!isRestrictedRole && (
+                    <div className="relative w-full sm:w-48">
+                        <select
+                            value={course}
+                            onChange={(e) => setCourse(e.target.value)}
+                            className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4 outline-none"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                                backgroundSize: '20px 20px',
+                                backgroundPosition: 'right 12px center'
+                            }}
+                        >
+                            <option value="">All Course</option>
+                            {Array.from(new Set(coursesList.map(c => c.course_name)))
+                                .sort()
+                                .map((name, i) => (
+                                    <option key={i} value={name}>{name}</option>
+                                ))}
+                        </select>
+                    </div>
+                )}
 
                 <div className="flex-1 flex justify-end items-center space-x-6 shrink-0">
                     <YearPicker selectedYear={year} onYearChange={(y) => setYear(y)} />

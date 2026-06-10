@@ -154,7 +154,13 @@ export default function TrainingMasterPage() {
 
   useEffect(() => {
     const userData = getUserFromToken();
-    if (userData) setUser(userData);
+    if (userData) {
+      setUser(userData);
+      const isManagerial = ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(userData.role);
+      if (!isManagerial) {
+        setActiveView('employee');
+      }
+    }
     fetchData();
   }, []);
 
@@ -917,12 +923,13 @@ export default function TrainingMasterPage() {
           </span>
         </div>
 
-        {/* Division Filter */}
-        {!['Head of Division', 'Team Leader', 'Employee'].includes(user?.role) && (
+
+        {/* Month Filter */}
+        {activeView !== 'employee' && (
           <div className="relative w-full sm:w-48">
             <select
-              value={division}
-              onChange={(e) => setDivision(e.target.value)}
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
               className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
@@ -930,32 +937,13 @@ export default function TrainingMasterPage() {
                 backgroundPosition: 'right 12px center'
               }}
             >
-              <option value="">All Division</option>
-              {divisions.map((d, i) => (
-                <option key={i} value={d.division_name}>{d.division_name}</option>
+              <option value="">All Month</option>
+              {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m, idx) => (
+                <option key={m} value={idx + 1}>{m}</option>
               ))}
             </select>
           </div>
         )}
-
-        {/* Month Filter */}
-        <div className="relative w-full sm:w-48">
-          <select
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
-              backgroundSize: '20px 20px',
-              backgroundPosition: 'right 12px center'
-            }}
-          >
-            <option value="">All Month</option>
-            {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m, idx) => (
-              <option key={m} value={idx + 1}>{m}</option>
-            ))}
-          </select>
-        </div>
 
         {/* Right Section: Year & Actions */}
         <div className="flex-1 flex justify-end items-center space-x-6 shrink-0">
@@ -1017,10 +1005,10 @@ export default function TrainingMasterPage() {
                 <th className="px-3 py-4 font-bold">Location</th>
                 <th className="px-3 py-4 font-bold">Vendor</th>
                 <th className="px-3 py-4 font-bold">Training Category</th>
-                {(user?.role === 'Head of Division' || user?.role === 'Employee') && (
+                {((['Head of Division', 'Team Leader', 'Employee'].includes(user?.role)) || activeView === 'employee') && (
                   <th className="px-3 py-4 font-bold">Participants</th>
                 )}
-                {!(user?.role === 'Head of Division' || user?.role === 'Employee') && (
+                {!((['Head of Division', 'Team Leader', 'Employee'].includes(user?.role)) || activeView === 'employee') && (
                   <>
                     <th className="px-3 py-4 font-bold text-center">L1</th>
                     <th className="px-3 py-4 font-bold text-center">L2</th>
@@ -1052,7 +1040,7 @@ export default function TrainingMasterPage() {
                 </tr>
               ) : (
                 trainings.flatMap((t, i) => {
-                  const isRestricted = user?.role === 'Head of Division' || user?.role === 'Employee';
+                  const isRestricted = ['Head of Division', 'Team Leader', 'Employee'].includes(user?.role) || activeView === 'employee';
                   const pNames = (t.division_participant_names || "").split(", ").filter(n => n);
 
                   if (isRestricted) {

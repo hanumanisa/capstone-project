@@ -48,11 +48,14 @@ const EmployeePage = () => {
         setShowTnaModal(true);
     };
 
+    const isManagerialRole = user && ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(user.role);
+    const isMyData = !isManagerialRole || activeView === 'employee';
+
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const [empRes, divRes] = await Promise.all([
-                api.get(`/api/employee/?page=${currentPage}&search=${searchTerm}&division=${selectedDivision === 'All Division' ? '' : selectedDivision}&year=${selectedYear}&view_mode=${activeView}`),
+                api.get(`/api/employee/?page=${currentPage}&search=${searchTerm}&division=${isMyData ? '' : (selectedDivision === 'All Division' ? '' : selectedDivision)}&year=${selectedYear}&view_mode=${activeView}`),
                 api.get('/api/divisions/')
             ]);
 
@@ -71,7 +74,7 @@ const EmployeePage = () => {
         } finally {
             setLoading(false);
         }
-    }, [currentPage, searchTerm, selectedDivision, selectedYear, activeView]);
+    }, [currentPage, searchTerm, selectedDivision, selectedYear, activeView, isMyData]);
 
     useEffect(() => {
         fetchData();
@@ -92,8 +95,6 @@ const EmployeePage = () => {
         for (let i = start; i <= end; i++) pages.push(i);
         return pages;
     };
-
-    const isManagerialRole = user && ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(user.role);
 
     return (
         <MainLayout>
@@ -136,7 +137,7 @@ const EmployeePage = () => {
                 </div>
 
                 {/* Search bar all division samakan dengan dashboard style */}
-                {(!user || !['Head of Division', 'Team Leader'].includes(user.role)) && (
+                {!isMyData && (!user || !['Head of Division', 'Team Leader'].includes(user.role)) && (
                     <div className="relative w-full sm:w-60">
                         <select
                             value={selectedDivision}

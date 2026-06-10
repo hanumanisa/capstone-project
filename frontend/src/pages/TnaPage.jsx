@@ -55,14 +55,17 @@ const TnaPage = () => {
         fetchFilters();
     }, []);
 
+    const isManagerialRole = user && ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(user.role);
+    const isMyTna = !isManagerialRole || activeView === 'employee';
+
     const fetchParticipants = useCallback(async () => {
         setLoading(true);
         try {
             const params = {
                 search: searchTerm,
             };
-            if (divisionFilter && divisionFilter !== 'All Division') params.division = divisionFilter;
-            if (courseFilter && courseFilter !== 'All Course') params.course_name = courseFilter;
+            if (!isMyTna && divisionFilter && divisionFilter !== 'All Division') params.division = divisionFilter;
+            if (!isMyTna && courseFilter && courseFilter !== 'All Course') params.course_name = courseFilter;
             if (activeYear) params.year = activeYear;
             params.view_mode = activeView;
 
@@ -73,13 +76,12 @@ const TnaPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, divisionFilter, courseFilter, activeYear, activeView]);
+    }, [searchTerm, divisionFilter, courseFilter, activeYear, activeView, isMyTna]);
 
     useEffect(() => {
         fetchParticipants();
     }, [fetchParticipants]);
 
-    const isManagerialRole = user && ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(user.role);
     const isAdmin = user && ['Super Administrator', 'Administrator'].includes(user.role) && activeView === 'admin';
 
     // ─── Filter Logic ─────────────────────────────────────────────────────
@@ -111,13 +113,12 @@ const TnaPage = () => {
             'Division': item.division_name,
             'Position': item.position_name,
             'TNA Fulfillment': item.tna_fulfilled,
-            'IHT + Public': item.iht_plus_public
         }));
         const ws = XLSX.utils.json_to_sheet(exportData);
         // Column widths
         const wscols = [
             { wch: 25 }, { wch: 35 }, { wch: 15 }, { wch: 30 },
-            { wch: 25 }, { wch: 25 }, { wch: 15 }, { wch: 15 }
+            { wch: 25 }, { wch: 25 }, { wch: 15 }
         ];
         ws['!cols'] = wscols;
         const wb = XLSX.utils.book_new();
@@ -167,7 +168,7 @@ const TnaPage = () => {
                         </span>
                     </div>
 
-                    {!['Head of Division', 'Team Leader', 'Employee'].includes(user?.role) && (
+                    {!isMyTna && !['Head of Division', 'Team Leader', 'Employee'].includes(user?.role) && (
                         <div className="relative w-full sm:w-48">
                             <select
                                 value={divisionFilter}
@@ -187,25 +188,27 @@ const TnaPage = () => {
                         </div>
                     )}
 
-                    <div className="relative w-full sm:w-48">
-                        <select
-                            value={courseFilter}
-                            onChange={(e) => setCourseFilter(e.target.value)}
-                            className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
-                            style={{
-                                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
-                                backgroundSize: '20px 20px',
-                                backgroundPosition: 'right 12px center'
-                            }}
-                        >
-                            <option value="All Course">All Course</option>
-                            {Array.from(new Set(courses.map(c => c.course_name)))
-                                .sort()
-                                .map((name, i) => (
-                                    <option key={i} value={name}>{name}</option>
-                                ))}
-                        </select>
-                    </div>
+                    {!isMyTna && (
+                        <div className="relative w-full sm:w-48">
+                            <select
+                                value={courseFilter}
+                                onChange={(e) => setCourseFilter(e.target.value)}
+                                className="w-full border-none rounded-lg pl-4 pr-10 py-2 text-sm text-gray-600 bg-gray-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2174C3] appearance-none bg-no-repeat bg-right-4"
+                                style={{
+                                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e")`,
+                                    backgroundSize: '20px 20px',
+                                    backgroundPosition: 'right 12px center'
+                                }}
+                            >
+                                <option value="All Course">All Course</option>
+                                {Array.from(new Set(courses.map(c => c.course_name)))
+                                    .sort()
+                                    .map((name, i) => (
+                                        <option key={i} value={name}>{name}</option>
+                                    ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="flex-1 flex justify-end items-center space-x-6 shrink-0">
                         <YearPicker selectedYear={activeYear} onYearChange={(y) => setActiveYear(y)} />
@@ -252,13 +255,12 @@ const TnaPage = () => {
                                     <th className="px-6 py-5 font-bold whitespace-nowrap border-b border-blue-200 bg-[#5C85BB]">Division</th>
                                     <th className="px-6 py-5 font-bold whitespace-nowrap border-b border-blue-200 bg-[#5C85BB]">Position</th>
                                     <th className="px-6 py-5 font-bold whitespace-nowrap text-center border-b border-blue-200 bg-[#5C85BB]">TNA Fulfillment</th>
-                                    <th className="px-6 py-5 font-bold whitespace-nowrap text-center border-b border-blue-200 bg-[#5C85BB]">IHT + Public</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50 whitespace-nowrap">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="8" className="px-6 py-20 text-center">
+                                        <td colSpan="7" className="px-6 py-20 text-center">
                                             <div className="flex flex-col items-center justify-center space-y-3">
                                                 <div className="w-10 h-10 border-4 border-blue-100 border-t-[#2174C3] rounded-full animate-spin"></div>
                                                 <span className="text-gray-400 font-medium">Analyzing TNA Data...</span>
@@ -267,7 +269,7 @@ const TnaPage = () => {
                                     </tr>
                                 ) : paginatedParticipants.length === 0 ? (
                                     <tr>
-                                        <td colSpan="8" className="px-6 py-20 text-center text-gray-400 font-medium">No data available</td>
+                                        <td colSpan="7" className="px-6 py-20 text-center text-gray-400 font-medium">No data available</td>
                                     </tr>
                                 ) : (
                                     paginatedParticipants.map((item) => (
@@ -284,7 +286,6 @@ const TnaPage = () => {
                                             <td className="px-6 py-4 text-gray-600">{item.division_name}</td>
                                             <td className="px-6 py-4 text-gray-600">{item.position_name}</td>
                                             <td className="px-6 py-4 text-center text-gray-600">{item.tna_fulfilled}</td>
-                                            <td className="px-6 py-4 text-center text-gray-600">{item.iht_plus_public}</td>
                                         </tr>
                                     ))
                                 )}

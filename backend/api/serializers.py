@@ -150,6 +150,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         type_filter = self.context.get('type')
 
         events = obj.get_completed_events(year)
+        events = [ep for ep in events if ep.event.status.lower() == 'completed']
         
         if start_date:
             events = [ep for ep in events if ep.event.start_date and ep.event.start_date.isoformat() >= start_date]
@@ -209,6 +210,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     def get_attendance_details(self, obj):
         year = self.context.get('year')
         events = self._get_filtered_events(obj)
+        events = [ep for ep in events if ep.event.status.lower() == 'completed']
         
         # Pre-fetch TNA course IDs for this employee
         tna_qs = obj.tnaparticipant_set.all()
@@ -539,7 +541,30 @@ class TrainingMasterSerializer(serializers.ModelSerializer):
         if not hasattr(self, '_latest_event_cache'):
             self._latest_event_cache = {}
         if obj.training_id not in self._latest_event_cache:
-            self._latest_event_cache[obj.training_id] = obj.trainingevent_set.order_by('-start_date').first()
+            request = self.context.get('request')
+            view_mode = request.query_params.get('view_mode', 'admin') if request and hasattr(request, 'query_params') else 'admin'
+            
+            # Check if purely an Employee role
+            is_employee_user = False
+            if request and request.user.is_authenticated:
+                user_groups = list(request.user.groups.values_list('name', flat=True))
+                if "Employee" in user_groups and not any(r in user_groups for r in ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader']):
+                    is_employee_user = True
+            
+            if view_mode == 'employee' or is_employee_user:
+                event = None
+                if request and request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.employee:
+                    emp = request.user.profile.employee
+                    event = obj.trainingevent_set.filter(
+                        participants__nik=emp,
+                        participants__attendance_status='Present',
+                        status='completed'
+                    ).order_by('-start_date').first()
+                if not event:
+                    event = obj.trainingevent_set.filter(status='completed').order_by('-start_date').first()
+                self._latest_event_cache[obj.training_id] = event
+            else:
+                self._latest_event_cache[obj.training_id] = obj.trainingevent_set.order_by('-start_date').first()
         return self._latest_event_cache[obj.training_id]
 
     def get_latest_event(self, obj):
@@ -678,22 +703,31 @@ class TrainingMasterSerializer(serializers.ModelSerializer):
         
         user = request.user
         user_groups = list(user.groups.values_list('name', flat=True))
+        view_mode = request.query_params.get('view_mode', 'admin') if request and hasattr(request, 'query_params') else 'admin'
         
+        # Check if purely an Employee role
+        is_employee_user = "Employee" in user_groups and not any(r in user_groups for r in ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'])
+
         if hasattr(user, 'profile') and user.profile.employee:
             emp = user.profile.employee
-            if "Head of Division" in user_groups:
-                div_id = emp.division_id
-                participants = EventParticipant.objects.filter(
-                    event__training=obj,
-                    nik__division_id=div_id
-                ).select_related('nik').order_by('nik__full_name')
-                
-                names = [p.nik.full_name for p in participants]
-                return ", ".join(sorted(list(set(names))))
-            elif "Employee" in user_groups:
-                # Check if employee actually attended training
-                if EventParticipant.objects.filter(event__training=obj, nik=emp).exists():
+            if view_mode == 'employee' or is_employee_user:
+                # Check if employee actually attended training and it is completed/Present
+                if EventParticipant.objects.filter(event__training=obj, nik=emp, attendance_status='Present', event__status='completed').exists():
                     return emp.full_name
+            else:
+                if "Head of Division" in user_groups or "Team Leader" in user_groups:
+                    div_id = emp.division_id
+                    participants = EventParticipant.objects.filter(
+                        event__training=obj,
+                        nik__division_id=div_id
+                    ).select_related('nik').order_by('nik__full_name')
+                    
+                    names = [p.nik.full_name for p in participants]
+                    return ", ".join(sorted(list(set(names))))
+                elif "Employee" in user_groups or "Administrator" in user_groups or "Super Administrator" in user_groups or "Dean" in user_groups or user.is_superuser:
+                    # Check if employee actually attended training
+                    if EventParticipant.objects.filter(event__training=obj, nik=emp).exists():
+                        return emp.full_name
         return ""
 
 
