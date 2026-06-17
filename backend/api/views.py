@@ -979,7 +979,12 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
                     submitted_at = answers_qs.first().created_at.strftime('%d %B %Y') if answers_qs.first().created_at else None
                     p_qs = participants.filter(event__training_id=form.training_master_id).first()
                     if form_type == 'L2':
-                        score = p_qs.l2_score if p_qs else None
+                        total_s = sum((ans.l2_score or 0) for ans in answers_qs)
+                        total_p = sum((q.score or 0) for q in form.questions.all())
+                        if total_p > 0:
+                            score = float(round((total_s / total_p) * 100, 2))
+                        else:
+                            score = 0.0
                     else:
                         score = p_qs.l1_score if p_qs else None
                 
@@ -1163,6 +1168,17 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
                 participant_map[p.nik_id] = p
 
         form_type = form.form_type or ('L2' if '[L2]' in (form.form_name or '') else 'L1')
+        
+        # Pre-fetch answers to calculate raw score for L2
+        answers_map = {}
+        if form_type == 'L2':
+            all_answers = EvaluationAnswer.objects.filter(form=form)
+            for ans in all_answers:
+                if ans.user_id not in answers_map:
+                    answers_map[ans.user_id] = []
+                answers_map[ans.user_id].append(ans)
+        
+        t_possible = sum((q.score or 0) for q in form.questions.all()) if form_type == 'L2' else 0
 
         for user_id in submitted_user_ids:
             profile = profile_map.get(user_id)
@@ -1173,7 +1189,6 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
             nik_val = profile.employee.nik if profile.employee else 'N/A'
             name_val = profile.employee.full_name if profile.employee else (profile.user.get_full_name() or profile.user.username)
             
-            # Use snapshot if available
             if res:
                 if res.user_name: name_val = res.user_name
                 score_val = float(res.score) if res.score is not None else 0.0
@@ -1184,10 +1199,20 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
                     p = participant_map[profile.employee.nik]
                     score_val = float(p.l2_score if form_type == 'L2' else p.l1_score) if (p.l2_score if form_type == 'L2' else p.l1_score) is not None else 0.0
             
+            raw_score_val = 0.0
+            if form_type == 'L2':
+                u_ans = answers_map.get(user_id, [])
+                t_score = sum((a.l2_score or 0) for a in u_ans)
+                if t_possible > 0:
+                    raw_score_val = float(round((t_score / t_possible) * 100, 2))
+            else:
+                raw_score_val = score_val
+
             result.append({
                 'nik': nik_val,
                 'name': name_val,
-                'score': score_val
+                'score': score_val,
+                'raw_score': raw_score_val
             })
             
         return Response(result, status=status.HTTP_200_OK)

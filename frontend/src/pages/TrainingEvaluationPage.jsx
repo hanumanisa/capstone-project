@@ -229,14 +229,7 @@ export default function TrainingEvaluationPage() {
         try {
             const res = await api.get(`/api/evaluation-forms/${card.id}/respondents/`);
             const converted = (res.data || []).map(r => {
-                let s = r.score;
-                if (card.type === 'L2' && s > 4) {
-                    if (s <= 25) s = 1;
-                    else if (s <= 50) s = 2;
-                    else if (s <= 75) s = 3;
-                    else s = 4;
-                }
-                return { ...r, score: s };
+                return { ...r };
             });
             setRealRespondents(converted);
         } catch (err) {
@@ -275,7 +268,12 @@ export default function TrainingEvaluationPage() {
         tableHTML += '<th style="background-color:#2174C3;color:white;">No</th>';
         tableHTML += '<th style="background-color:#2174C3;color:white;">NIK</th>';
         tableHTML += '<th style="background-color:#2174C3;color:white;">Name</th>';
-        tableHTML += '<th style="background-color:#2174C3;color:white;">Score (%)</th>';
+        if (selectedCard?.type === 'L2') {
+            tableHTML += '<th style="background-color:#2174C3;color:white;">Score (0-100)</th>';
+            tableHTML += '<th style="background-color:#2174C3;color:white;">Scale (1-4)</th>';
+        } else {
+            tableHTML += '<th style="background-color:#2174C3;color:white;">Score</th>';
+        }
         tableHTML += '</tr>';
 
         respondents.forEach((r, i) => {
@@ -283,7 +281,12 @@ export default function TrainingEvaluationPage() {
             tableHTML += `<td align="center">${i + 1}</td>`;
             tableHTML += `<td>${r.nik || 'N/A'}</td>`;
             tableHTML += `<td>${r.name}</td>`;
-            tableHTML += `<td align="center">${r.score}</td>`;
+            if (selectedCard?.type === 'L2') {
+                tableHTML += `<td align="center">${r.raw_score}</td>`;
+                tableHTML += `<td align="center">${r.score}</td>`;
+            } else {
+                tableHTML += `<td align="center">${r.score}</td>`;
+            }
             tableHTML += '</tr>';
         });
 
@@ -809,18 +812,32 @@ export default function TrainingEvaluationPage() {
                                             <tr className="bg-gray-100 border-b border-gray-200">
                                                 <th className="text-center py-3 px-4 text-sm font-bold text-black w-10">No</th>
                                                 <th className="text-left py-3 px-4 text-sm font-bold text-black">Name</th>
-                                                <th className="text-center py-3 px-4 text-sm font-bold text-black w-28">Score</th>
+                                                {selectedCard?.type === 'L2' ? (
+                                                    <>
+                                                        <th className="text-center py-3 px-4 text-sm font-bold text-black w-28">Raw Score</th>
+                                                        <th className="text-center py-3 px-4 text-sm font-bold text-black w-28">Scale</th>
+                                                    </>
+                                                ) : (
+                                                    <th className="text-center py-3 px-4 text-sm font-bold text-black w-28">Score</th>
+                                                )}
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {responseRespondentsPreview.length === 0 ? (
-                                                <tr><td colSpan="3" className="text-center py-8 text-gray-400 text-sm">No respondent data yet</td></tr>
+                                                <tr><td colSpan={selectedCard?.type === 'L2' ? "4" : "3"} className="text-center py-8 text-gray-400 text-sm">No respondent data yet</td></tr>
                                             ) : (
                                                 responseRespondentsPreview.map((resp, i) => (
                                                     <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                                                         <td className="py-3 px-4 text-center text-sm text-black font-medium">{i + 1}</td>
                                                         <td className="py-3 px-4 text-sm text-black font-semibold">{resp.name}</td>
-                                                        <td className="py-3 px-4 text-center text-sm font-black text-black">{resp.score}</td>
+                                                        {selectedCard?.type === 'L2' ? (
+                                                            <>
+                                                                <td className="py-3 px-4 text-center text-sm font-black text-black">{resp.raw_score}</td>
+                                                                <td className="py-3 px-4 text-center text-sm font-black text-[#2174C3]">{resp.score}</td>
+                                                            </>
+                                                        ) : (
+                                                            <td className="py-3 px-4 text-center text-sm font-black text-black">{resp.score}</td>
+                                                        )}
                                                     </tr>
                                                 ))
                                             )}

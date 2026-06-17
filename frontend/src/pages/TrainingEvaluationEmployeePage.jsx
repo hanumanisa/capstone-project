@@ -147,10 +147,7 @@ export default function TrainingEvaluationEmployeePage() {
         return answered / total;
     }, [selectedCard, l2Answers]);
 
-    const l2MaxScore = useMemo(() => {
-        if (!selectedCard) return 100;
-        return (selectedCard.questions || []).reduce((s, q) => s + (q.score || 0), 0) || 100;
-    }, [selectedCard]);
+    const l2MaxScore = 100;
 
     const submitResponse = async (type) => {
         if (!selectedCard) return;
