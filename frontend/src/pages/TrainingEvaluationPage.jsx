@@ -83,7 +83,7 @@ export default function TrainingEvaluationPage() {
             const data = Array.isArray(res.data) ? res.data : [];
             const mapping = data.map(item => {
                 const isL2 = item.form_type === 'L2' || (item.form_name && item.form_name.includes('[L2]'));
-                const year = item.created_at ? new Date(item.created_at).getFullYear().toString() : activeYear;
+                const year = item.year ? String(item.year) : (item.created_at ? new Date(item.created_at).getFullYear().toString() : activeYear);
 
                 const card = {
                     id: item.form_id,
@@ -353,6 +353,7 @@ export default function TrainingEvaluationPage() {
         setSelectedTemplate(newTemplate);
         setSelectedTraining('');
         setTrainingSearchQuery('');
+        setShowTrainingDropdown(false);
         if (newTemplate === 'L2_Templates') {
             setL2Rows([{ q: '', opts: ['', '', '', ''], optActive: [true, true, true, true], optVisible: [true, true, true, true], answer: 'A', score: 0 }]);
         } else {
@@ -460,6 +461,7 @@ export default function TrainingEvaluationPage() {
         setSelectedTemplate('L1_Templates');
         setSelectedTraining('');
         setTrainingSearchQuery('');
+        setShowTrainingDropdown(false);
         setEvalRows([{ q: '', type: 'Rating', active: true, options: [], optionAnswers: [], scores: [] }]);
         setL2Rows([{ q: '', opts: ['', '', '', ''], optActive: [true, true, true, true], optVisible: [true, true, true, true], answer: 'A', score: 0 }]);
         setShowEval(true);
@@ -895,8 +897,11 @@ export default function TrainingEvaluationPage() {
                                                 <input
                                                     type="text"
                                                     value={trainingSearchQuery}
-                                                    onFocus={() => setShowTrainingDropdown(true)}
-                                                    onChange={(e) => setTrainingSearchQuery(e.target.value)}
+                                                    onClick={() => setShowTrainingDropdown(true)}
+                                                    onChange={(e) => {
+                                                        setTrainingSearchQuery(e.target.value);
+                                                        setShowTrainingDropdown(true);
+                                                    }}
                                                     placeholder="Search"
                                                     className="w-52 border border-gray-200 rounded-lg px-3 py-2 pr-8 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#2174C3] focus:border-transparent outline-none transition" />
                                                 {trainingSearchQuery && (

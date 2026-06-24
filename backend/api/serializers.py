@@ -829,16 +829,26 @@ class EvaluationFormSerializer(serializers.ModelSerializer):
     questions = EvaluationQuestionSerializer(many=True, required=False)
     training_title = serializers.CharField(source='training_master.training_title', read_only=True)
     responses_count = serializers.SerializerMethodField()
+    year = serializers.SerializerMethodField()
 
     class Meta:
         model = EvaluationForm
-        fields = ['form_id', 'form_name', 'training_master', 'description', 'deadline', 'is_active', 'created_by', 'created_at', 'form_type', 'training_title', 'responses_count', 'questions']
+        fields = ['form_id', 'form_name', 'training_master', 'description', 'deadline', 'is_active', 'created_by', 'created_at', 'form_type', 'training_title', 'responses_count', 'questions', 'year']
 
     def get_responses_count(self, obj):
         from .models import EvaluationAnswer
         # Simplified to count all unique users who submitted, 
         # ensuring the count stays even if participant records are modified.
         return EvaluationAnswer.objects.filter(form=obj).values('user').distinct().count()
+
+    def get_year(self, obj):
+        if obj.training_master:
+            event = obj.training_master.trainingevent_set.order_by('-start_date').first()
+            if event and event.start_date:
+                return event.start_date.year
+        if obj.created_at:
+            return obj.created_at.year
+        return None
 
 class EvaluationAnswerSerializer(serializers.ModelSerializer):
     class Meta:

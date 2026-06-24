@@ -118,7 +118,8 @@ class CourseCategoryViewSet(viewsets.ModelViewSet):
         qs = CourseCategory.objects.all().order_by('course_category_id')
         year = self.request.query_params.get('year', None)
         if year:
-            qs = qs.filter(created_at__year=year)
+            year_suffix = str(year)[-2:]
+            qs = qs.filter(course_category_id__contains=year_suffix)
         return qs
 
 
@@ -139,7 +140,8 @@ class CourseViewSet(viewsets.ModelViewSet):
         if category_id:
             qs = qs.filter(course_category_id=category_id)
         if year:
-            qs = qs.filter(created_at__year=year)
+            year_suffix = str(year)[-2:]
+            qs = qs.filter(course_id__contains=year_suffix)
         return qs
 
 
@@ -800,6 +802,18 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['form_name', 'training_master__training_title', 'training_master__training_code']
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.action == 'list':
+            year = self.request.query_params.get('year')
+            if year:
+                from django.db.models import Q
+                qs = qs.filter(
+                    Q(training_master__trainingevent__start_date__year=year) |
+                    Q(training_master__isnull=True, created_at__year=year)
+                ).distinct()
+        return qs
+
     def get_permissions(self):
         if self.action in ['submit_answers', 'my_evaluations']:
             return [permissions.IsAuthenticated()]
@@ -1011,13 +1025,22 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
                 
                 # Strip [L1] / [L2] prefix for clean title
                 clean_title = (form.form_name or '').replace('[L1] ', '').replace('[L2] ', '')
+                
+                form_year = None
+                if form.training_master:
+                    event_for_year = form.training_master.trainingevent_set.order_by('-start_date').first()
+                    if event_for_year and event_for_year.start_date:
+                        form_year = event_for_year.start_date.year
+                if not form_year and form.created_at:
+                    form_year = form.created_at.year
+
                 result.append({
                     'id': form.form_id,
                     'title': clean_title,
                     'description': form.description,
                     'deadline': form.deadline.isoformat() if form.deadline else None,
                     'type': form_type,
-                    'year': form.created_at.year if form.created_at else None,
+                    'year': form_year,
                     'hasQuestions': has_questions,
                     'questions': questions_list,
                     'is_submitted': has_submitted,
