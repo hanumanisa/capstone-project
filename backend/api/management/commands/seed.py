@@ -3,7 +3,8 @@ from django.contrib.auth.models import User, Group
 from api.models import (
     Directorate, Division, Employee, Profile, 
     CourseCategory, Course, Hotel, Vendor, TnaPeriod, TnaMaster, TnaParticipant,
-    TrainingMaster, TrainingEvent, EventLocation, EventSchedule
+    TrainingMaster, TrainingEvent, EventLocation, EventSchedule,
+    EventParticipant, EventCost, EventDocument
 )
 
 
@@ -1325,7 +1326,6 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write(self.style.SUCCESS(f"  [OK] Created TrainingEvent: {ev['topic']}"))
 
-             
                 EventLocation.objects.create(
                     event=event,
                     city="Jakarta",
@@ -1334,7 +1334,6 @@ class Command(BaseCommand):
                     address="Jl. Jenderal Sudirman Kav. 8, Jakarta Pusat"
                 )
 
-          
                 EventSchedule.objects.create(
                     event=event,
                     training_date=ev['start_date'],

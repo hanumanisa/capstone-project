@@ -113,12 +113,13 @@ const TnaPage = () => {
             'Division': item.division_name,
             'Position': item.position_name,
             'TNA Fulfillment': item.tna_fulfilled,
+            'Fulfillment Training': item.fulfillment_trainings || '-',
         }));
         const ws = XLSX.utils.json_to_sheet(exportData);
         // Column widths
         const wscols = [
             { wch: 25 }, { wch: 35 }, { wch: 15 }, { wch: 30 },
-            { wch: 25 }, { wch: 25 }, { wch: 15 }
+            { wch: 25 }, { wch: 25 }, { wch: 15 }, { wch: 35 }
         ];
         ws['!cols'] = wscols;
         const wb = XLSX.utils.book_new();

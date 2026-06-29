@@ -408,10 +408,23 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class VendorSerializer(serializers.ModelSerializer):
+    trainings = serializers.SerializerMethodField()
+
     class Meta:
         model = Vendor
         fields = '__all__'
         read_only_fields = ['created_at']
+
+    def get_trainings(self, obj):
+        trainings = obj.trainingmaster_set.select_related('course', 'course_category').all()
+        return [
+            {
+                'category_name': t.course_category.category_name if t.course_category else '',
+                'course_name': t.course.course_name if t.course else '',
+                'training_title': t.training_title or ''
+            }
+            for t in trainings
+        ]
 
     def validate_vendor_id(self, value):
         if self.instance is None:  # Only for creation
@@ -453,13 +466,14 @@ class TnaParticipantSerializer(serializers.ModelSerializer):
     
     iht_plus_public = serializers.SerializerMethodField()
     tna_fulfilled = serializers.SerializerMethodField()
+    fulfillment_trainings = serializers.SerializerMethodField()
 
     class Meta:
         model = TnaParticipant
         fields = [
             'tna_participant_id', 'tna', 'category_name', 'course_name', 
             'nik', 'employee_name', 'division_name', 'position_name',
-            'iht_plus_public', 'tna_fulfilled'
+            'iht_plus_public', 'tna_fulfilled', 'fulfillment_trainings'
         ]
 
     def get_iht_plus_public(self, obj):
@@ -473,6 +487,20 @@ class TnaParticipantSerializer(serializers.ModelSerializer):
         events = obj.nik.get_completed_events(year)
         attended_course_ids = [ep.event.training.course_id for ep in events]
         return 1 if obj.tna.course_id in attended_course_ids else 0
+
+    def get_fulfillment_trainings(self, obj):
+        year = obj.tna.tna_period.year
+        events = obj.nik.get_completed_events(year)
+        matching_events = [
+            ep for ep in events 
+            if ep.event.training.course_id == obj.tna.course_id
+        ]
+        titles = [ep.event.training.training_title for ep in matching_events if ep.event.training.training_title]
+        unique_titles = []
+        for title in titles:
+            if title not in unique_titles:
+                unique_titles.append(title)
+        return ", ".join(unique_titles)
 
 
 

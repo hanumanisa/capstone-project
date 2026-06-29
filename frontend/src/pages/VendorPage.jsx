@@ -161,31 +161,115 @@ const VendorPage = () => {
             alert('No data available to export.');
             return;
         }
-        const exportData = vendors.map(v => ({
-            'Vendor Code': v.vendor_id,
-            'Vendor Name': v.vendor_name,
-            'Vendor Type': v.provider_type,
-            'PIC': v.pic_name,
-            'Speciality': v.speciality,
-            'Address': v.address,
-            'City': v.city,
-            'Province': v.province,
-            'Country': v.country,
-            'Postcode': v.postcode,
-            'Phone': v.phone,
-            'FAX': v.fax,
-            'Email': v.email,
-            'Web Address': v.web_address
-        }));
+
+        const exportData = [];
+        const merges = [];
+        let currentRow = 1; // 0-indexed row 0 is header, so data starts at row 1
+
+        vendors.forEach(v => {
+            const vendorTrainings = v.trainings || [];
+
+            if (vendorTrainings.length === 0) {
+                // No trainings, just one row for the vendor
+                exportData.push({
+                    'Vendor Code': v.vendor_id,
+                    'Vendor Name': v.vendor_name,
+                    'Vendor Type': v.provider_type,
+                    'PIC': v.pic_name,
+                    'Speciality': v.speciality,
+                    'Address': v.address,
+                    'City': v.city,
+                    'Province': v.province,
+                    'Country': v.country,
+                    'Postcode': v.postcode,
+                    'Phone': v.phone,
+                    'FAX': v.fax,
+                    'Email': v.email,
+                    'Web Address': v.web_address,
+                    'Course Category': '',
+                    'Course': '',
+                    'Training Title': ''
+                });
+                currentRow++;
+            } else {
+                // Group trainings by category_name
+                const groups = {};
+                vendorTrainings.forEach(t => {
+                    const cat = t.category_name || '(No Category)';
+                    if (!groups[cat]) {
+                        groups[cat] = [];
+                    }
+                    groups[cat].push(t);
+                });
+
+                const vendorStartRow = currentRow;
+                const categories = Object.keys(groups);
+
+                categories.forEach(cat => {
+                    const categoryTrainings = groups[cat];
+                    const categoryStartRow = currentRow;
+
+                    categoryTrainings.forEach((t, index) => {
+                        exportData.push({
+                            'Vendor Code': (index === 0 && cat === categories[0]) ? v.vendor_id : '',
+                            'Vendor Name': (index === 0 && cat === categories[0]) ? v.vendor_name : '',
+                            'Vendor Type': (index === 0 && cat === categories[0]) ? v.provider_type : '',
+                            'PIC': (index === 0 && cat === categories[0]) ? v.pic_name : '',
+                            'Speciality': (index === 0 && cat === categories[0]) ? v.speciality : '',
+                            'Address': (index === 0 && cat === categories[0]) ? v.address : '',
+                            'City': (index === 0 && cat === categories[0]) ? v.city : '',
+                            'Province': (index === 0 && cat === categories[0]) ? v.province : '',
+                            'Country': (index === 0 && cat === categories[0]) ? v.country : '',
+                            'Postcode': (index === 0 && cat === categories[0]) ? v.postcode : '',
+                            'Phone': (index === 0 && cat === categories[0]) ? v.phone : '',
+                            'FAX': (index === 0 && cat === categories[0]) ? v.fax : '',
+                            'Email': (index === 0 && cat === categories[0]) ? v.email : '',
+                            'Web Address': (index === 0 && cat === categories[0]) ? v.web_address : '',
+                            'Course Category': index === 0 ? (t.category_name || '') : '',
+                            'Course': t.course_name || '',
+                            'Training Title': t.training_title || ''
+                        });
+                        currentRow++;
+                    });
+
+                    const categoryEndRow = currentRow - 1;
+                    if (categoryEndRow > categoryStartRow) {
+                        // Merge Course Category column (index 14)
+                        merges.push({
+                            s: { r: categoryStartRow, c: 14 },
+                            e: { r: categoryEndRow, c: 14 }
+                        });
+                    }
+                });
+
+                const vendorEndRow = currentRow - 1;
+                if (vendorEndRow > vendorStartRow) {
+                    // Merge vendor columns (indexes 0 to 13)
+                    for (let col = 0; col <= 13; col++) {
+                        merges.push({
+                            s: { r: vendorStartRow, c: col },
+                            e: { r: vendorEndRow, c: col }
+                        });
+                    }
+                }
+            }
+        });
+
         const ws = XLSX.utils.json_to_sheet(exportData);
+        if (merges.length > 0) {
+            ws['!merges'] = merges;
+        }
+
         // Column widths
         const wscols = [
             { wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 20 },
             { wch: 30 }, { wch: 40 }, { wch: 15 }, { wch: 15 },
             { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 15 },
-            { wch: 25 }, { wch: 30 }
+            { wch: 25 }, { wch: 30 }, { wch: 25 }, { wch: 25 },
+            { wch: 35 }
         ];
         ws['!cols'] = wscols;
+
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Vendor Report');
         XLSX.writeFile(wb, 'Vendor Report.xlsx');

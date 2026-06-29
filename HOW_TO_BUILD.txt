@@ -1,0 +1,464 @@
+================================================================================
+TUTORIAL LENGKAP: MEMBANGUN SISTEM FULL-STACK
+DJANGO (BACKEND) & REACT VITE (FRONTEND) DENGAN POSTGRESQL & JWT AUTHENTICATION
+================================================================================
+
+Panduan ini berisi langkah-langkah terstruktur dan koreksi mendalam untuk membangun 
+sistem full-stack dengan fitur autentikasi JWT (JSON Web Token), dari awal hingga 
+implementasi login yang dapat digunakan (fungsional).
+
+--------------------------------------------------------------------------------
+BAGIAN 1: KOREKSI & PERBAIKAN DRAF AWAL
+--------------------------------------------------------------------------------
+
+Sebelum memulai, berikut adalah koreksi penting dari draf yang Anda berikan agar 
+tidak terjadi error saat pengerjaan:
+
+1. URUTAN AKTIVASI VIRTUAL ENVIRONMENT
+   * Draf Anda: Menjalankan "pip install -r requirements.txt" sebelum mengaktifkan venv.
+   * Koreksi: Anda harus mengaktifkan virtual environment terlebih dahulu (.venv\Scripts\activate) 
+     baru kemudian menginstal packages. Jika tidak, library akan terinstal global 
+     pada sistem operasi Anda, bukan terisolasi di dalam project.
+
+2. NAMA PACKAGE DECOUPLE
+   * Draf Anda: "pip install decouple"
+   * Koreksi: Package Django yang benar adalah "python-decouple". Menginstal "decouple" 
+     biasa sering menyebabkan kegagalan import config.
+
+3. DRIVER DATABASE POSTGRESQL
+   * Draf Anda: Tidak mencantumkan instalasi driver database.
+   * Koreksi: Django membutuhkan library "psycopg2" atau "psycopg2-binary" agar dapat 
+     berkomunikasi dengan PostgreSQL.
+
+4. LIBRARY JWT
+   * Draf Anda: Hanya menginstal djangorestframework.
+   * Koreksi: Anda membutuhkan library tambahan bernama "djangorestframework-simplejwt" 
+     untuk menangani sistem login berbasis token JWT (Access Token & Refresh Token).
+
+5. TYPO PERINTAH
+   * Draf Anda: "django-admin start project crud ." -> Koreksi: "django-admin startproject crud ." (tanpa spasi).
+   * Draf Anda: "python manage.py makemigration" -> Koreksi: "python manage.py makemigrations" (menggunakan akhiran 's').
+   * Draf Anda: "npm isntall axios" -> Koreksi: "npm install axios".
+   * Draf Anda: Tidak menyebutkan "react-router-dom". Anda memerlukannya untuk memproses navigasi route halaman login ke dashboard.
+
+--------------------------------------------------------------------------------
+BAGIAN 2: LANGKAH-LANGKAH SETUP BACKEND (DJANGO REST FRAMEWORK)
+--------------------------------------------------------------------------------
+
+Langkah 2.1: Instalasi Software Utama
+Pastikan Anda sudah mengunduh dan menginstal:
+* Python (v3.10 ke atas) -> Centang opsi "Add Python to PATH" saat menginstal.
+* Node.js (LTS version) -> Menyertakan npm secara otomatis.
+* PostgreSQL -> Ingat password superuser database yang diatur saat instalasi.
+
+Langkah 2.2: Setup Virtual Environment & Install Dependencies
+1. Buka Terminal/PowerShell, arahkan ke folder utama project Anda.
+2. Buat folder backend dan masuk ke dalamnya:
+   mkdir backend
+   cd backend
+
+3. Buat Virtual Environment:
+   python -m venv .venv
+
+4. Aktifkan Virtual Environment:
+   * Windows (PowerShell): .venv\Scripts\activate
+   * Windows (CMD): .venv\Scripts\activate.bat
+   * Mac/Linux: source .venv/bin/activate
+   (Akan muncul tanda (.venv) di terminal Anda jika berhasil).
+
+5. Install Dependencies:
+   pip install django djangorestframework djangorestframework-simplejwt django-cors-headers python-decouple psycopg2-binary requests
+
+Langkah 2.3: Inisiasi Django Project & App
+1. Buat project Django dengan nama "crudmodule" di folder saat ini:
+   django-admin startproject crudmodule .
+
+2. Buat aplikasi Django bernama "api":
+   python manage.py startapp api
+
+Langkah 2.4: Membuat Database & Konfigurasi .env
+1. Buka pgAdmin atau psql, jalankan perintah SQL ini untuk membuat database:
+   CREATE DATABASE capstone;
+
+2. Buat file bernama ".env" (tanpa nama depan, hanya ekstensi) di folder utama backend (sejajar dengan manage.py). Isi dengan teks berikut:
+
+--- Awal File .env ---
+DB_NAME=capstone
+DB_USER=postgres
+DB_PASSWORD=IsiDenganPasswordPostgresAnda
+DB_HOST=localhost
+DB_PORT=5432
+
+SECRET_KEY=django-insecure-kunci-acak-rahasia-anda
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+
+JWT_ACCESS_TOKEN_MINUTES=60
+JWT_REFRESH_TOKEN_DAYS=1
+
+OPENAI_API_KEY=isi_key_openai_anda
+OPENROUTER_API_KEY=isi_key_openrouter_anda
+--- Akhir File .env ---
+
+Langkah 2.5: Konfigurasi File settings.py
+Buka "crudmodule/settings.py" dan sesuaikan pengaturannya sebagai berikut:
+
+1. Import Decouple di baris paling atas:
+   from decouple import config
+   from datetime import timedelta
+
+2. Ambil Secret Key, Debug, dan Allowed Hosts dari .env:
+   SECRET_KEY = config('SECRET_KEY')
+   DEBUG = config('DEBUG', default=False, cast=bool)
+   ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+
+3. Tambahkan rest_framework, corsheaders, dan api ke INSTALLED_APPS:
+   INSTALLED_APPS = [
+       'django.contrib.admin',
+       'django.contrib.auth',
+       'django.contrib.contenttypes',
+       'django.contrib.sessions',
+       'django.contrib.messages',
+       'django.contrib.staticfiles',
+       'rest_framework',
+       'corsheaders',
+       'api',
+   ]
+
+4. Tambahkan Middleware CORS (Harus diletakkan di atas CommonMiddleware):
+   MIDDLEWARE = [
+       'django.middleware.security.SecurityMiddleware',
+       'django.contrib.sessions.middleware.SessionMiddleware',
+       'corsheaders.middleware.CorsMiddleware',
+       'django.middleware.common.CommonMiddleware',
+       'django.middleware.csrf.CsrfViewMiddleware',
+       'django.contrib.auth.middleware.AuthenticationMiddleware',
+       'django.contrib.messages.middleware.MessageMiddleware',
+       'django.middleware.clickjacking.XFrameOptionsMiddleware',
+   ]
+
+5. Konfigurasi REST Framework & SimpleJWT:
+   REST_FRAMEWORK = {
+       'DEFAULT_AUTHENTICATION_CLASSES': (
+           'rest_framework_simplejwt.authentication.JWTAuthentication',
+       ),
+   }
+
+   SIMPLE_JWT = {
+       'ACCESS_TOKEN_LIFETIME': timedelta(minutes=config('JWT_ACCESS_TOKEN_MINUTES', default=60, cast=int)),
+       'REFRESH_TOKEN_LIFETIME': timedelta(days=config('JWT_REFRESH_TOKEN_DAYS', default=1, cast=int)),
+       'ROTATE_REFRESH_TOKENS': False,
+       'BLACKLIST_AFTER_ROTATION': False,
+       'ALGORITHM': 'HS256',
+       'SIGNING_KEY': SECRET_KEY,
+       'AUTH_HEADER_TYPES': ('Bearer',),
+       'USER_ID_FIELD': 'id',
+       'USER_ID_CLAIM': 'user_id',
+   }
+
+   CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173').split(',')
+
+6. Konfigurasi Database ke PostgreSQL:
+   DATABASES = {
+       'default': {
+           'ENGINE': 'django.db.backends.postgresql',
+           'NAME': config('DB_NAME'),
+           'USER': config('DB_USER'),
+           'PASSWORD': config('DB_PASSWORD'),
+           'HOST': config('DB_HOST', default='localhost'),
+           'PORT': config('DB_PORT', default='5432'),
+       }
+   }
+
+Langkah 2.6: Membuat Token Serializer Custom
+Ubah berkas "api/serializers.py" untuk menambahkan data user (seperti email, full name, role) ke payload JWT token response:
+
+--- Awal File api/serializers.py ---
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['email'] = user.email
+        token['username'] = user.username
+        if hasattr(user, 'profile') and user.profile.employee:
+            token['nik'] = user.profile.employee.nik
+            token['full_name'] = user.profile.employee.full_name
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data['user'] = {
+            'username': self.user.username,
+            'email': self.user.email,
+            'full_name': self.user.profile.employee.full_name if hasattr(self.user, 'profile') else "-"
+        }
+        return data
+--- Akhir File api/serializers.py ---
+
+Langkah 2.7: Membuat View & URL Login
+1. Buka "api/views.py" dan buat class Login View yang menggunakan serializer custom kita:
+   
+   --- Awal File api/views.py ---
+   from rest_framework_simplejwt.views import TokenObtainPairView
+   from .serializers import MyTokenObtainPairSerializer
+
+   class MyTokenObtainPairView(TokenObtainPairView):
+       serializer_class = MyTokenObtainPairSerializer
+   --- Akhir File api/views.py ---
+
+2. Buat file "api/urls.py" untuk routing login API:
+   
+   --- Awal File api/urls.py ---
+   from django.urls import path
+   from rest_framework_simplejwt.views import TokenRefreshView
+   from .views import MyTokenObtainPairView
+
+   urlpatterns = [
+       path('login/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+       path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+   ]
+   --- Akhir File api/urls.py ---
+
+3. Daftarkan router API di router utama "crudmodule/urls.py":
+   
+   --- Awal File crudmodule/urls.py ---
+   from django.contrib import admin
+   from django.urls import path, include
+
+   urlpatterns = [
+       path('admin/', admin.site.urls),
+       path('api/', include('api.urls')),
+   ]
+   --- Akhir File crudmodule/urls.py ---
+
+Langkah 2.8: Migrasi Database & Create User
+Jalankan perintah berikut di terminal backend:
+```bash
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser
+```
+(Masukkan username, email, dan password untuk user administrator baru yang akan diuji).
+
+--------------------------------------------------------------------------------
+BAGIAN 3: LANGKAH-LANGKAH SETUP FRONTEND (REACT VITE + AXIOS)
+--------------------------------------------------------------------------------
+
+Langkah 3.1: Inisiasi React Vite Project
+1. Keluar dari folder backend (ke folder utama project) dan jalankan inisiasi Vite:
+   cd ..
+   npm create vite@latest frontend -- --template react
+
+2. Masuk ke folder frontend dan install library utama:
+   cd frontend
+   npm install
+
+3. Install Axios (untuk API request) dan React Router Dom (untuk routing):
+   npm install axios react-router-dom
+
+Langkah 3.2: Membuat File Konfigurasi Axios (frontend/src/api/axios.js)
+Gunakan Axios Interceptors agar setiap request yang membutuhkan autentikasi otomatis melampirkan JWT token di header:
+
+--- Awal File src/api/axios.js ---
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor Request: Masukkan access token ke Header Authorization
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor Response: Bersihkan token jika menerima error 401 (token expired/invalid)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+--- Akhir File src/api/axios.js ---
+
+Langkah 3.3: Membuat Halaman Login (frontend/src/pages/Login/LoginPage.jsx)
+Buat tampilan form login serta logika pengiriman data kredensial ke Django API:
+
+--- Awal File src/pages/Login/LoginPage.jsx ---
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../../api/axios';
+
+const LoginPage = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        try {
+            // Post email dan password ke Django JWT Endpoint
+            const response = await api.post('/api/login/', {
+                username: email, // Django REST default memetakan email ke username
+                password: password
+            });
+
+            const { access, refresh } = response.data;
+            
+            // Simpan access token & refresh token di local storage
+            localStorage.setItem('access_token', access);
+            localStorage.setItem('refresh_token', refresh);
+
+            // Alihkan user ke dashboard setelah login berhasil
+            navigate('/dashboard');
+        } catch (err) {
+            console.error(err);
+            setError(err.response?.data?.detail || 'Kombinasi email dan password salah.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div style={styles.container}>
+            <div style={styles.card}>
+                <h2 style={styles.title}>SMI Portal Login</h2>
+                {error && <div style={styles.error}>{error}</div>}
+                <form onSubmit={handleLogin} style={styles.form}>
+                    <div style={styles.inputGroup}>
+                        <label style={styles.label}>Email Address</label>
+                        <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="nama@smi.co.id"
+                            style={styles.input}
+                        />
+                    </div>
+                    <div style={styles.inputGroup}>
+                        <label style={styles.label}>Password</label>
+                        <input
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Masukkan password"
+                            style={styles.input}
+                        />
+                    </div>
+                    <button type="submit" disabled={loading} style={styles.button}>
+                        {loading ? 'Logging in...' : 'Login'}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+const styles = {
+    container: { display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', fontFamily: 'sans-serif' },
+    card: { width: '100%', maxWidth: '380px', backgroundColor: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid #cbd5e1' },
+    title: { textAlign: 'center', color: '#1e293b', marginBottom: '20px', fontWeight: 'bold' },
+    error: { backgroundColor: '#fef2f2', color: '#b91c1c', padding: '10px', borderRadius: '6px', fontSize: '14px', marginBottom: '15px', border: '1px solid #fee2e2' },
+    form: { display: 'flex', flexDirection: 'column', gap: '15px' },
+    inputGroup: { display: 'flex', flexDirection: 'column', gap: '5px' },
+    label: { fontSize: '14px', color: '#475569', fontWeight: '600' },
+    input: { padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '16px' },
+    button: { padding: '12px', borderRadius: '6px', backgroundColor: '#2563eb', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }
+};
+
+export default LoginPage;
+--- Akhir File src/pages/Login/LoginPage.jsx ---
+
+Langkah 3.4: Mengatur Routes di Halaman Utama (frontend/src/App.jsx)
+Ubah file "src/App.jsx" untuk mengatur halaman rute default:
+
+--- Awal File src/App.jsx ---
+import { Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './pages/Login/LoginPage';
+
+// Komponen Dashboard Sederhana untuk membuktikan login berhasil
+const DashboardDemo = () => {
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    window.location.href = '/login';
+  };
+
+  return (
+    <div style={{ padding: '50px', fontFamily: 'sans-serif' }}>
+      <h1>🎉 Anda Berhasil Login!</h1>
+      <p>Token JWT Anda telah tersimpan di sistem.</p>
+      <button onClick={handleLogout} style={{ padding: '10px 20px', backgroundColor: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+        Logout
+      </button>
+    </div>
+  );
+};
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route 
+        path="/dashboard" 
+        element={
+          localStorage.getItem('access_token') ? <DashboardDemo /> : <Navigate to="/login" replace />
+        } 
+      />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
+
+export default App;
+--- Akhir File src/App.jsx ---
+
+--------------------------------------------------------------------------------
+BAGIAN 4: UJI COBA MENJALANKAN SYSTEM
+--------------------------------------------------------------------------------
+
+1. Jalankan Backend Django:
+   * Masuk ke folder 'backend'
+   * Pastikan virtualenv (.venv) aktif
+   * Jalankan server:
+     python manage.py runserver
+   * Backend berjalan di: http://127.0.0.1:8000/
+
+2. Jalankan Frontend React:
+   * Masuk ke folder 'frontend'
+   * Jalankan server:
+     npm run dev
+   * Frontend berjalan di: http://localhost:5173/
+
+3. Buka browser Anda ke http://localhost:5173/, halaman akan dialihkan ke login,
+   masukkan akun superuser yang Anda buat di Langkah 2.8 untuk melakukan login.
+================================================================================
