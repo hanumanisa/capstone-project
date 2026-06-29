@@ -1355,11 +1355,11 @@ export default function TrainingMasterPage() {
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-[100] p-4">
           <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar rounded-xl shadow-2xl p-8 relative">
-            <h2 className="text-3xl font-bold text-black mb-2">{isEditMode ? "Edit Training" : "Add Training"}</h2>
+            <h2 className="text-3xl font-bold text-black mb-2">{isEditMode ? (user?.role === 'Dean' ? "Detail Training" : "Edit Training") : "Add Training"}</h2>
             <p className="text-sm text-gray-400 mb-6">Step 1: Training Information</p>
             <hr className="mb-8 border-gray-200" />
 
-            <div className="space-y-6">
+            <fieldset disabled={user?.role === 'Dean'} className="space-y-6 border-none p-0 m-0 w-full">
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Training Code</label>
                 <input type="text" value={trainingCode} style={{ color: '#000' }}
@@ -1448,7 +1448,7 @@ export default function TrainingMasterPage() {
                   <input type="number" className="w-full pl-12 pr-4 py-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3]" style={{ color: '#000' }} value={estimatedCost} onChange={(e) => setEstimatedCost(e.target.value)} />
                 </div>
               </div>
-            </div>
+            </fieldset>
 
             <div className="flex justify-end space-x-2 mt-10">
               {isEditMode && user?.role !== 'Dean' && (
@@ -1465,11 +1465,11 @@ export default function TrainingMasterPage() {
       {showEventModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-[110] p-4">
           <div className="bg-white w-full max-w-4xl max-h-[95vh] overflow-y-auto custom-scrollbar rounded-xl shadow-2xl p-10 relative">
-            <h2 className="text-3xl font-bold text-black mb-2">{isEditMode ? "Edit Event Training" : "Event Training"}</h2>
+            <h2 className="text-3xl font-bold text-black mb-2">{isEditMode ? (user?.role === 'Dean' ? "Detail Event Training" : "Edit Event Training") : "Event Training"}</h2>
             <p className="text-sm text-gray-400 mb-6">Step 2: Event Training Information</p>
             <hr className="mb-8 border-gray-200" />
 
-            <div className="space-y-6 mb-10">
+            <fieldset disabled={user?.role === 'Dean'} className="space-y-6 mb-10 border-none p-0 m-0 w-full">
               {/* Training Topic */}
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Training Topic</label>
@@ -1496,7 +1496,7 @@ export default function TrainingMasterPage() {
                   <option value="Cancelled">Cancelled</option>
                 </select>
               </div>
-            </div>
+            </fieldset>
 
             {/* Sub-Tabs */}
             <div className="flex gap-8 border-b border-gray-100 mb-6 overflow-x-auto whitespace-nowrap scrollbar-hide">
@@ -1524,6 +1524,7 @@ export default function TrainingMasterPage() {
 
             {/* TAB CONTENTS */}
             <div className="min-h-[300px]">
+              <fieldset disabled={user?.role === 'Dean'} className="border-none p-0 m-0 w-full h-full">
               {activeTab === "location" && (
                 <div className="space-y-6">
                   <h3 className="text-[#2174C3] font-bold text-lg mb-4">Location</h3>
@@ -1864,6 +1865,7 @@ export default function TrainingMasterPage() {
                   <button type="button" onClick={() => setDocumentationRows([...documentationRows, { type: "", file_name: "", url: "", submitted_by: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Documentation</button>
                 </div>
               )}
+              </fieldset>
             </div>
 
             <div className="flex justify-end space-x-2 mt-12">
