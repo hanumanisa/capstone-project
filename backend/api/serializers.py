@@ -340,10 +340,11 @@ class EmployeeSerializer(serializers.ModelSerializer):
 class EmployeeMinimalSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
     tna_count = serializers.SerializerMethodField()
+    division_name = serializers.CharField(source='division.division_name', read_only=True)
 
     class Meta:
         model = Employee
-        fields = ['nik', 'full_name', 'role', 'position_name', 'tna_count']
+        fields = ['nik', 'full_name', 'role', 'position_name', 'tna_count', 'division_name']
 
     def get_role(self, obj):
         try:

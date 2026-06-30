@@ -538,11 +538,15 @@ export default function TrainingMasterPage() {
         const params = new URLSearchParams();
         params.append("nopage", "true");
         params.append("report", "true");
-        if (divisionFilter) params.append("division", divisionFilter);
-        if (statusFilter) params.append("status", statusFilter);
-        if (categoryFilter) params.append("category", categoryFilter);
-        if (startDate) params.append("start_date", startDate);
-        if (endDate) params.append("end_date", endDate);
+        if (activeView === 'employee') {
+          params.append("view_mode", "employee");
+        } else {
+          if (divisionFilter) params.append("division", divisionFilter);
+          if (statusFilter) params.append("status", statusFilter);
+          if (categoryFilter) params.append("category", categoryFilter);
+          if (startDate) params.append("start_date", startDate);
+          if (endDate) params.append("end_date", endDate);
+        }
         if (yearFilter) params.append("year", yearFilter);
 
         setToast({ message: "Generating Employee Report...", type: "success" });
@@ -670,6 +674,7 @@ export default function TrainingMasterPage() {
           empMap[key] = {
             nik: e.nik,
             nama: e.full_name,
+            division_name: e.division_name || '',
             total_hours: 0,
             trainings: []
           };
@@ -687,7 +692,7 @@ export default function TrainingMasterPage() {
         });
 
         const wb = XLSX.utils.book_new();
-        const header = [['NIK', 'Nama', 'Total Hours', 'Training Title']];
+        const header = [['NIK', 'Nama', 'Division Name', 'Total Hours', 'Training Title']];
         const rows = [];
         const merges = [];
         let currentRow = 1;
@@ -695,23 +700,24 @@ export default function TrainingMasterPage() {
         Object.values(empMap).forEach(emp => {
           const numRows = emp.trainings.length || 1;
           if (emp.trainings.length === 0) {
-            rows.push([emp.nik, emp.nama, 0, '-']);
+            rows.push([emp.nik, emp.nama, emp.division_name, 0, '-']);
           } else {
             emp.trainings.forEach((t, idx) => {
-              rows.push([emp.nik, emp.nama, emp.total_hours, t.title]);
+              rows.push([emp.nik, emp.nama, emp.division_name, emp.total_hours, t.title]);
             });
           }
           if (numRows > 1) {
             merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow + numRows - 1, c: 0 } });
             merges.push({ s: { r: currentRow, c: 1 }, e: { r: currentRow + numRows - 1, c: 1 } });
             merges.push({ s: { r: currentRow, c: 2 }, e: { r: currentRow + numRows - 1, c: 2 } });
+            merges.push({ s: { r: currentRow, c: 3 }, e: { r: currentRow + numRows - 1, c: 3 } });
           }
           currentRow += numRows;
         });
 
         const ws = XLSX.utils.aoa_to_sheet([...header, ...rows]);
         ws['!merges'] = merges;
-        ws['!cols'] = [{ wch: 12 }, { wch: 35 }, { wch: 15 }, { wch: 70 }];
+        ws['!cols'] = [{ wch: 12 }, { wch: 35 }, { wch: 25 }, { wch: 15 }, { wch: 70 }];
         XLSX.utils.book_append_sheet(wb, ws, "Division Report");
         XLSX.writeFile(wb, `Division_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
         setToast({ message: "Division Report exported successfully", type: "success" });
@@ -952,7 +958,9 @@ export default function TrainingMasterPage() {
           <div className="flex gap-2">
             <button
               onClick={() => {
-                if (user?.role === 'Head of Division' || user?.role === 'Employee') {
+                if (activeView === 'employee') {
+                  handleExport(null, "employee");
+                } else if (user?.role === 'Head of Division' || user?.role === 'Employee') {
                   handleExport(null, "master");
                 } else {
                   setShowReportModal(true);
