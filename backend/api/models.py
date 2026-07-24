@@ -785,7 +785,6 @@ class AiChatLog(models.Model):
     ai_response = models.TextField(null=True, blank=True)
     intent = models.CharField(max_length=100, null=True, blank=True)
 
-    is_faq_triggered = models.BooleanField(default=False)
     is_out_of_scope = models.BooleanField(default=False)
     is_unanswered = models.BooleanField(default=False)
     redirected_to_wa = models.BooleanField(default=False)

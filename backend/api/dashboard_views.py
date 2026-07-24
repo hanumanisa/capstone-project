@@ -50,6 +50,14 @@ class DashboardCardsAPIView(APIView):
         # Base filters: Completed and Draft events
         events = TrainingEvent.objects.filter(status__in=['completed', 'draft']).filter(start_date__year=year)
         
+        search = request.query_params.get('search')
+        if search:
+            events = events.filter(
+                Q(training__training_title__icontains=search) |
+                Q(training__course__course_name__icontains=search) |
+                Q(training__vendor__vendor_name__icontains=search)
+            )
+        
         # Participants filter: Attendance Present, scope to target_niks, and completed/draft events
         participants = EventParticipant.objects.filter(
             nik__in=target_niks,

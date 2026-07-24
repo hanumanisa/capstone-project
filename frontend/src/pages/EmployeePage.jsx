@@ -51,34 +51,42 @@ const EmployeePage = () => {
     const isManagerialRole = user && ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(user.role);
     const isMyData = !isManagerialRole || activeView === 'employee';
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        try {
-            const [empRes, divRes] = await Promise.all([
-                api.get(`/api/employee/?page=${currentPage}&search=${searchTerm}&division=${isMyData ? '' : (selectedDivision === 'All Division' ? '' : selectedDivision)}&year=${selectedYear}&view_mode=${activeView}`),
-                api.get('/api/divisions/')
-            ]);
+        useEffect(() => {
+        let ignore = false;
+        
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                const [empRes, divRes] = await Promise.all([
+                    api.get(`/api/employee/?page=${currentPage}&search=${searchTerm}&division=${isMyData ? '' : (selectedDivision === 'All Division' ? '' : selectedDivision)}&year=${selectedYear}&view_mode=${activeView}`),
+                    api.get('/api/divisions/')
+                ]);
 
-            if (empRes.data.results) {
-                setEmployees(empRes.data.results);
-                setTotalCount(empRes.data.count);
-                setTotalPages(Math.ceil(empRes.data.count / ITEMS_PER_PAGE));
-            } else {
-                setEmployees(empRes.data);
-                setTotalCount(empRes.data.length);
-                setTotalPages(Math.ceil(empRes.data.length / ITEMS_PER_PAGE));
+                if (!ignore) {
+                    if (empRes.data.results) {
+                        setEmployees(empRes.data.results);
+                        setTotalCount(empRes.data.count);
+                        setTotalPages(Math.ceil(empRes.data.count / ITEMS_PER_PAGE));
+                    } else {
+                        setEmployees(empRes.data);
+                        setTotalCount(empRes.data.length);
+                        setTotalPages(Math.ceil(empRes.data.length / ITEMS_PER_PAGE));
+                    }
+                    setDivisions(divRes.data);
+                }
+            } catch (err) {
+                if (!ignore) console.error('Failed to fetch data:', err);
+            } finally {
+                if (!ignore) setLoading(false);
             }
-            setDivisions(divRes.data);
-        } catch (err) {
-            console.error('Failed to fetch data:', err);
-        } finally {
-            setLoading(false);
-        }
-    }, [currentPage, searchTerm, selectedDivision, selectedYear, activeView, isMyData]);
+        };
 
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        loadData();
+
+        return () => {
+            ignore = true;
+        };
+    }, [currentPage, searchTerm, selectedDivision, selectedYear, activeView, isMyData]);
 
     // Since we use backend pagination, filteredData is just for local search/filtering if needed,
     // but we primarily rely on the backend now.
@@ -101,7 +109,7 @@ const EmployeePage = () => {
             {isManagerialRole && (
                 <div className="flex space-x-8 border-b border-gray-300 mb-6 px-4 sm:px-0 mt-4">
                     <button
-                        onClick={() => setActiveView('admin')}
+                        onClick={() => { setActiveView('admin'); setCurrentPage(1); }}
                         className={`pb-3 px-1 font-bold text-xl transition-colors ${activeView === 'admin'
                             ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
                             : 'text-gray-400 hover:text-[#2174C3]'
@@ -110,7 +118,7 @@ const EmployeePage = () => {
                         {['Super Administrator', 'Administrator', 'Dean'].includes(user?.role) ? 'Company Employees' : 'Division Employees'}
                     </button>
                     <button
-                        onClick={() => setActiveView('employee')}
+                        onClick={() => { setActiveView('employee'); setCurrentPage(1); }}
                         className={`pb-3 px-1 font-bold text-xl transition-colors ${activeView === 'employee'
                             ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
                             : 'text-gray-400 hover:text-[#2174C3]'
@@ -238,9 +246,7 @@ const EmployeePage = () => {
             </div>
 
             {/* Pagination */}
-            {!loading && (
-                totalPages > 1 ? (
-                    <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+            <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
                         <div className="flex items-center space-x-1">
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -270,16 +276,7 @@ const EmployeePage = () => {
                             Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} of {totalCount} employees
                         </div>
                     </div>
-                ) : (
-                    totalCount > 0 && (
-                        <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
-                            <div className="text-xs text-gray-400 font-medium">
-                                Showing 1–{totalCount} of {totalCount} employees
-                            </div>
-                        </div>
-                    )
-                )
-            )}
+                
 
 
             {/* Attendance Detail Modal */}

@@ -41,7 +41,7 @@ export default function TrainingEvaluationPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeYear, setActiveYear] = useState(new Date().getFullYear().toString());
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 20;
+    const itemsPerPage = 50;
 
     // --- Form Management State ---
     const [selectedTemplate, setSelectedTemplate] = useState('L1_Templates');
@@ -593,8 +593,7 @@ export default function TrainingEvaluationPage() {
                 </div>
 
                 {/* Pagination */}
-                {!loading && filteredCards.length > 0 && (
-                    <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+                <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
                         <div className="flex items-center space-x-1">
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -624,7 +623,7 @@ export default function TrainingEvaluationPage() {
                             Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredCards.length)} of {filteredCards.length} evaluations
                         </div>
                     </div>
-                )}
+                
 
                 {/* MODALS */}
 

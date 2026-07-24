@@ -318,49 +318,39 @@ const CourseCategoryPage = () => {
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 ? (
-                <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
-                    <div className="flex items-center space-x-1">
+            <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+                <div className="flex items-center space-x-1">
+                    <button
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Previous
+                    </button>
+                    {getPageNumbers().map((page) => (
                         <button
-                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`px-4 py-2 rounded-md font-medium transition-colors ${currentPage === page
+                                ? 'bg-[#2174C3] text-white'
+                                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                                }`}
                         >
-                            Previous
+                            {page}
                         </button>
-                        {getPageNumbers().map((page) => (
-                            <button
-                                key={page}
-                                onClick={() => setCurrentPage(page)}
-                                className={`px-4 py-2 rounded-md font-medium transition-colors ${currentPage === page
-                                    ? 'bg-[#2174C3] text-white'
-                                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                                    }`}
-                            >
-                                {page}
-                            </button>
-                        ))}
-                        <button
-                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Next
-                        </button>
-                    </div>
-                    <div className="text-xs text-gray-400 font-medium">
-                        Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, categories.length)} of {categories.length} categories
-                    </div>
+                    ))}
+                    <button
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Next
+                    </button>
                 </div>
-            ) : (
-                categories.length > 0 && (
-                    <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
-                        <div className="text-xs text-gray-400 font-medium">
-                            Showing 1–{categories.length} of {categories.length} categories
-                        </div>
-                    </div>
-                )
-            )}
+                <div className="text-xs text-gray-400 font-medium">
+                    Showing {categories.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, categories.length)} of {categories.length} categories
+                </div>
+            </div>
 
 
             {/* ─── Add / Edit Modal ────────────────────────────────────── */}

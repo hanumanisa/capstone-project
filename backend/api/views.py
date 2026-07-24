@@ -400,6 +400,9 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
         user_groups = list(user.groups.values_list('name', flat=True))
         
         view_mode = self.request.query_params.get('view_mode', 'admin')
+        year_filter = self.request.query_params.get('year')
+        month_filter = self.request.query_params.get('month')
+        division_filter = self.request.query_params.get('division')
 
         # If purely an Employee role, force employee mode to avoid race conditions/incorrect views
         is_employee_user = "Employee" in user_groups and not any(r in user_groups for r in ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'])
@@ -414,15 +417,19 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
                     participants__attendance_status='Present',
                     status='completed'
                 )
+                if year_filter:
+                    active_events = active_events.filter(start_date__year=year_filter)
+                if month_filter:
+                    try:
+                        m = int(month_filter)
+                        active_events = active_events.filter(start_date__month=m)
+                    except (ValueError, TypeError):
+                        pass
                 qs = qs.filter(trainingevent__in=active_events).distinct()
             else:
                 qs = qs.none()
         elif user.is_superuser or "Administrator" in user_groups or "Dean" in user_groups:
             # Apply standard filters
-            division_filter = self.request.query_params.get('division')
-            month_filter = self.request.query_params.get('month')
-            year_filter = self.request.query_params.get('year')
-            
             if division_filter:
                 qs = qs.filter(trainingevent__participants__nik__division_id=division_filter).distinct()
             if month_filter:
@@ -442,6 +449,16 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
                     participants__nik__division_id=div_id,
                     participants__attendance_status='Present'
                 ).exclude(status='cancelled')
+                
+                if year_filter:
+                    active_events = active_events.filter(start_date__year=year_filter)
+                if month_filter:
+                    try:
+                        m = int(month_filter)
+                        active_events = active_events.filter(start_date__month=m)
+                    except (ValueError, TypeError):
+                        pass
+
                 qs = qs.filter(trainingevent__in=active_events).distinct()
             else:
                 qs = qs.none()
@@ -454,6 +471,14 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
                     participants__attendance_status='Present',
                     status='completed'
                 )
+                if year_filter:
+                    active_events = active_events.filter(start_date__year=year_filter)
+                if month_filter:
+                    try:
+                        m = int(month_filter)
+                        active_events = active_events.filter(start_date__month=m)
+                    except (ValueError, TypeError):
+                        pass
                 qs = qs.filter(trainingevent__in=active_events).distinct()
             else:
                 qs = qs.none()
@@ -1414,7 +1439,7 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
                 ai_response = "Data pribadi hanya diketahui oleh HRD."
                 AiChatLog.objects.create(
                     session=session, user=request.user, nik=employee_nik, role=user_role,
-                    user_message=message, ai_response=ai_response, is_faq_triggered=False,
+                    user_message=message, ai_response=ai_response,
                     is_unanswered=False, response_time_ms=int((time.time() - start_time) * 1000),
                     tokens_used=0, context_sent="PERSONAL_DATA_BLOCKED", is_out_of_scope=False
                 )
@@ -1474,7 +1499,7 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
                     # Save Log
                     AiChatLog.objects.create(
                         session=session, user=request.user, nik=employee_nik, role=user_role,
-                        user_message=message, ai_response=ai_response_text, is_faq_triggered=False,
+                        user_message=message, ai_response=ai_response_text,
                         is_unanswered=is_unanswered, is_out_of_scope=is_out_of_scope,
                         redirected_to_wa=redirected_to_wa,
                         response_time_ms=int((time.time() - start_time) * 1000),
@@ -1512,7 +1537,7 @@ class AiChatSessionViewSet(viewsets.ModelViewSet):
             # Log execution
             AiChatLog.objects.create(
                 session=session, user=request.user, nik=employee_nik, role=user_role,
-                user_message=message, ai_response=ai_response, is_faq_triggered=False,
+                user_message=message, ai_response=ai_response,
                 is_unanswered=is_unanswered, is_out_of_scope=is_out_of_scope,
                 redirected_to_wa=redirected_to_wa,
                 response_time_ms=int((time.time() - start_time) * 1000),

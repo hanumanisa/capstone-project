@@ -903,7 +903,7 @@ class AiChatLogSerializer(serializers.ModelSerializer):
         model = AiChatLog
         fields = [
             'log_id', 'session', 'user', 'nik', 'role', 'user_message', 'ai_response', 
-            'intent', 'faq', 'is_faq_triggered', 'is_out_of_scope', 'is_unanswered', 
+            'intent', 'is_out_of_scope', 'is_unanswered', 
             'redirected_to_wa', 'is_authorized', 'query_executed', 'context_sent', 
             'response_time_ms', 'tokens_used', 'created_at'
         ]

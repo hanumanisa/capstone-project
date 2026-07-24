@@ -284,9 +284,7 @@ const HotelPage = () => {
             </div>
 
             {/* Pagination */}
-            {!loading && (
-                totalPages > 1 ? (
-                    <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+            <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
                     <div className="flex items-center space-x-1">
                         <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -316,16 +314,7 @@ const HotelPage = () => {
                             Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredHotels.length)} of {filteredHotels.length} hotels
                         </div>
                     </div>
-                ) : (
-                    filteredHotels.length > 0 && (
-                        <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
-                            <div className="text-xs text-gray-400 font-medium">
-                                Showing 1–{filteredHotels.length} of {filteredHotels.length} hotels
-                            </div>
-                        </div>
-                    )
-                )
-            )}
+                
 
 
             {/* ─── Add / Edit Modal ────────────────────────────────────── */}

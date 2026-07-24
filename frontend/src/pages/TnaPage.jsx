@@ -58,7 +58,7 @@ const TnaPage = () => {
     const isManagerialRole = user && ['Super Administrator', 'Administrator', 'Dean', 'Head of Division', 'Team Leader'].includes(user.role);
     const isMyTna = !isManagerialRole || activeView === 'employee';
 
-    const fetchParticipants = useCallback(async () => {
+    const fetchParticipants = useCallback(async (ignoreFlag = { current: false }) => {
         setLoading(true);
         try {
             const params = {
@@ -70,16 +70,20 @@ const TnaPage = () => {
             params.view_mode = activeView;
 
             const res = await api.get('/api/tna-participant/', { params });
-            setParticipants(res.data);
+            if (!ignoreFlag.current) {
+                setParticipants(res.data);
+            }
         } catch (err) {
-            console.error('Failed to fetch participants:', err);
+            if (!ignoreFlag.current) console.error('Failed to fetch participants:', err);
         } finally {
-            setLoading(false);
+            if (!ignoreFlag.current) setLoading(false);
         }
     }, [searchTerm, divisionFilter, courseFilter, activeYear, activeView, isMyTna]);
 
     useEffect(() => {
-        fetchParticipants();
+        const ignoreFlag = { current: false };
+        fetchParticipants(ignoreFlag);
+        return () => { ignoreFlag.current = true; };
     }, [fetchParticipants]);
 
     const isAdmin = user && ['Super Administrator', 'Administrator'].includes(user.role) && activeView === 'admin';
@@ -132,7 +136,7 @@ const TnaPage = () => {
             {isManagerialRole && (
                 <div className="flex space-x-8 border-b border-gray-300 mb-6 px-4 sm:px-0">
                     <button
-                        onClick={() => setActiveView('admin')}
+                        onClick={() => { setActiveView('admin'); setCurrentPage(1); }}
                         className={`pb-3 px-1 font-bold text-xl transition-colors ${activeView === 'admin'
                             ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
                             : 'text-gray-400 hover:text-[#2174C3]'
@@ -141,7 +145,7 @@ const TnaPage = () => {
                         {['Super Administrator', 'Administrator', 'Dean'].includes(user?.role) ? 'Company TNA' : 'Division TNA'}
                     </button>
                     <button
-                        onClick={() => setActiveView('employee')}
+                        onClick={() => { setActiveView('employee'); setCurrentPage(1); }}
                         className={`pb-3 px-1 font-bold text-xl transition-colors ${activeView === 'employee'
                             ? 'text-[#2174C3] border-b-4 border-[#2174C3]'
                             : 'text-gray-400 hover:text-[#2174C3]'
@@ -296,8 +300,7 @@ const TnaPage = () => {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 ? (
-                    <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+                <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
                         <div className="flex items-center space-x-1">
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -352,15 +355,7 @@ const TnaPage = () => {
                             Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredParticipants.length)} of {filteredParticipants.length} TNA
                         </div>
                     </div>
-                ) : (
-                    filteredParticipants.length > 0 && (
-                        <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex justify-end items-center z-20 mt-4 border-t border-gray-100">
-                            <div className="text-xs text-gray-400 font-medium">
-                                Showing 1–{filteredParticipants.length} of {filteredParticipants.length} TNA
-                            </div>
-                        </div>
-                    )
-                )}
+                
             </div>
 
             {/* Modals */}

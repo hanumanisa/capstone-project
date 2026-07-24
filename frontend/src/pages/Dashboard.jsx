@@ -97,6 +97,7 @@ const Dashboard = () => {
             if (isRestrictedRole) {
                 const params = new URLSearchParams();
                 params.append('year', year);
+                if (search) params.append('search', search);
                 if (activeTab === 'admin') {
                     params.append('view_mode', 'admin');
                 } else {
