@@ -87,7 +87,7 @@ class Employee(models.Model):
     def get_completed_events(self, year=None):
         events = [
             ep for ep in self.attended_events
-            if ep.event.status.lower() in ['draft', 'completed'] and ep.attendance_status == 'Present'
+            if ep.event.status.lower() == 'completed' and ep.attendance_status == 'Present'
         ]
         if year:
             try:

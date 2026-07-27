@@ -18,7 +18,7 @@ class DashboardAdminAPIView(APIView):
         search = request.query_params.get('search')
         course = request.query_params.get('course')
         
-        events = TrainingEvent.objects.exclude(status='cancelled')
+        events = TrainingEvent.objects.filter(status='completed')
         
         if year:
             events = events.filter(start_date__year=year)

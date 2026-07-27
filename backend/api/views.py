@@ -1660,7 +1660,7 @@ class ExportReportView(APIView):
                 qs = qs.filter(nik_id=employee_filter)
             if division_filter:
                 qs = qs.filter(nik__division__division_name=division_filter)
-        elif "Head of Division" in user_groups:
+        elif "Head of Division" in user_groups or "Team Leader" in user_groups:
             if hasattr(user, 'profile') and user.profile.employee:
                 qs = qs.filter(nik__division_id=user.profile.employee.division_id)
             else:

@@ -192,7 +192,7 @@ def get_tna_status(user_id: int = None) -> str:
         
         # Get completed training course IDs
         completed_course_ids = set(EventParticipant.objects.filter(
-            nik=employee, event__status__in=['draft', 'completed'], attendance_status='Present'
+            nik=employee, event__status='completed', attendance_status='Present'
         ).values_list('event__training__course_id', flat=True))
         
         result = []
@@ -243,7 +243,7 @@ def get_employee_tna(query: str, requester_user_id: int = None) -> str:
         
         # Get completed training course IDs
         completed_course_ids = set(EventParticipant.objects.filter(
-            nik=employee, event__status__in=['draft', 'completed'], attendance_status='Present'
+            nik=employee, event__status='completed', attendance_status='Present'
         ).values_list('event__training__course_id', flat=True))
         
         result = []
@@ -286,7 +286,7 @@ def get_unfulfilled_tna_report(requester_user_id: int = None) -> str:
             qs = qs.filter(nik__division_id=division_id)
             
         completed_events = EventParticipant.objects.filter(
-            event__status__in=['draft', 'completed'], attendance_status='Present'
+            event__status='completed', attendance_status='Present'
         ).values('nik_id', 'event__training__course_id')
         
         completed_map = {}
@@ -513,7 +513,7 @@ def get_budget_and_costs(query: str = "", division_name: str = "", month: int = 
             )
             return float((agg['t'] or 0) + (agg['r'] or 0) + (agg['s'] or 0))
             
-        events = TrainingEvent.objects.exclude(status='cancelled').filter(start_date__year=current_year)
+        events = TrainingEvent.objects.filter(status='completed').filter(start_date__year=current_year)
         if month:
             events = events.filter(start_date__month=month)
         

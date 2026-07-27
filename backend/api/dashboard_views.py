@@ -48,7 +48,7 @@ class DashboardCardsAPIView(APIView):
                 employee_count = 1
 
         # Base filters: Completed and Draft events
-        events = TrainingEvent.objects.filter(status__in=['completed', 'draft']).filter(start_date__year=year)
+        events = TrainingEvent.objects.filter(status='completed').filter(start_date__year=year)
         
         search = request.query_params.get('search')
         if search:
@@ -62,7 +62,7 @@ class DashboardCardsAPIView(APIView):
         participants = EventParticipant.objects.filter(
             nik__in=target_niks,
             attendance_status='Present',
-            event__status__in=['completed', 'draft']
+            event__status='completed'
         ).filter(
             event__start_date__year=year
         )

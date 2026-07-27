@@ -752,7 +752,7 @@ export default function TrainingMasterPage() {
             "Divisi": item.divisi,
             "Jabatan": item.jabatan,
           };
-          if (!(user?.role === 'Head of Division' || user?.role === 'Employee')) {
+          if (!(['Head of Division', 'Team Leader', 'Employee'].includes(user?.role))) {
             row["L1"] = item.l1;
             row["L2"] = item.l2;
             row["YearMonth"] = item.year_month;
@@ -767,7 +767,7 @@ export default function TrainingMasterPage() {
           { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 20 }, { wch: 25 },
           { wch: 18 }, { wch: 12 }, { wch: 30 }, { wch: 25 }, { wch: 25 }
         ];
-        if (!(user?.role === 'Head of Division' || user?.role === 'Employee')) {
+        if (!(['Head of Division', 'Team Leader', 'Employee'].includes(user?.role))) {
           ws["!cols"].push({ wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 15 });
         }
 
@@ -961,9 +961,10 @@ export default function TrainingMasterPage() {
               onClick={() => {
                 if (activeView === 'employee') {
                   handleExport(null, "employee");
-                } else if (user?.role === 'Head of Division' || user?.role === 'Employee') {
+                } else if (user?.role === 'Employee') {
                   handleExport(null, "master");
                 } else {
+                  setActiveReportTab("master");
                   setShowReportModal(true);
                 }
               }}
@@ -1171,14 +1172,19 @@ export default function TrainingMasterPage() {
             <h2 className="text-3xl font-bold text-black mb-10">Report Form</h2>
 
 
-            {/* Redesigned Tabs */}
             <div className="flex space-x-8 border-b border-gray-200 mb-8">
-              {[
-                { id: 'master', label: 'Annual Report' },
-                { id: 'monthly', label: 'Monthly Report' },
-                { id: 'division', label: 'Division Report' },
-                { id: 'employee', label: 'Employee Report' }
-              ].map((tab) => (
+              {(user && ['Head of Division', 'Team Leader'].includes(user.role)
+                ? [
+                    { id: 'master', label: 'Annual Report' },
+                    { id: 'division', label: 'Division Report' }
+                  ]
+                : [
+                    { id: 'master', label: 'Annual Report' },
+                    { id: 'monthly', label: 'Monthly Report' },
+                    { id: 'division', label: 'Division Report' },
+                    { id: 'employee', label: 'Employee Report' }
+                  ]
+              ).map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
@@ -1257,12 +1263,21 @@ export default function TrainingMasterPage() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                     <label className="text-black font-semibold">Division</label>
-                    <select name="division" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black">
-                      <option value="">All Division</option>
-                      {divisions.map((d, i) => (
-                        <option key={i} value={d.division_name}>{d.division_name}</option>
-                      ))}
-                    </select>
+                    {user && ['Head of Division', 'Team Leader'].includes(user.role) ? (
+                      <>
+                        <input type="hidden" name="division" value={employees.find(emp => emp.nik === user?.nik)?.division_name || ""} />
+                        <select disabled className="sm:col-span-2 p-3 rounded-lg bg-gray-200 border-none text-gray-500 cursor-not-allowed">
+                          <option value="">{employees.find(emp => emp.nik === user?.nik)?.division_name || "My Division"}</option>
+                        </select>
+                      </>
+                    ) : (
+                      <select name="division" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black">
+                        <option value="">All Division</option>
+                        {divisions.map((d, i) => (
+                          <option key={i} value={d.division_name}>{d.division_name}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </>
               )}
