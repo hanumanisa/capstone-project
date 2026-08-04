@@ -267,7 +267,7 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
 
                 <div className="p-10 pb-0 shrink-0">
                     <h2 className="text-3xl font-bold text-black mb-2 tracking-tight">
-                        Training Needs Analysis
+                        {tnaRecord?.tna_id ? 'Edit Training Needs Analysis' : 'Add Training Needs Analysis'}
                     </h2>
                     <hr className="mb-8 border-gray-100" />
                 </div>

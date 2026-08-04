@@ -150,8 +150,7 @@ def execute_ai_query(user, message: str, history: list = None) -> tuple:
             "Jika seluruh data telah selesai ditampilkan ke pengguna (baik pada balasan pertama yang kurang dari 100, maupun pada balasan lanjutan yang terakhir), Anda WAJIB menutupnya dengan kalimat yang sopan, misalnya: '_SMI Assistant telah menampilkan seluruh data dengan lengkap. Jika ada hal lain yang ingin ditanyakan, silakan beri tahu saya!_' "
             "Jika pengguna HANYA MENYAPA (contoh: 'halo', 'selamat pagi', 'hai') Anda DIWAJIBKAN membalas sapaan tersebut dengan ramah dan menanyakan apa yang bisa dibantu. JANGAN PERNAH memberikan pesan penolakan jika pengguna hanya menyapa. "
             "SEBALIKNYA, jika pertanyaan sangat jelas dan sama sekali tidak berkaitan dengan topik HR, Karyawan, atau Pelatihan/L&D (contoh: cuaca, sejarah, masakan, hal random), barulah Anda wajib menjawab: "
-            "'Maaf, SMI Assistant hanya dapat menjawab pertanyaan yang berkaitan dengan sistem manajemen pelatihan (L&D). Silakan ajukan pertanyaan seputar pelatihan.'
-"
+            "'Maaf, SMI Assistant hanya dapat menjawab pertanyaan yang berkaitan dengan sistem manajemen pelatihan (L&D). Silakan ajukan pertanyaan seputar pelatihan.\\n'"
             "Jika pengguna mengetik 'lanjutkan'/'continue', Anda DIWAJIBKAN meneruskan daftar Anda."
         )
 
@@ -349,8 +348,7 @@ def execute_ai_query_stream(user, message: str, history: list = None):
             "Jika seluruh data telah selesai ditampilkan ke pengguna (baik pada balasan pertama yang kurang dari 100, maupun pada balasan lanjutan yang terakhir), Anda WAJIB menutupnya dengan kalimat yang sopan, misalnya: '_SMI Assistant telah menampilkan seluruh data dengan lengkap. Jika ada hal lain yang ingin ditanyakan, silakan beri tahu saya!_' "
             "Jika pengguna HANYA MENYAPA (contoh: 'halo', 'selamat pagi', 'hai') Anda DIWAJIBKAN membalas sapaan tersebut dengan ramah dan menanyakan apa yang bisa dibantu. JANGAN PERNAH memberikan pesan penolakan jika pengguna hanya menyapa. "
             "SEBALIKNYA, jika pertanyaan sangat jelas dan sama sekali tidak berkaitan dengan topik HR, Karyawan, atau Pelatihan/L&D (contoh: cuaca, sejarah, masakan, hal random), barulah Anda wajib menjawab: "
-            "'Maaf, SMI Assistant hanya dapat menjawab pertanyaan yang berkaitan dengan sistem manajemen pelatihan (L&D). Silakan ajukan pertanyaan seputar pelatihan.'
-"
+            "'Maaf, SMI Assistant hanya dapat menjawab pertanyaan yang berkaitan dengan sistem manajemen pelatihan (L&D). Silakan ajukan pertanyaan seputar pelatihan.\\n'"
             "Jika pengguna mengetik 'lanjutkan'/'continue', Anda DIWAJIBKAN meneruskan daftar Anda."
         )
 
