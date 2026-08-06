@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import { getUserFromToken } from '../utils/auth';
@@ -43,6 +43,11 @@ export default function TrainingEvaluationPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 50;
 
+    const activeYearRef = useRef(activeYear);
+    useEffect(() => {
+        activeYearRef.current = activeYear;
+    }, [activeYear]);
+
     // --- Form Management State ---
     const [selectedTemplate, setSelectedTemplate] = useState('L1_Templates');
     const [selectedTraining, setSelectedTraining] = useState('');
@@ -65,11 +70,14 @@ export default function TrainingEvaluationPage() {
 
     /** Fetches Training Master data for dropdowns */
     const loadTrainingMasters = async () => {
+        const fetchYear = activeYear;
         try {
-            const res = await api.get(`/api/training-master/?year=${activeYear}`);
-            const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
-            const sortedData = data.sort((a, b) => (a.training_title || "").localeCompare(b.training_title || ""));
-            setTrainingMasters(sortedData);
+            const res = await api.get(`/api/training-master/?year=${fetchYear}&page_size=1000`);
+            if (activeYearRef.current === fetchYear) {
+                const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+                const sortedData = data.sort((a, b) => (a.training_title || "").localeCompare(b.training_title || ""));
+                setTrainingMasters(sortedData);
+            }
         } catch (err) {
             console.error("Failed to fetch trainings", err);
         }
@@ -77,53 +85,58 @@ export default function TrainingEvaluationPage() {
 
     /** Fetches all Evaluation Forms and maps them to UI card format */
     const loadForms = async () => {
+        const fetchYear = activeYear;
         setLoading(true);
         try {
-            const res = await api.get(`/api/evaluation-forms/?year=${activeYear}`);
-            const data = Array.isArray(res.data) ? res.data : [];
-            const mapping = data.map(item => {
-                const isL2 = item.form_type === 'L2' || (item.form_name && item.form_name.includes('[L2]'));
-                const year = item.year ? String(item.year) : (item.created_at ? new Date(item.created_at).getFullYear().toString() : activeYear);
+            const res = await api.get(`/api/evaluation-forms/?year=${fetchYear}`);
+            if (activeYearRef.current === fetchYear) {
+                const data = Array.isArray(res.data) ? res.data : [];
+                const mapping = data.map(item => {
+                    const isL2 = item.form_type === 'L2' || (item.form_name && item.form_name.includes('[L2]'));
+                    const year = item.year ? String(item.year) : (item.created_at ? new Date(item.created_at).getFullYear().toString() : fetchYear);
 
-                const card = {
-                    id: item.form_id,
-                    title: (item.form_name || '').replace('[L1] ', '').replace('[L2] ', ''),
-                    type: isL2 ? 'L2' : 'L1',
-                    year: year,
-                    description: item.description || '',
-                    deadline: item.deadline ? item.deadline.slice(0, 16) : '',
-                    responses: item.responses_count || 0,
-                    hasQuestions: item.questions && item.questions.length > 0,
-                    trainingId: item.training_master,
-                    trainingTitle: item.training_title
-                };
+                    const card = {
+                        id: item.form_id,
+                        title: (item.form_name || '').replace('[L1] ', '').replace('[L2] ', ''),
+                        type: isL2 ? 'L2' : 'L1',
+                        year: year,
+                        description: item.description || '',
+                        deadline: item.deadline ? item.deadline.slice(0, 16) : '',
+                        responses: item.responses_count || 0,
+                        hasQuestions: item.questions && item.questions.length > 0,
+                        trainingId: item.training_master,
+                        trainingTitle: item.training_title
+                    };
 
-                if (isL2) {
-                    card.l2Questions = (item.questions || []).map(q => {
-                        const correctIdx = (q.options || []).findIndex(o => o.is_correct);
-                        return {
+                    if (isL2) {
+                        card.l2Questions = (item.questions || []).map(q => {
+                            const correctIdx = (q.options || []).findIndex(o => o.is_correct);
+                            return {
+                                q: q.question_text,
+                                options: q.options || [],
+                                answer: correctIdx !== -1 ? String.fromCharCode(65 + correctIdx) : 'A',
+                                score: q.score || 0,
+                                optActive: (q.options || []).map(o => o.is_active !== false),
+                                optVisible: (q.options || []).map(() => true)
+                            };
+                        });
+                    } else {
+                        card.l1Questions = (item.questions || []).map(q => ({
                             q: q.question_text,
-                            options: q.options || [],
-                            answer: correctIdx !== -1 ? String.fromCharCode(65 + correctIdx) : 'A',
-                            score: q.score || 0,
-                            optActive: (q.options || []).map(o => o.is_active !== false),
-                            optVisible: (q.options || []).map(() => true)
-                        };
-                    });
-                } else {
-                    card.l1Questions = (item.questions || []).map(q => ({
-                        q: q.question_text,
-                        type: q.question_type || 'Rating Scale',
-                        active: q.is_active !== false
-                    }));
-                }
-                return card;
-            });
-            setAllCards(mapping);
+                            type: q.question_type || 'Rating Scale',
+                            active: q.is_active !== false
+                        }));
+                    }
+                    return card;
+                });
+                setAllCards(mapping);
+            }
         } catch (err) {
             console.error("Failed to fetch forms", err);
         } finally {
-            setLoading(false);
+            if (activeYearRef.current === fetchYear) {
+                setLoading(false);
+            }
         }
     };
 

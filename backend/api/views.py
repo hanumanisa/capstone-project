@@ -418,7 +418,10 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
                     status='completed'
                 )
                 if year_filter:
-                    active_events = active_events.filter(start_date__year=year_filter)
+                    from django.db.models import Q
+                    active_events = active_events.filter(
+                        Q(start_date__year=year_filter) | Q(end_date__year=year_filter)
+                    )
                 if month_filter:
                     try:
                         m = int(month_filter)
@@ -439,7 +442,11 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
                 except (ValueError, TypeError):
                     pass
             if year_filter:
-                qs = qs.filter(trainingevent__start_date__year=year_filter).distinct()
+                from django.db.models import Q
+                qs = qs.filter(
+                    Q(trainingevent__start_date__year=year_filter) |
+                    Q(trainingevent__end_date__year=year_filter)
+                ).distinct()
         elif "Head of Division" in user_groups or "Team Leader" in user_groups:
             if hasattr(user, 'profile') and user.profile.employee:
                 div_id = user.profile.employee.division_id
@@ -451,7 +458,10 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
                 ).exclude(status='cancelled')
                 
                 if year_filter:
-                    active_events = active_events.filter(start_date__year=year_filter)
+                    from django.db.models import Q
+                    active_events = active_events.filter(
+                        Q(start_date__year=year_filter) | Q(end_date__year=year_filter)
+                    )
                 if month_filter:
                     try:
                         m = int(month_filter)
@@ -472,7 +482,10 @@ class TrainingMasterViewSet(viewsets.ModelViewSet):
                     status='completed'
                 )
                 if year_filter:
-                    active_events = active_events.filter(start_date__year=year_filter)
+                    from django.db.models import Q
+                    active_events = active_events.filter(
+                        Q(start_date__year=year_filter) | Q(end_date__year=year_filter)
+                    )
                 if month_filter:
                     try:
                         m = int(month_filter)
