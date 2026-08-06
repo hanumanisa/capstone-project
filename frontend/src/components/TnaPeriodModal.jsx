@@ -55,7 +55,29 @@ const TnaPeriodModal = ({ isOpen, onClose, period, onSave, setToast }) => {
             onClose();
         } catch (err) {
             console.error('Failed to save TNA period:', err);
-            setToast({ message: 'TNA Period Added Unsuccesfully', type: 'error' });
+            const isEdit = !!period?.tna_period_id;
+            let errorMsg = isEdit ? 'TNA Period Update Unsuccesfully' : 'TNA Period Added Unsuccesfully';
+            if (err.response?.data) {
+                const data = err.response.data;
+                if (data.period_code) {
+                    errorMsg = "Period code already exist";
+                } else if (typeof data === 'string') {
+                    errorMsg = data;
+                } else if (data.non_field_errors) {
+                    errorMsg = data.non_field_errors[0];
+                } else if (data.detail) {
+                    errorMsg = data.detail;
+                } else if (Array.isArray(data)) {
+                    errorMsg = data[0];
+                } else {
+                    const firstKey = Object.keys(data)[0];
+                    if (firstKey) {
+                        const val = data[firstKey];
+                        errorMsg = Array.isArray(val) ? val[0] : val;
+                    }
+                }
+            }
+            setToast({ message: errorMsg, type: 'error' });
         } finally {
             setSaving(false);
         }

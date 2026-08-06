@@ -136,7 +136,28 @@ const HotelPage = () => {
             fetchHotels();
         } catch (err) {
             console.error('Save failed:', err);
-            setToast({ message: 'Failed to add hotel', type: 'error' });
+            let errorMsg = isEdit ? 'Failed to update hotel' : 'Failed to add hotel';
+            if (err.response?.data) {
+                const data = err.response.data;
+                if (data.hotel_id) {
+                    errorMsg = "Hotel ID already exist";
+                } else if (typeof data === 'string') {
+                    errorMsg = data;
+                } else if (data.non_field_errors) {
+                    errorMsg = data.non_field_errors[0];
+                } else if (data.detail) {
+                    errorMsg = data.detail;
+                } else if (Array.isArray(data)) {
+                    errorMsg = data[0];
+                } else {
+                    const firstKey = Object.keys(data)[0];
+                    if (firstKey) {
+                        const val = data[firstKey];
+                        errorMsg = Array.isArray(val) ? val[0] : val;
+                    }
+                }
+            }
+            setToast({ message: errorMsg, type: 'error' });
         } finally {
             setSaving(false);
         }
