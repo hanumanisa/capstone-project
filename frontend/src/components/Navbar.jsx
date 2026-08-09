@@ -120,7 +120,7 @@ const Navbar = () => {
                                         {!isRestricted && (
                                             <li>
                                                 <Link to="/hotel" className={`block px-5 py-2.5 hover:bg-gray-100 hover:text-[#2174C3] cursor-pointer transition-colors rounded-full text-left font-medium ${location.pathname === '/hotel' ? 'bg-gray-100 text-[#2174C3] font-bold' : ''}`}>
-                                                    Hotel
+                                                    Venue
                                                 </Link>
                                             </li>
                                         )}
@@ -266,7 +266,7 @@ const Navbar = () => {
                                 )}
                                 {!isRestricted && (
                                     <Link to="/hotel" className={`block p-3 pl-8 rounded-xl ${location.pathname === '/hotel' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
-                                        Hotel
+                                        Venue
                                     </Link>
                                 )}
                                 {isRestricted && (

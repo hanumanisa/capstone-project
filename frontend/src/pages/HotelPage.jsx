@@ -130,17 +130,17 @@ const HotelPage = () => {
             }
             setShowModal(false);
             setToast({
-                message: isEdit ? 'Hotel updated successfully' : 'Hotel added successfully',
+                message: isEdit ? 'Venue updated successfully' : 'Venue added successfully',
                 type: 'success'
             });
             fetchHotels();
         } catch (err) {
             console.error('Save failed:', err);
-            let errorMsg = isEdit ? 'Failed to update hotel' : 'Failed to add hotel';
+            let errorMsg = isEdit ? 'Failed to update venue' : 'Failed to add venue';
             if (err.response?.data) {
                 const data = err.response.data;
                 if (data.hotel_id) {
-                    errorMsg = "Hotel ID already exist";
+                    errorMsg = "Venue ID already exist";
                 } else if (typeof data === 'string') {
                     errorMsg = data;
                 } else if (data.non_field_errors) {
@@ -173,11 +173,11 @@ const HotelPage = () => {
             await api.delete(`/api/hotels/${formData.hotel_id}/`);
             setShowModal(false);
             setShowDeleteConfirm(false);
-            setToast({ message: 'Hotel deleted successfully', type: 'success' });
+            setToast({ message: 'Venue deleted successfully', type: 'success' });
             fetchHotels();
         } catch (err) {
             console.error('Delete failed:', err);
-            setToast({ message: 'Failed to delete hotel', type: 'error' });
+            setToast({ message: 'Failed to delete venue', type: 'error' });
             setShowDeleteConfirm(false);
         }
     };
@@ -188,13 +188,13 @@ const HotelPage = () => {
             return;
         }
         const exportData = hotels.map(h => ({
-            'Hotel ID': h.hotel_id,
+            'Venue ID': h.hotel_id,
             'City': h.hotel_city,
-            'Hotel Name': h.hotel_name,
+            'Venue Name': h.hotel_name,
             'Sales Name': h.sales_name,
             'Sales Number': h.sales_phone_number,
             'Price Estimated': h.price_estimation,
-            'Hotel Star': h.hotel_star
+            'Venue Star': h.hotel_star
         }));
         const ws = XLSX.utils.json_to_sheet(exportData);
         // Column widths
@@ -204,8 +204,8 @@ const HotelPage = () => {
         ];
         ws['!cols'] = wscols;
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Hotel Report');
-        XLSX.writeFile(wb, 'Hotel Report.xlsx');
+        XLSX.utils.book_append_sheet(wb, ws, 'Venue Report');
+        XLSX.writeFile(wb, 'Venue Report.xlsx');
     };
 
     return (
@@ -239,13 +239,13 @@ const HotelPage = () => {
                             onClick={openAdd}
                             className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-1 rounded-lg font-medium flex items-center justify-center shadow-sm transition-all text-sm cursor-pointer"
                         >
-                            <span className="mr-1 text-lg font-bold">+</span> Hotel
+                            <span className="mr-1 text-lg font-bold">+</span> Venue
                         </button>
                     )}
                 </div>
             </div>
 
-            <h1 className="text-4xl font-bold text-gray-800 tracking-tight mb-6">Hotels</h1>
+            <h1 className="text-4xl font-bold text-gray-800 tracking-tight mb-6">Venues</h1>
 
             {/* ─── Table ───────────────────────────────────────────────── */}
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden transition-all h-[calc(100vh-350px)] flex flex-col">
@@ -253,20 +253,20 @@ const HotelPage = () => {
                     <table className="w-full text-left text-sm min-w-[800px]">
                         <thead className="bg-[#5C85BB] text-white text-xs uppercase tracking-wider sticky top-0 z-10">
                             <tr>
-                                <th className="px-4 py-3 text-center">Hotel ID</th>
+                                <th className="px-4 py-3 text-center">Venue ID</th>
                                 <th className="px-4 py-3">City</th>
-                                <th className="px-4 py-3">Hotel Name</th>
+                                <th className="px-4 py-3">Venue Name</th>
                                 <th className="px-4 py-3">Sales Name</th>
                                 <th className="px-4 py-3">Sales Number</th>
                                 <th className="px-4 py-3">Estimated Price per Night</th>
-                                <th className="px-4 py-3 text-center">Hotel Star</th>
+                                <th className="px-4 py-3 text-center">Venue Star</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
                                 <tr><td colSpan="6" className="px-6 py-12 text-center text-gray-400">Loading...</td></tr>
                             ) : paginatedData.length === 0 ? (
-                                <tr><td colSpan="6" className="px-6 py-12 text-center text-gray-400">No hotels found.</td></tr>
+                                <tr><td colSpan="6" className="px-6 py-12 text-center text-gray-400">No venues found.</td></tr>
                             ) : (
                                 paginatedData.map((item) => (
                                     <tr key={item.hotel_id} className="hover:bg-blue-50/30 transition-colors">
@@ -332,7 +332,7 @@ const HotelPage = () => {
                         </button>
                     </div>
                         <div className="text-xs text-gray-400 font-medium">
-                            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredHotels.length)} of {filteredHotels.length} hotels
+                            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredHotels.length)} of {filteredHotels.length} venues
                         </div>
                     </div>
                 
@@ -343,13 +343,13 @@ const HotelPage = () => {
                 <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden p-10">
                         <h2 className="text-3xl font-bold text-[#212529] mb-2">
-                            {isEdit ? 'Edit Hotel' : 'Add Hotel'}
+                            {isEdit ? 'Edit Venue' : 'Add Venue'}
                         </h2>
                         <hr className="mb-8 border-gray-200" />
 
                         <div className="space-y-6">
                             <div className="grid grid-cols-3 items-center">
-                                <label className="text-[#495057] font-semibold">Hotel ID</label>
+                                <label className="text-[#495057] font-semibold">Venue ID</label>
                                 <input
                                     type="text"
                                     value={formData.hotel_id}
@@ -372,14 +372,14 @@ const HotelPage = () => {
                                 />
                             </div>
                             <div className="grid grid-cols-3 items-center">
-                                <label className="text-[#495057] font-semibold">Hotel Name</label>
+                                <label className="text-[#495057] font-semibold">Venue Name</label>
                                 <input
                                     type="text"
                                     value={formData.hotel_name}
                                     style={{ color: '#000' }}
                                     onChange={(e) => setFormData({ ...formData, hotel_name: e.target.value })}
                                     className="col-span-2 bg-[#F1F3F5] rounded-lg p-3 outline-none focus:ring-2 focus:ring-[#2174C3]"
-                                    placeholder="Enter hotel name"
+                                    placeholder="Enter venue name"
                                 />
                             </div>
                             <div className="grid grid-cols-3 items-center">
@@ -416,7 +416,7 @@ const HotelPage = () => {
                                 />
                             </div>
                             <div className="grid grid-cols-3 items-center">
-                                <label className="text-[#495057] font-semibold">Hotel Star</label>
+                                <label className="text-[#495057] font-semibold">Venue Star</label>
                                 <div className="col-span-2 flex items-center space-x-1">
                                     {[1, 2, 3, 4, 5].map(i => (
                                         <svg
@@ -475,7 +475,7 @@ const HotelPage = () => {
                 onClose={() => setShowDeleteConfirm(false)}
                 onConfirm={handleConfirmDelete}
                 title="Confirm Delete"
-                message="Are you sure want to delete this Hotel?"
+                message="Are you sure want to delete this Venue?"
             />
         </MainLayout>
     );
