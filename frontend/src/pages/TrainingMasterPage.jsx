@@ -1420,7 +1420,7 @@ export default function TrainingMasterPage() {
                 <select className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={courseId} onChange={(e) => setCourseId(e.target.value)}>
                   <option value="">Select Course</option>
                   {courses.map((c, i) => (
-                    <option key={i} value={c.course_id}>{c.course_name}</option>
+                    <option key={i} value={c.course_id}>{c.course_id} - {c.course_name}</option>
                   ))}
                 </select>
               </div>

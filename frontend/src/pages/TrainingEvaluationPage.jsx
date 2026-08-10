@@ -4,6 +4,7 @@ import MainLayout from '../components/MainLayout';
 import { getUserFromToken } from '../utils/auth';
 import api from '../api/axios';
 import ConfirmModal from '../components/ConfirmModal';
+import Toast from '../components/Toast';
 import YearPicker from '../components/YearPicker';
 import './TrainingEvaluationPage.css';
 
@@ -26,6 +27,7 @@ export default function TrainingEvaluationPage() {
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [showDescModal, setShowDescModal] = useState(false);
     const [showTrainingDropdown, setShowTrainingDropdown] = useState(false);
+    const [toast, setToast] = useState(null);
 
     // --- Data State ---
     const [allCards, setAllCards] = useState([]);
@@ -398,6 +400,12 @@ export default function TrainingEvaluationPage() {
 
         let payloadQuestions = [];
         if (isL2) {
+            const hasInvalidScore = l2Rows.some(row => row.q.trim() !== '' && Number(row.score) < 100);
+            if (hasInvalidScore) {
+                setToast({ message: 'Score must be 100', type: 'error' });
+                return;
+            }
+
             l2Rows.forEach(row => {
                 if (row.q.trim() !== '') {
                     const allOptions = [];
@@ -1015,7 +1023,7 @@ export default function TrainingEvaluationPage() {
                                                             </button>
                                                         </div>
                                                         <div className="border border-gray-200 rounded-lg bg-white flex items-center justify-center" style={{ height: '36px' }}>
-                                                            <select value={row.answer} onChange={e => { const r = [...l2Rows]; r[index].answer = e.target.value; setL2Rows(r); }} className="ans-select" style={{ height: '28px', fontSize: '12px', padding: '3px 4px' }}>
+                                                            <select value={row.answer} onChange={e => { const r = [...l2Rows]; r[index].answer = e.target.value; r[index].score = 100; setL2Rows(r); }} className="ans-select" style={{ height: '28px', fontSize: '12px', padding: '3px 4px' }}>
                                                                 {row.opts.map((o, vi) => <option key={vi} value={String.fromCharCode(65 + vi)}>{String.fromCharCode(65 + vi)}</option>)}
                                                             </select>
                                                         </div>
@@ -1030,6 +1038,9 @@ export default function TrainingEvaluationPage() {
                                                             ))}
                                                         </div>
                                                     </div>
+                                                    {Number(row.score) < 100 && (
+                                                        <div className="text-red-500 text-xs mt-2 ml-[50px] mb-2 font-medium">Score must be 100</div>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -1063,6 +1074,14 @@ export default function TrainingEvaluationPage() {
                     title="Confirm Delete"
                     message={`Are you sure want to delete this Evaluation "${cardToDelete?.title}"?`}
                 />
+
+                {toast && (
+                    <Toast
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(null)}
+                    />
+                )}
             </div>
         </MainLayout>
     );
