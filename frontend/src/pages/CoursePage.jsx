@@ -264,9 +264,9 @@ const CoursePage = () => {
                             <button
                                 onClick={handleExport}
                                 disabled={courses.length === 0}
-                                className={`w-28 py-2 rounded-lg font-medium text-sm transition-all shadow-sm outline-none border-none ${courses.length === 0 ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-[#2174C3] hover:bg-[#1A5E9D] text-white cursor-pointer'}`}
+                                className={`w-36 py-2 rounded-lg font-medium text-sm transition-all shadow-sm outline-none border-none ${courses.length === 0 ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-[#2174C3] hover:bg-[#1A5E9D] text-white cursor-pointer'}`}
                             >
-                                Report
+                                Download Report
                             </button>
                         )}
                         {isAdmin && (

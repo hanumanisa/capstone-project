@@ -835,7 +835,7 @@ export default function TrainingMasterPage() {
             const monthName = d.toLocaleString('default', { month: 'long' });
             const year = d.getFullYear();
             const key = `${monthName} ${year}`;
-            
+
             if (!monthlyData[key]) {
               monthlyData[key] = {
                 hours: 0,
@@ -859,7 +859,7 @@ export default function TrainingMasterPage() {
             const monthlyHours = monthlyData[key].hours;
             const activeEmployees = monthlyData[key].niks.size;
             const avg = activeEmployees > 0 ? (monthlyHours / activeEmployees) : 0;
-            
+
             slide2AoA.push([key, "Jumlah Jam Training", Number(monthlyHours.toFixed(2))]);
             slide2AoA.push(["", `Jumlah Karyawan per ${key}`, activeEmployees]);
             slide2AoA.push(["", "Rata-rata jam training", Number(avg.toFixed(2))]);
@@ -968,9 +968,9 @@ export default function TrainingMasterPage() {
                   setShowReportModal(true);
                 }
               }}
-              className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-2 rounded-lg font-medium text-sm transition-all shadow-sm cursor-pointer"
+              className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-36 py-2 rounded-lg font-medium text-sm transition-all shadow-sm cursor-pointer"
             >
-              Report
+              Download Report
             </button>
             {isAdmin && user?.role !== 'Dean' && (
               <button
@@ -1129,40 +1129,40 @@ export default function TrainingMasterPage() {
       </div>
 
       {/* Pagination */}
-      
-        <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
-          <div className="flex items-center space-x-1">
+
+      <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
+        <div className="flex items-center space-x-1">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
+          >
+            Previous
+          </button>
+          {[...Array(totalPages)].map((_, i) => (
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
+              key={i}
+              onClick={() => setPage(i + 1)}
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${page === i + 1 ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
             >
-              Previous
+              {i + 1}
             </button>
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setPage(i + 1)}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${page === i + 1 ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-          {!loading && totalCount > 0 && (
-            <div className="text-right text-xs text-gray-400 font-medium">
-              Showing {(page - 1) * 50 + 1}–{Math.min(page * 50, totalCount)} of {totalCount} training
-            </div>
-          )}
+          ))}
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
-      
+        {!loading && totalCount > 0 && (
+          <div className="text-right text-xs text-gray-400 font-medium">
+            Showing {(page - 1) * 50 + 1}–{Math.min(page * 50, totalCount)} of {totalCount} training
+          </div>
+        )}
+      </div>
+
 
 
       {/* ========================= MODAL REPORT ========================= */}
@@ -1175,15 +1175,15 @@ export default function TrainingMasterPage() {
             <div className="flex space-x-8 border-b border-gray-200 mb-8">
               {(user && ['Head of Division', 'Team Leader'].includes(user.role)
                 ? [
-                    { id: 'master', label: 'Annual Report' },
-                    { id: 'division', label: 'Division Report' }
-                  ]
+                  { id: 'master', label: 'Annual Report' },
+                  { id: 'division', label: 'Division Report' }
+                ]
                 : [
-                    { id: 'master', label: 'Annual Report' },
-                    { id: 'monthly', label: 'Monthly Report' },
-                    { id: 'division', label: 'Division Report' },
-                    { id: 'employee', label: 'Employee Report' }
-                  ]
+                  { id: 'master', label: 'Annual Report' },
+                  { id: 'monthly', label: 'Monthly Report' },
+                  { id: 'division', label: 'Division Report' },
+                  { id: 'employee', label: 'Employee Report' }
+                ]
               ).map((tab) => (
                 <button
                   key={tab.id}
@@ -1541,362 +1541,362 @@ export default function TrainingMasterPage() {
             {/* TAB CONTENTS */}
             <div className="min-h-[300px]">
               <fieldset disabled={user?.role === 'Dean'} className="border-none p-0 m-0 w-full h-full">
-              {activeTab === "location" && (
-                <div className="space-y-6">
-                  <h3 className="text-[#2174C3] font-bold text-lg mb-4">Location</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
-                    <label className="text-black font-semibold">Location City</label>
-                    <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={locationCity} onChange={(e) => setLocationCity(e.target.value)} placeholder="Enter location city" />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
-                    <label className="text-black font-semibold">Venue</label>
-                    <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Enter location venue" />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
-                    <label className="text-black font-semibold">Room</label>
-                    <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="Enter location room" />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 items-start gap-2">
-                    <label className="text-black font-semibold pt-2">Address</label>
-                    <textarea className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" rows="4" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter location address"></textarea>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "schedule" && (
-                <div className="space-y-4">
-                  <h3 className="text-[#2174C3] font-bold text-lg mb-4">Schedule</h3>
-                  <div className="custom-scrollbar overflow-auto border border-gray-100 rounded-lg">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
-                        <tr>
-                          {user?.role !== 'Dean' && <th className="p-3 w-[50px]"></th>}
-                          <th className="p-3">Date</th>
-                          <th className="p-3">Start Time</th>
-                          <th className="p-3">End Time</th>
-                          <th className="p-3">Material</th>
-                          <th className="p-3">Instructor</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {scheduleRows.map((row, idx) => (
-                          <tr key={idx}>
-                            {user?.role !== 'Dean' && (
-                              <td className="p-2">
-                                <button type="button" onClick={() => setScheduleRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
-                              </td>
-                            )}
-                            <td className="p-2"><input type="date" value={row.date} onChange={(e) => { const a = [...scheduleRows]; a[idx].date = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded" /></td>
-                            <td className="p-2"><input type="text" placeholder="00:00" maxLength="5" value={row.start} onChange={(e) => { const a = [...scheduleRows]; a[idx].start = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded text-center font-mono" /></td>
-                            <td className="p-2"><input type="text" placeholder="00:00" maxLength="5" value={row.end} onChange={(e) => { const a = [...scheduleRows]; a[idx].end = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded text-center font-mono" /></td>
-                            <td className="p-2"><input type="text" value={row.material} onChange={(e) => { const a = [...scheduleRows]; a[idx].material = e.target.value; setScheduleRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" placeholder="Enter material" /></td>
-                            <td className="p-2"><input type="text" value={row.instructor} onChange={(e) => { const a = [...scheduleRows]; a[idx].instructor = e.target.value; setScheduleRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" placeholder="Enter instructor" /></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {user?.role !== 'Dean' && (
-                    <button type="button" onClick={() => setScheduleRows([...scheduleRows, { date: "", start: "", end: "", material: "", instructor: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Schedule</button>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "participant" && (
-                <div className="space-y-4">
-                  <h3 className="text-[#2174C3] font-bold text-lg mb-4">Participant</h3>
-                  <div className="custom-scrollbar overflow-visible border border-gray-100 rounded-lg">
-                    <table className="w-full text-sm min-w-[600px] relative">
-                      <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
-                        <tr>
-                          {user?.role !== 'Dean' && <th className="p-3 w-[50px]"></th>}
-                          <th className="p-3">Employee Name</th>
-                          <th className="p-3 w-[200px]">Attendance Status</th>
-                          <th className="p-3 w-[120px]">L1 Score</th>
-                          <th className="p-3 w-[120px]">L2 Score</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {participantRows.map((row, idx) => (
-                          <tr key={idx}>
-                            {user?.role !== 'Dean' && (
-                              <td className="p-2">
-                                <button type="button" onClick={() => setParticipantRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
-                              </td>
-                            )}
-                            <td className="p-2">
-                              <select
-                                value={row.employee}
-                                onChange={(e) => handleEmployeeChange(idx, e.target.value)}
-                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                              >
-                                <option value="">Select Employee</option>
-                                {employees.map((emp, i) => (
-                                  <option key={i} value={emp.nik}>({emp.nik}) {emp.full_name}</option>
-                                ))}
-                              </select>
-                            </td>
-                            <td className="p-2">
-                              <select
-                                value={row.attendance}
-                                onChange={(e) => { const a = [...participantRows]; a[idx].attendance = e.target.value; setParticipantRows(a); }}
-                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                              >
-                                <option value="Present">Present</option>
-                                <option value="Absent">Absent</option>
-                              </select>
-                            </td>
-                            <td className="p-2"><input type="number" step="0.1" max="4" placeholder="1-4" value={row.l1} onChange={(e) => { const val = e.target.value; const a = [...participantRows]; a[idx].l1 = (val > 4) ? 4 : val; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                            <td className="p-2"><input type="number" step="0.1" max="4" placeholder="1-4" value={row.l2} onChange={(e) => { const val = e.target.value; const a = [...participantRows]; a[idx].l2 = (val > 4) ? 4 : val; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {user?.role !== 'Dean' && (
-                    <button type="button" onClick={() => setParticipantRows([...participantRows, { employee: "", attendance: "Present", l1: "", l2: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Participant</button>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "evaluation" && (
-                <div className="space-y-8">
-                  <h3 className="text-[#2174C3] font-bold text-lg mb-6">Evaluation</h3>
-
+                {activeTab === "location" && (
                   <div className="space-y-6">
-                    <div className="flex items-center space-x-12">
-                      <div className="flex items-center w-72 justify-between">
-                        <label className="text-gray-700 font-semibold">Enable Training Access</label>
-                        <input
-                          type="checkbox"
-                          checked={evaluation.courseAccess}
-                          onChange={(e) => setEvaluation({ ...evaluation, courseAccess: e.target.checked })}
-                          className="w-5 h-5 rounded border-gray-300 text-[#2174C3] focus:ring-[#2174C3] cursor-pointer"
-                        />
-                      </div>
-                      <span className="text-red-500 text-sm font-medium">Content has not been configured</span>
+                    <h3 className="text-[#2174C3] font-bold text-lg mb-4">Location</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                      <label className="text-black font-semibold">Location City</label>
+                      <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={locationCity} onChange={(e) => setLocationCity(e.target.value)} placeholder="Enter location city" />
                     </div>
-
-                    <div className="flex items-center space-x-12">
-                      <div className="flex items-center w-72 justify-between">
-                        <label className="text-gray-700 font-semibold">Enable Feedback (L1 Templates)</label>
-                        <input
-                          type="checkbox"
-                          checked={evaluation.feedback}
-                          onChange={(e) => setEvaluation({ ...evaluation, feedback: e.target.checked })}
-                          className="w-5 h-5 rounded border-gray-300 text-[#2174C3] focus:ring-[#2174C3] cursor-pointer"
-                        />
-                      </div>
-                      <span className="text-red-500 text-sm font-medium">Feedback has not been configured</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                      <label className="text-black font-semibold">Venue</label>
+                      <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Enter location venue" />
                     </div>
-
-                    <div className="flex items-center space-x-12">
-                      <div className="flex items-center w-72 justify-between">
-                        <label className="text-gray-700 font-semibold">Enable Evaluation (L2 Templates)</label>
-                        <input
-                          type="checkbox"
-                          checked={evaluation.evaluationStage}
-                          onChange={(e) => setEvaluation({ ...evaluation, evaluationStage: e.target.checked })}
-                          className="w-5 h-5 rounded border-gray-300 text-[#2174C3] focus:ring-[#2174C3] cursor-pointer"
-                        />
-                      </div>
-                      <span className="text-red-500 text-sm font-medium">Evaluation Stage has not been configured</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                      <label className="text-black font-semibold">Room</label>
+                      <input type="text" className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="Enter location room" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 items-start gap-2">
+                      <label className="text-black font-semibold pt-2">Address</label>
+                      <textarea className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" rows="4" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter location address"></textarea>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {activeTab === "cost" && (
-                <div className="space-y-6">
-                  <h3 className="text-[#2174C3] font-bold text-lg mb-4">Cost Management</h3>
-                  <div className="flex items-center space-x-4 mb-2">
-                    <span className="text-[#333] font-bold text-sm">Training Cost Allocation Type</span>
-                    <div className="relative">
-                      <select
-                        value={costAllocationType}
-                        onChange={(e) => setCostAllocationType(e.target.value)}
-                        className="bg-[#F3F4F6] border-none rounded-lg py-2 px-4 pr-10 text-sm font-bold appearance-none focus:ring-2 focus:ring-[#2174C3] cursor-pointer text-black"
-                      >
-                        <option value="Actual Cost" style={{ color: '#000' }}>Actual Cost</option>
-                        <option value="Estimate Cost" style={{ color: '#000' }}>Estimate Cost</option>
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
+                {activeTab === "schedule" && (
                   <div className="space-y-4">
+                    <h3 className="text-[#2174C3] font-bold text-lg mb-4">Schedule</h3>
                     <div className="custom-scrollbar overflow-auto border border-gray-100 rounded-lg">
-                      <table className="w-full text-sm min-w-[800px]">
+                      <table className="w-full text-sm">
                         <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
                           <tr>
                             {user?.role !== 'Dean' && <th className="p-3 w-[50px]"></th>}
-                            <th className="p-3">Cost Center</th>
-                            <th className="p-3 w-[100px]">Currency</th>
-                            <th className="p-3">Training Cost</th>
-                            <th className="p-3">Venue Cost</th>
-                            <th className="p-3">SPPD Cost</th>
-                            <th className="p-3 w-[120px]">Status</th>
+                            <th className="p-3">Date</th>
+                            <th className="p-3">Start Time</th>
+                            <th className="p-3">End Time</th>
+                            <th className="p-3">Material</th>
+                            <th className="p-3">Instructor</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                          {costRows.map((row, idx) => {
-                            const selectedDivObj = divisions.find(d => parseInt(d.division_id) === parseInt(row.division));
-                            const abbr = selectedDivObj ? getAbbreviation(selectedDivObj.division_name) : "";
-
-                            return (
-                              <tr key={idx}>
-                                {user?.role !== 'Dean' && (
-                                  <td className="p-2">
-                                    <button type="button" onClick={() => setCostRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
-                                  </td>
-                                )}
+                          {scheduleRows.map((row, idx) => (
+                            <tr key={idx}>
+                              {user?.role !== 'Dean' && (
                                 <td className="p-2">
-                                  <div className="space-y-1">
-                                    <select
-                                      value={row.division}
-                                      onChange={(e) => { const a = [...costRows]; a[idx].division = e.target.value; setCostRows(a); }}
-                                      className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                                    >
-                                      <option value="">Select Division</option>
-                                      {divisions.map(div => (
-                                        <option key={div.division_id} value={div.division_id}>{div.division_name}</option>
-                                      ))}
-                                    </select>
-                                    {abbr && <span className="text-[10px] text-gray-500 font-bold ml-2">Code: {abbr}</span>}
-                                  </div>
+                                  <button type="button" onClick={() => setScheduleRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
                                 </td>
-                                <td className="p-2">
-                                  <select
-                                    value={row.currency}
-                                    onChange={(e) => { const a = [...costRows]; a[idx].currency = e.target.value; setCostRows(a); }}
-                                    className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                                  >
-                                    <option value="IDR">IDR</option>
-                                  </select>
-                                </td>
-                                <td className="p-2"><input type="number" placeholder="Enter cost" value={row.training} onChange={(e) => { const a = [...costRows]; a[idx].training = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                                <td className="p-2"><input type="number" placeholder="Enter cost" value={row.room} onChange={(e) => { const a = [...costRows]; a[idx].room = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                                <td className="p-2"><input type="number" placeholder="Enter cost" value={row.sppd} onChange={(e) => { const a = [...costRows]; a[idx].sppd = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
-                                <td className="p-2">
-                                  <select
-                                    value={row.status}
-                                    onChange={(e) => { const a = [...costRows]; a[idx].status = e.target.value; setCostRows(a); }}
-                                    className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                                  >
-                                    <option value="">Status</option>
-                                    <option value="Unpaid">Unpaid</option>
-                                    <option value="Paid">Paid</option>
-                                  </select>
-                                </td>
-                              </tr>
-                            );
-                          })}
+                              )}
+                              <td className="p-2"><input type="date" value={row.date} onChange={(e) => { const a = [...scheduleRows]; a[idx].date = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded" /></td>
+                              <td className="p-2"><input type="text" placeholder="00:00" maxLength="5" value={row.start} onChange={(e) => { const a = [...scheduleRows]; a[idx].start = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded text-center font-mono" /></td>
+                              <td className="p-2"><input type="text" placeholder="00:00" maxLength="5" value={row.end} onChange={(e) => { const a = [...scheduleRows]; a[idx].end = e.target.value; setScheduleRows(a); }} className="w-full p-2 bg-gray-50 rounded text-center font-mono" /></td>
+                              <td className="p-2"><input type="text" value={row.material} onChange={(e) => { const a = [...scheduleRows]; a[idx].material = e.target.value; setScheduleRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" placeholder="Enter material" /></td>
+                              <td className="p-2"><input type="text" value={row.instructor} onChange={(e) => { const a = [...scheduleRows]; a[idx].instructor = e.target.value; setScheduleRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" placeholder="Enter instructor" /></td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
                     {user?.role !== 'Dean' && (
-                      <button type="button" onClick={() => setCostRows([...costRows, { division: "", currency: "IDR", room: "", training: "", sppd: "", status: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Cost Center Allocation</button>
+                      <button type="button" onClick={() => setScheduleRows([...scheduleRows, { date: "", start: "", end: "", material: "", instructor: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Schedule</button>
                     )}
                   </div>
-                </div>
-              )}
+                )}
 
-              {activeTab === "doc" && (
-                <div className="space-y-4">
-                  <h3 className="text-[#2174C3] font-bold text-lg mb-4">Documentation</h3>
-                  <div className="custom-scrollbar overflow-auto border border-gray-100 rounded-lg">
-                    <table className="w-full text-sm min-w-[1000px]">
-                      <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
-                        <tr>
-                          {user?.role !== 'Dean' && <th className="p-3 w-[50px]"></th>}
-                          <th className="p-3">Document Type</th>
-                          <th className="p-3">File Name</th>
-                          <th className="p-3 w-[80px]">Drive</th>
-                          <th className="p-3">File Link (URL)</th>
-                          <th className="p-3">Uploader</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {documentationRows.map((row, idx) => (
-                          <tr key={idx}>
-                            {user?.role !== 'Dean' && (
-                              <td className="p-2">
-                                <button type="button" onClick={() => setDocumentationRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
-                              </td>
-                            )}
-                            <td className="p-2">
-                              <select
-                                value={row.type}
-                                onChange={(e) => { const a = [...documentationRows]; a[idx].type = e.target.value; setDocumentationRows(a); }}
-                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                              >
-                                <option value="">Select Type</option>
-                                <option value="Invoice">Invoice</option>
-                                <option value="Form IHT">Form IHT</option>
-                                <option value="All Document">All Document</option>
-                              </select>
-                            </td>
-                            <td className="p-2">
-                              <input
-                                type="text"
-                                value={row.file_name}
-                                onChange={(e) => { const a = [...documentationRows]; a[idx].file_name = e.target.value; setDocumentationRows(a); }}
-                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                                placeholder="Enter file name"
-                              />
-                            </td>
-                            <td className="p-2 text-center">
-                              <button
-                                type="button"
-                                onClick={() => window.open('https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing', '_blank')}
-                                className="p-2 rounded-lg transition-all bg-[#2174C3] text-white hover:bg-[#1A5E9D]"
-                                title="Open in Google Drive"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                              </button>
-                            </td>
-                            <td className="p-2">
-                              <input
-                                type="text"
-                                value={row.url}
-                                onChange={(e) => { const a = [...documentationRows]; a[idx].url = e.target.value; setDocumentationRows(a); }}
-                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                                placeholder="Enter url"
-                              />
-                            </td>
-                            <td className="p-2">
-                              <select
-                                value={row.submitted_by}
-                                onChange={(e) => { const a = [...documentationRows]; a[idx].submitted_by = e.target.value; setDocumentationRows(a); }}
-                                className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
-                              >
-                                <option value="" style={{ color: '#000' }}>Select PIC</option>
-                                {employees.filter(emp =>
-                                  emp.role === 'Administrator' ||
-                                  emp.role === 'Super Administrator' ||
-                                  [200335, 200331, 200329].includes(parseInt(emp.nik)) ||
-                                  parseInt(emp.nik) === parseInt(user?.nik)
-                                ).map(emp => (
-                                  <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>{emp.full_name}</option>
-                                ))}
-                              </select>
-                            </td>
+                {activeTab === "participant" && (
+                  <div className="space-y-4">
+                    <h3 className="text-[#2174C3] font-bold text-lg mb-4">Participant</h3>
+                    <div className="custom-scrollbar overflow-visible border border-gray-100 rounded-lg">
+                      <table className="w-full text-sm min-w-[600px] relative">
+                        <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
+                          <tr>
+                            {user?.role !== 'Dean' && <th className="p-3 w-[50px]"></th>}
+                            <th className="p-3">Employee Name</th>
+                            <th className="p-3 w-[200px]">Attendance Status</th>
+                            <th className="p-3 w-[120px]">L1 Score</th>
+                            <th className="p-3 w-[120px]">L2 Score</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {participantRows.map((row, idx) => (
+                            <tr key={idx}>
+                              {user?.role !== 'Dean' && (
+                                <td className="p-2">
+                                  <button type="button" onClick={() => setParticipantRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
+                                </td>
+                              )}
+                              <td className="p-2">
+                                <select
+                                  value={row.employee}
+                                  onChange={(e) => handleEmployeeChange(idx, e.target.value)}
+                                  className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                >
+                                  <option value="">Select Employee</option>
+                                  {employees.map((emp, i) => (
+                                    <option key={i} value={emp.nik}>({emp.nik}) {emp.full_name}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="p-2">
+                                <select
+                                  value={row.attendance}
+                                  onChange={(e) => { const a = [...participantRows]; a[idx].attendance = e.target.value; setParticipantRows(a); }}
+                                  className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                >
+                                  <option value="Present">Present</option>
+                                  <option value="Absent">Absent</option>
+                                </select>
+                              </td>
+                              <td className="p-2"><input type="number" step="0.1" max="4" placeholder="1-4" value={row.l1} onChange={(e) => { const val = e.target.value; const a = [...participantRows]; a[idx].l1 = (val > 4) ? 4 : val; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                              <td className="p-2"><input type="number" step="0.1" max="4" placeholder="1-4" value={row.l2} onChange={(e) => { const val = e.target.value; const a = [...participantRows]; a[idx].l2 = (val > 4) ? 4 : val; setParticipantRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {user?.role !== 'Dean' && (
+                      <button type="button" onClick={() => setParticipantRows([...participantRows, { employee: "", attendance: "Present", l1: "", l2: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Participant</button>
+                    )}
                   </div>
-                  {user?.role !== 'Dean' && (
-                    <button type="button" onClick={() => setDocumentationRows([...documentationRows, { type: "", file_name: "", url: "", submitted_by: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Documentation</button>
-                  )}
-                </div>
-              )}
+                )}
+
+                {activeTab === "evaluation" && (
+                  <div className="space-y-8">
+                    <h3 className="text-[#2174C3] font-bold text-lg mb-6">Evaluation</h3>
+
+                    <div className="space-y-6">
+                      <div className="flex items-center space-x-12">
+                        <div className="flex items-center w-72 justify-between">
+                          <label className="text-gray-700 font-semibold">Enable Training Access</label>
+                          <input
+                            type="checkbox"
+                            checked={evaluation.courseAccess}
+                            onChange={(e) => setEvaluation({ ...evaluation, courseAccess: e.target.checked })}
+                            className="w-5 h-5 rounded border-gray-300 text-[#2174C3] focus:ring-[#2174C3] cursor-pointer"
+                          />
+                        </div>
+                        <span className="text-red-500 text-sm font-medium">Content has not been configured</span>
+                      </div>
+
+                      <div className="flex items-center space-x-12">
+                        <div className="flex items-center w-72 justify-between">
+                          <label className="text-gray-700 font-semibold">Enable Feedback (L1 Templates)</label>
+                          <input
+                            type="checkbox"
+                            checked={evaluation.feedback}
+                            onChange={(e) => setEvaluation({ ...evaluation, feedback: e.target.checked })}
+                            className="w-5 h-5 rounded border-gray-300 text-[#2174C3] focus:ring-[#2174C3] cursor-pointer"
+                          />
+                        </div>
+                        <span className="text-red-500 text-sm font-medium">Feedback has not been configured</span>
+                      </div>
+
+                      <div className="flex items-center space-x-12">
+                        <div className="flex items-center w-72 justify-between">
+                          <label className="text-gray-700 font-semibold">Enable Evaluation (L2 Templates)</label>
+                          <input
+                            type="checkbox"
+                            checked={evaluation.evaluationStage}
+                            onChange={(e) => setEvaluation({ ...evaluation, evaluationStage: e.target.checked })}
+                            className="w-5 h-5 rounded border-gray-300 text-[#2174C3] focus:ring-[#2174C3] cursor-pointer"
+                          />
+                        </div>
+                        <span className="text-red-500 text-sm font-medium">Evaluation Stage has not been configured</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "cost" && (
+                  <div className="space-y-6">
+                    <h3 className="text-[#2174C3] font-bold text-lg mb-4">Cost Management</h3>
+                    <div className="flex items-center space-x-4 mb-2">
+                      <span className="text-[#333] font-bold text-sm">Training Cost Allocation Type</span>
+                      <div className="relative">
+                        <select
+                          value={costAllocationType}
+                          onChange={(e) => setCostAllocationType(e.target.value)}
+                          className="bg-[#F3F4F6] border-none rounded-lg py-2 px-4 pr-10 text-sm font-bold appearance-none focus:ring-2 focus:ring-[#2174C3] cursor-pointer text-black"
+                        >
+                          <option value="Actual Cost" style={{ color: '#000' }}>Actual Cost</option>
+                          <option value="Estimate Cost" style={{ color: '#000' }}>Estimate Cost</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="custom-scrollbar overflow-auto border border-gray-100 rounded-lg">
+                        <table className="w-full text-sm min-w-[800px]">
+                          <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
+                            <tr>
+                              {user?.role !== 'Dean' && <th className="p-3 w-[50px]"></th>}
+                              <th className="p-3">Cost Center</th>
+                              <th className="p-3 w-[100px]">Currency</th>
+                              <th className="p-3">Training Cost</th>
+                              <th className="p-3">Venue Cost</th>
+                              <th className="p-3">SPPD Cost</th>
+                              <th className="p-3 w-[120px]">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {costRows.map((row, idx) => {
+                              const selectedDivObj = divisions.find(d => parseInt(d.division_id) === parseInt(row.division));
+                              const abbr = selectedDivObj ? getAbbreviation(selectedDivObj.division_name) : "";
+
+                              return (
+                                <tr key={idx}>
+                                  {user?.role !== 'Dean' && (
+                                    <td className="p-2">
+                                      <button type="button" onClick={() => setCostRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
+                                    </td>
+                                  )}
+                                  <td className="p-2">
+                                    <div className="space-y-1">
+                                      <select
+                                        value={row.division}
+                                        onChange={(e) => { const a = [...costRows]; a[idx].division = e.target.value; setCostRows(a); }}
+                                        className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                      >
+                                        <option value="">Select Division</option>
+                                        {divisions.map(div => (
+                                          <option key={div.division_id} value={div.division_id}>{div.division_name}</option>
+                                        ))}
+                                      </select>
+                                      {abbr && <span className="text-[10px] text-gray-500 font-bold ml-2">Code: {abbr}</span>}
+                                    </div>
+                                  </td>
+                                  <td className="p-2">
+                                    <select
+                                      value={row.currency}
+                                      onChange={(e) => { const a = [...costRows]; a[idx].currency = e.target.value; setCostRows(a); }}
+                                      className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                    >
+                                      <option value="IDR">IDR</option>
+                                    </select>
+                                  </td>
+                                  <td className="p-2"><input type="number" placeholder="Enter cost" value={row.training} onChange={(e) => { const a = [...costRows]; a[idx].training = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                                  <td className="p-2"><input type="number" placeholder="Enter cost" value={row.room} onChange={(e) => { const a = [...costRows]; a[idx].room = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                                  <td className="p-2"><input type="number" placeholder="Enter cost" value={row.sppd} onChange={(e) => { const a = [...costRows]; a[idx].sppd = e.target.value; setCostRows(a); }} className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black" /></td>
+                                  <td className="p-2">
+                                    <select
+                                      value={row.status}
+                                      onChange={(e) => { const a = [...costRows]; a[idx].status = e.target.value; setCostRows(a); }}
+                                      className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                    >
+                                      <option value="">Status</option>
+                                      <option value="Unpaid">Unpaid</option>
+                                      <option value="Paid">Paid</option>
+                                    </select>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      {user?.role !== 'Dean' && (
+                        <button type="button" onClick={() => setCostRows([...costRows, { division: "", currency: "IDR", room: "", training: "", sppd: "", status: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Cost Center Allocation</button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "doc" && (
+                  <div className="space-y-4">
+                    <h3 className="text-[#2174C3] font-bold text-lg mb-4">Documentation</h3>
+                    <div className="custom-scrollbar overflow-auto border border-gray-100 rounded-lg">
+                      <table className="w-full text-sm min-w-[1000px]">
+                        <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold text-center border-b border-gray-100">
+                          <tr>
+                            {user?.role !== 'Dean' && <th className="p-3 w-[50px]"></th>}
+                            <th className="p-3">Document Type</th>
+                            <th className="p-3">File Name</th>
+                            <th className="p-3 w-[80px]">Drive</th>
+                            <th className="p-3">File Link (URL)</th>
+                            <th className="p-3">Uploader</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {documentationRows.map((row, idx) => (
+                            <tr key={idx}>
+                              {user?.role !== 'Dean' && (
+                                <td className="p-2">
+                                  <button type="button" onClick={() => setDocumentationRows(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 rounded-full bg-red-50 text-red-500 text-xs font-bold">×</button>
+                                </td>
+                              )}
+                              <td className="p-2">
+                                <select
+                                  value={row.type}
+                                  onChange={(e) => { const a = [...documentationRows]; a[idx].type = e.target.value; setDocumentationRows(a); }}
+                                  className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                >
+                                  <option value="">Select Type</option>
+                                  <option value="Invoice">Invoice</option>
+                                  <option value="Form IHT">Form IHT</option>
+                                  <option value="All Document">All Document</option>
+                                </select>
+                              </td>
+                              <td className="p-2">
+                                <input
+                                  type="text"
+                                  value={row.file_name}
+                                  onChange={(e) => { const a = [...documentationRows]; a[idx].file_name = e.target.value; setDocumentationRows(a); }}
+                                  className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                  placeholder="Enter file name"
+                                />
+                              </td>
+                              <td className="p-2 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => window.open('https://drive.google.com/drive/folders/1oM-ijNHhANgh7EFZvzUG_smQJBq4G77d?usp=sharing', '_blank')}
+                                  className="p-2 rounded-lg transition-all bg-[#2174C3] text-white hover:bg-[#1A5E9D]"
+                                  title="Open in Google Drive"
+                                >
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                </button>
+                              </td>
+                              <td className="p-2">
+                                <input
+                                  type="text"
+                                  value={row.url}
+                                  onChange={(e) => { const a = [...documentationRows]; a[idx].url = e.target.value; setDocumentationRows(a); }}
+                                  className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                  placeholder="Enter url"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <select
+                                  value={row.submitted_by}
+                                  onChange={(e) => { const a = [...documentationRows]; a[idx].submitted_by = e.target.value; setDocumentationRows(a); }}
+                                  className="w-full bg-gray-100 rounded-lg p-3 border-none focus:ring-2 focus:ring-[#2174C3] text-sm text-black"
+                                >
+                                  <option value="" style={{ color: '#000' }}>Select PIC</option>
+                                  {employees.filter(emp =>
+                                    emp.role === 'Administrator' ||
+                                    emp.role === 'Super Administrator' ||
+                                    [200335, 200331, 200329].includes(parseInt(emp.nik)) ||
+                                    parseInt(emp.nik) === parseInt(user?.nik)
+                                  ).map(emp => (
+                                    <option key={emp.nik} value={emp.nik} style={{ color: '#000' }}>{emp.full_name}</option>
+                                  ))}
+                                </select>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {user?.role !== 'Dean' && (
+                      <button type="button" onClick={() => setDocumentationRows([...documentationRows, { type: "", file_name: "", url: "", submitted_by: "" }])} className="text-[#2174C3] font-bold text-sm">+ Add Documentation</button>
+                    )}
+                  </div>
+                )}
               </fieldset>
             </div>
 

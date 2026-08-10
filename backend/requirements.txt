@@ -31,5 +31,4 @@ urllib3==2.6.3
 langchain
 langchain-openai
 langchain-core
-
-
+langgraph

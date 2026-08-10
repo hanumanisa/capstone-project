@@ -242,9 +242,9 @@ const TnaPage = () => {
                     </div>
                     <button
                         onClick={handleExport}
-                        className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-28 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer"
+                        className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white w-36 py-2 rounded-lg font-medium shadow-sm transition-all text-sm cursor-pointer"
                     >
-                        Report
+                        Download Report
                     </button>
                 </div>
 
@@ -301,61 +301,61 @@ const TnaPage = () => {
 
                 {/* Pagination */}
                 <div className="sticky bottom-0 bg-[#F4F7FA]/95 backdrop-blur-sm py-4 flex flex-col items-end gap-2 z-20 mt-4 border-t border-gray-100">
-                        <div className="flex items-center space-x-1">
-                            <button
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={currentPage === 1}
-                            >Previous</button>
+                    <div className="flex items-center space-x-1">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            className="px-4 py-2 bg-[#E2E8F0] text-gray-500 rounded-md font-medium hover:bg-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={currentPage === 1}
+                        >Previous</button>
 
-                            {(() => {
-                                const pages = [];
-                                const maxVisible = 5;
-                                let start = Math.max(1, currentPage - 2);
-                                let end = Math.min(totalPages, start + maxVisible - 1);
+                        {(() => {
+                            const pages = [];
+                            const maxVisible = 5;
+                            let start = Math.max(1, currentPage - 2);
+                            let end = Math.min(totalPages, start + maxVisible - 1);
 
-                                if (end - start + 1 < maxVisible) {
-                                    start = Math.max(1, end - maxVisible + 1);
-                                }
+                            if (end - start + 1 < maxVisible) {
+                                start = Math.max(1, end - maxVisible + 1);
+                            }
 
-                                if (start > 1) {
-                                    pages.push(
-                                        <button key={1} onClick={() => setCurrentPage(1)} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-all">1</button>
-                                    );
-                                    if (start > 2) pages.push(<span key="sep1" className="px-2 text-gray-400">...</span>);
-                                }
+                            if (start > 1) {
+                                pages.push(
+                                    <button key={1} onClick={() => setCurrentPage(1)} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-all">1</button>
+                                );
+                                if (start > 2) pages.push(<span key="sep1" className="px-2 text-gray-400">...</span>);
+                            }
 
-                                for (let i = start; i <= end; i++) {
-                                    pages.push(
-                                        <button
-                                            key={i}
-                                            onClick={() => setCurrentPage(i)}
-                                            className={`px-4 py-2 rounded-md font-medium transition-all ${currentPage === i ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                                        >{i}</button>
-                                    );
-                                }
+                            for (let i = start; i <= end; i++) {
+                                pages.push(
+                                    <button
+                                        key={i}
+                                        onClick={() => setCurrentPage(i)}
+                                        className={`px-4 py-2 rounded-md font-medium transition-all ${currentPage === i ? 'bg-[#2174C3] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                    >{i}</button>
+                                );
+                            }
 
-                                if (end < totalPages) {
-                                    if (end < totalPages - 1) pages.push(<span key="sep2" className="px-2 text-gray-400">...</span>);
-                                    pages.push(
-                                        <button key={totalPages} onClick={() => setCurrentPage(totalPages)} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-all">{totalPages}</button>
-                                    );
-                                }
+                            if (end < totalPages) {
+                                if (end < totalPages - 1) pages.push(<span key="sep2" className="px-2 text-gray-400">...</span>);
+                                pages.push(
+                                    <button key={totalPages} onClick={() => setCurrentPage(totalPages)} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-all">{totalPages}</button>
+                                );
+                            }
 
-                                return pages;
-                            })()}
+                            return pages;
+                        })()}
 
-                            <button
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={currentPage === totalPages}
-                            >Next</button>
-                        </div>
-                        <div className="text-xs text-gray-400 font-medium">
-                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredParticipants.length)} of {filteredParticipants.length} TNA
-                        </div>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={currentPage === totalPages}
+                        >Next</button>
                     </div>
-                
+                    <div className="text-xs text-gray-400 font-medium">
+                        Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredParticipants.length)} of {filteredParticipants.length} TNA
+                    </div>
+                </div>
+
             </div>
 
             {/* Modals */}
