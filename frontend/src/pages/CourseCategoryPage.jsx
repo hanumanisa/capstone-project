@@ -189,6 +189,9 @@ const CourseCategoryPage = () => {
             'Status': cat.is_active ? 'Active' : 'Inactive'
         }));
         const ws = XLSX.utils.json_to_sheet(exportData);
+        XLSX.utils.sheet_add_aoa(ws, [
+            ["[1] PT Sarana Multi Infrastruktur (Persero), “Course Category Data,” Internal Company Database, 2026."]
+        ], { origin: `A${exportData.length + 3}` });
         // Column widths
         const wscols = [
             { wch: 15 },

@@ -318,6 +318,9 @@ export default function TrainingEvaluationPage() {
             tableHTML += '</tr>';
         });
 
+        tableHTML += '<tr><td colspan="' + (selectedCard?.type === 'L2' ? 5 : 4) + '" style="border:none;">&nbsp;</td></tr>';
+        tableHTML += '<tr><td colspan="' + (selectedCard?.type === 'L2' ? 5 : 4) + '" style="border:none;">[1] PT Sarana Multi Infrastruktur (Persero), “Training Evaluation Data,” Internal Company Database, 2026.</td></tr>';
+        tableHTML += '<tr><td colspan="' + (selectedCard?.type === 'L2' ? 5 : 4) + '" style="border:none;">[2] PT Sarana Multi Infrastruktur (Persero), “Employee Data,” Internal Company Database, 2026.</td></tr>';
         tableHTML += '</table></body></html>';
 
         const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel;charset=utf-8;' });

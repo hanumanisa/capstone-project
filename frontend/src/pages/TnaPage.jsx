@@ -120,6 +120,12 @@ const TnaPage = () => {
             'Fulfillment Training': item.fulfillment_trainings || '-',
         }));
         const ws = XLSX.utils.json_to_sheet(exportData);
+        XLSX.utils.sheet_add_aoa(ws, [
+            ["[1] PT Sarana Multi Infrastruktur (Persero), “TNA Data,” Internal Company Database, 2026."],
+            ["[2] PT Sarana Multi Infrastruktur (Persero), “Course Category Data,” Internal Company Database, 2026."],
+            ["[3] PT Sarana Multi Infrastruktur (Persero), “Course Data,” Internal Company Database, 2026."],
+            ["[4] PT Sarana Multi Infrastruktur (Persero), “Employee Data,” Internal Company Database, 2026."]
+        ], { origin: `A${exportData.length + 3}` });
         // Column widths
         const wscols = [
             { wch: 25 }, { wch: 35 }, { wch: 15 }, { wch: 30 },

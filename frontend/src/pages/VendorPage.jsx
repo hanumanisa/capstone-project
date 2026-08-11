@@ -277,6 +277,12 @@ const VendorPage = () => {
         });
 
         const ws = XLSX.utils.json_to_sheet(exportData);
+        XLSX.utils.sheet_add_aoa(ws, [
+            ["[1] PT Sarana Multi Infrastruktur (Persero), “Vendor Data,” Internal Company Database, 2026."],
+            ["[2] PT Sarana Multi Infrastruktur (Persero), “Course Category Data,” Internal Company Database, 2026."],
+            ["[3] PT Sarana Multi Infrastruktur (Persero), “Course Data,” Internal Company Database, 2026."],
+            ["[4] PT Sarana Multi Infrastruktur (Persero), “Training Master Data,” Internal Company Database, 2026."]
+        ], { origin: `A${exportData.length + 3}` });
         if (merges.length > 0) {
             ws['!merges'] = merges;
         }
