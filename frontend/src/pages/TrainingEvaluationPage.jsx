@@ -68,6 +68,19 @@ export default function TrainingEvaluationPage() {
     const [evalRows, setEvalRows] = useState([{ q: '', type: 'Rating Scale', active: true, options: [], optionAnswers: [], scores: [] }]);
     const [l2Rows, setL2Rows] = useState([{ q: '', opts: ['', '', '', ''], optActive: [true, true, true, true], optVisible: [true, true, true, true], answer: 'A', score: 0 }]);
 
+    const formatDeadline = (dateString) => {
+        if (!dateString) return 'No limit';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        
+        const day = String(date.getDate()).padStart(2, '0');
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        
+        return `${day}-${month}-${year}`;
+    };
+
     // --- Data Loading Functions ---
 
     /** Fetches Training Master data for dropdowns */
@@ -779,7 +792,7 @@ export default function TrainingEvaluationPage() {
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center gap-3">
-                                                    <p className="text-sm font-semibold text-gray-800">{selectedCard?.deadline ? new Date(selectedCard.deadline).toLocaleString('en-US') : 'No limit'}</p>
+                                                    <p className="text-sm font-semibold text-gray-800">{selectedCard?.deadline ? formatDeadline(selectedCard.deadline) : 'No limit'}</p>
                                                     {canEdit && (
                                                         <button onClick={() => setIsEditingDeadline(true)} className="text-[#2174C3] hover:text-[#1A5E9D] p-1 bg-white border border-[#2174C3] rounded shadow-sm transition-colors" title="Edit Deadline">
                                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
@@ -820,13 +833,13 @@ export default function TrainingEvaluationPage() {
                                         )}
                                         <button onClick={exportToExcel} className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm flex items-center gap-2">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                            Export to Excel
+                                            Download Report
                                         </button>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
                                     <svg className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    <p className="text-xs text-amber-700 leading-relaxed">This table only displays the <strong>5 latest records</strong>. Click <strong>Export to Excel</strong> to view all respondent data.</p>
+                                    <p className="text-xs text-amber-700 leading-relaxed">This table only displays the <strong>5 latest records</strong>. Click <strong>Download Report</strong> to view all respondent data.</p>
                                 </div>
                                 <div className="rounded-xl overflow-hidden border border-gray-200">
                                     <table className="w-full resp-table">
