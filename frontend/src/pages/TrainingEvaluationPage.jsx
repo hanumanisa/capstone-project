@@ -416,8 +416,8 @@ export default function TrainingEvaluationPage() {
 
         let payloadQuestions = [];
         if (isL2) {
-            const hasInvalidScore = l2Rows.some(row => row.q.trim() !== '' && Number(row.score) < 100);
-            if (hasInvalidScore) {
+            const totalScore = l2Rows.reduce((sum, row) => row.q.trim() !== '' ? sum + Number(row.score || 0) : sum, 0);
+            if (totalScore !== 100) {
                 setToast({ message: 'Score must be 100', type: 'error' });
                 return;
             }
@@ -526,6 +526,8 @@ export default function TrainingEvaluationPage() {
     if (user && !isAdmin) {
         return <Navigate to="/dashboard" replace />;
     }
+
+    const l2TotalScore = isL2 ? l2Rows.reduce((sum, row) => sum + Number(row.score || 0), 0) : 0;
 
     return (
         <MainLayout>
@@ -962,6 +964,11 @@ export default function TrainingEvaluationPage() {
                                         <span>{isL2 ? l2Rows.length + ' questions' : evalRows.length + ' questions'}</span>
                                     </div>
                                 </div>
+                                {isL2 && l2TotalScore !== 100 && (
+                                    <div className="text-red-500 text-sm font-medium mb-4 -mt-4">
+                                        Score must be 100 — {l2TotalScore < 100 ? `missing ${100 - l2TotalScore}` : `exceeds by ${l2TotalScore - 100}`}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
@@ -1054,9 +1061,6 @@ export default function TrainingEvaluationPage() {
                                                             ))}
                                                         </div>
                                                     </div>
-                                                    {Number(row.score) < 100 && (
-                                                        <div className="text-red-500 text-xs mt-2 ml-[50px] mb-2 font-medium">Score must be 100</div>
-                                                    )}
                                                 </div>
                                             ))}
                                         </div>

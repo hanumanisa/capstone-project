@@ -1828,8 +1828,7 @@ class RequestPasswordResetOTP(APIView):
             # Cari user berdasarkan username yang dianggap email (seperti di seed.py)
             user = User.objects.get(username=email)
         except User.DoesNotExist:
-            # Kembalikan response sukses palsu agar penyerang tidak bisa mengecek email yang terdaftar
-            return Response({"message": "If an account with that email exists, an OTP has been sent."}, status=status.HTTP_200_OK)
+            return Response({"detail": "This email is not registered."}, status=status.HTTP_404_NOT_FOUND)
 
         # Hapus OTP lama jika ada
         PasswordResetOTP.objects.filter(user=user).delete()

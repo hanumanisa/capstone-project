@@ -62,7 +62,7 @@ const LoginPage = () => {
             setForgotMessage(response.data.message);
             setForgotStep(2);
         } catch (err) {
-            setForgotError(err.response?.data?.detail || 'Gagal mengirim OTP. Silakan coba lagi.');
+            setForgotError(err.response?.data?.detail || 'Failed to send OTP. Please try again.');
         } finally {
             setForgotLoading(false);
         }
@@ -81,7 +81,7 @@ const LoginPage = () => {
                 new_password: newPassword
             });
             
-            // Sukses ganti password
+            // Password changed successfully
             setForgotMessage(response.data.message);
             setTimeout(() => {
                 setShowForgotModal(false);
@@ -92,7 +92,7 @@ const LoginPage = () => {
                 setForgotMessage('');
             }, 2000);
         } catch (err) {
-            setForgotError(err.response?.data?.detail || 'OTP tidak valid atau kadaluarsa.');
+            setForgotError(err.response?.data?.detail || 'Invalid or expired OTP.');
         } finally {
             setForgotLoading(false);
         }
@@ -205,7 +205,7 @@ const LoginPage = () => {
                                 }}
                                 className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors bg-transparent border-none cursor-pointer"
                             >
-                                Lupa Password?
+                                Forgot Password?
                             </button>
                         </div>
 
@@ -225,7 +225,7 @@ const LoginPage = () => {
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-6 border-b border-slate-100">
                             <h3 className="text-lg font-bold text-slate-800">
-                                {forgotStep === 1 ? 'Lupa Password' : 'Reset Password'}
+                                {forgotStep === 1 ? 'Forgot Password' : 'Reset Password'}
                             </h3>
                             <button 
                                 onClick={() => setShowForgotModal(false)}
@@ -254,14 +254,14 @@ const LoginPage = () => {
                             {forgotStep === 1 ? (
                                 <form onSubmit={handleRequestOTP} className="space-y-4">
                                     <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-slate-600">Email Terdaftar</label>
-                                        <p className="text-xs text-slate-500 mb-2">Kami akan mengirimkan kode verifikasi 6-digit ke email Anda.</p>
+                                        <label className="block text-sm font-medium text-slate-600">Registered Email</label>
+                                        <p className="text-xs text-slate-500 mb-2">We will send a 6-digit verification code to your email.</p>
                                         <input
                                             type="email"
                                             required
                                             value={forgotEmail}
                                             onChange={(e) => setForgotEmail(e.target.value)}
-                                            placeholder="Contoh: user@gmail.com"
+                                            placeholder="Example: user@gmail.com"
                                             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200"
                                         />
                                     </div>
@@ -270,14 +270,14 @@ const LoginPage = () => {
                                         disabled={forgotLoading}
                                         className="w-full py-3 px-4 bg-[#2174C3] hover:bg-blue-700 text-white font-semibold rounded-xl shadow-[0_4px_12px_-2px_rgba(37,99,235,0.3)] transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
-                                        {forgotLoading ? 'Mengirim...' : 'Kirim Kode Verifikasi'}
+                                        {forgotLoading ? 'Sending...' : 'Send Verification Code'}
                                     </button>
                                 </form>
                             ) : (
                                 <form onSubmit={handleVerifyOTP} className="space-y-4">
                                     <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-slate-600">Kode Verifikasi (OTP)</label>
-                                        <p className="text-xs text-slate-500 mb-2">Cek kotak masuk email Anda dan masukkan 6-digit kode OTP.</p>
+                                        <label className="block text-sm font-medium text-slate-600">Verification Code (OTP)</label>
+                                        <p className="text-xs text-slate-500 mb-2">Check your email inbox and enter the 6-digit OTP code.</p>
                                         <input
                                             type="text"
                                             required
@@ -289,14 +289,14 @@ const LoginPage = () => {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-slate-600">Password Baru</label>
+                                        <label className="block text-sm font-medium text-slate-600">New Password</label>
                                         <div className="relative">
                                             <input
                                                 type={showNewPassword ? "text" : "password"}
                                                 required
                                                 value={newPassword}
                                                 onChange={(e) => setNewPassword(e.target.value)}
-                                                placeholder="Masukkan password baru"
+                                                placeholder="Enter new password"
                                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200 pr-12"
                                             />
                                             <button
@@ -322,7 +322,7 @@ const LoginPage = () => {
                                         disabled={forgotLoading}
                                         className="w-full py-3 px-4 bg-[#2174C3] hover:bg-blue-700 text-white font-semibold rounded-xl shadow-[0_4px_12px_-2px_rgba(37,99,235,0.3)] transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
-                                        {forgotLoading ? 'Memproses...' : 'Simpan Password Baru'}
+                                        {forgotLoading ? 'Processing...' : 'Save New Password'}
                                     </button>
                                 </form>
                             )}
