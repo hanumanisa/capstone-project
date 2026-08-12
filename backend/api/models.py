@@ -1,4 +1,5 @@
 from datetime import datetime, date
+import random
 # pyrefly: ignore [missing-import]
 from django.db import models
 from django.conf import settings
@@ -833,3 +834,15 @@ class Budget(models.Model):
 
     def __str__(self):
         return f"{self.budget_name} ({self.start_date_budget} - {self.end_date_budget})"
+
+class PasswordResetOTP(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'password_reset_otps'
+
+    def generate_otp(self):
+        self.otp = str(random.randint(100000, 999999))
+        self.save()

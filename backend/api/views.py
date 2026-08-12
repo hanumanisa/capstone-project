@@ -4,6 +4,7 @@ import json
 import os
 import re
 from django.utils import timezone
+from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q, Count, Sum, Case, When, F
@@ -23,7 +24,7 @@ from .models import (
     EvaluationForm, EvaluationQuestion, EvaluationQuestionOption,
     EvaluationAnswer, EvaluationResult, Profile,
     AiAdminConfig, AiChatSession, AiChatLog, AiUnauthorizedAttempt,
-    Budget
+    Budget, PasswordResetOTP
 )
 from .serializers import (
     UserSerializer, MyTokenObtainPairSerializer,
@@ -1814,4 +1815,72 @@ class CheckParticipantConflictView(APIView):
             })
         
         return Response({"conflict": False})
+
+class RequestPasswordResetOTP(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"detail": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Cari user berdasarkan username yang dianggap email (seperti di seed.py)
+            user = User.objects.get(username=email)
+        except User.DoesNotExist:
+            # Kembalikan response sukses palsu agar penyerang tidak bisa mengecek email yang terdaftar
+            return Response({"message": "If an account with that email exists, an OTP has been sent."}, status=status.HTTP_200_OK)
+
+        # Hapus OTP lama jika ada
+        PasswordResetOTP.objects.filter(user=user).delete()
+
+        # Buat OTP baru
+        otp_obj = PasswordResetOTP(user=user)
+        otp_obj.generate_otp()
+
+        # Kirim email
+        subject = "Your Password Reset Code"
+        message = f"Hello,\n\nYour password reset verification code is: {otp_obj.otp}\nThis code will expire in 10 minutes.\n\nIf you did not request this, please ignore this email."
+        sender = "capstoneprojectsmi03@gmail.com"
+        
+        try:
+            send_mail(subject, message, sender, [email], fail_silently=False)
+        except Exception as e:
+            return Response({"detail": f"Failed to send email. Please try again later. Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({"message": "If an account with that email exists, an OTP has been sent."}, status=status.HTTP_200_OK)
+
+
+class VerifyOTPAndResetPassword(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        otp_code = request.data.get('otp')
+        new_password = request.data.get('new_password')
+
+        if not all([email, otp_code, new_password]):
+            return Response({"detail": "Email, OTP, and new password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(username=email)
+            otp_obj = PasswordResetOTP.objects.get(user=user, otp=otp_code)
+        except (User.DoesNotExist, PasswordResetOTP.DoesNotExist):
+            return Response({"detail": "Invalid OTP or Email."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Cek kadaluarsa (10 menit)
+        now = timezone.now()
+        diff = now - otp_obj.created_at
+        if diff.total_seconds() > 600:
+            otp_obj.delete()
+            return Response({"detail": "OTP has expired."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Reset Password
+        user.set_password(new_password)
+        user.save()
+        
+        # Hapus OTP
+        otp_obj.delete()
+
+        return Response({"message": "Password has been successfully reset."}, status=status.HTTP_200_OK)
 

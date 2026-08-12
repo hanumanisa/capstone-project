@@ -10,7 +10,8 @@ from .views import (
     TrainingMasterViewSet, TrainingEventViewSet, EventLocationViewSet,
     EventScheduleViewSet, EventParticipantViewSet, EventCostViewSet,
     EventDocumentViewSet, AddTrainingView, DivisionViewSet, ExportReportView,
-    BudgetViewSet, CheckTrainingCodeView, CheckParticipantConflictView
+    BudgetViewSet, CheckTrainingCodeView, CheckParticipantConflictView,
+    RequestPasswordResetOTP, VerifyOTPAndResetPassword
 )
 from .dashboard_views import DashboardCardsAPIView
 from .dashboard_admin_views import DashboardAdminAPIView
@@ -61,6 +62,8 @@ urlpatterns = [
     # Auth endpoints
     path('login/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('forgot-password/request/', RequestPasswordResetOTP.as_view(), name='request-password-reset-otp'),
+    path('forgot-password/reset/', VerifyOTPAndResetPassword.as_view(), name='verify-otp-and-reset-password'),
     path('add-training/', AddTrainingView.as_view(), name='add-training'),
     path('add-training/<int:pk>/', AddTrainingView.as_view(), name='add-training-detail'),
     path('export-report/', ExportReportView.as_view(), name='export-report'),
