@@ -34,6 +34,106 @@ class BudgetSerializer(serializers.ModelSerializer):
         model = Budget
         fields = '__all__'
 
+    def validate(self, data):
+        import re
+        def normalize(val):
+            if not val:
+                return ""
+            return re.sub(r'[^a-zA-Z0-9]', '', str(val)).lower()
+
+        def get_levenshtein_similarity(s1, s2):
+            len1, len2 = len(s1), len(s2)
+            if len1 == 0:
+                return 1.0 if len2 == 0 else 0.0
+            if len2 == 0:
+                return 0.0
+
+            track = [[0] * (len1 + 1) for _ in range(len2 + 1)]
+            for i in range(len1 + 1):
+                track[0][i] = i
+            for j in range(1, len2 + 1):
+                track[j][0] = j
+
+            for j in range(1, len2 + 1):
+                for i in range(1, len1 + 1):
+                    indicator = 0 if s1[i - 1] == s2[j - 1] else 1
+                    track[j][i] = min(
+                        track[j][i - 1] + 1,
+                        track[j - 1][i] + 1,
+                        track[j - 1][i - 1] + indicator
+                    )
+
+            distance = track[len2][len1]
+            return 1.0 - (distance / max(len1, len2))
+
+        def is_similar(s1, s2):
+            if s1 == s2:
+                return True
+            sim = get_levenshtein_similarity(s1, s2)
+            if sim >= 0.70:
+                return True
+            if s1.startswith(s2) or s2.startswith(s1) or s1.endswith(s2) or s2.endswith(s1):
+                if abs(len(s1) - len(s2)) <= 3:
+                    return True
+            return False
+
+        budget_name = data.get('budget_name')
+        if budget_name is None and self.instance:
+            budget_name = self.instance.budget_name
+
+        start_date = data.get('start_date_budget')
+        if start_date is None and self.instance:
+            start_date = self.instance.start_date_budget
+
+        end_date = data.get('end_date_budget')
+        if end_date is None and self.instance:
+            end_date = self.instance.end_date_budget
+
+        # 1. Full Year Date Check (Start date must be Jan 1 and End date must be Dec 31)
+        if start_date and end_date:
+            start_str = str(start_date)
+            end_str = str(end_date)
+
+            is_jan_1 = start_str.endswith('-01-01')
+            is_dec_31 = end_str.endswith('-12-31')
+
+            if not (is_jan_1 and is_dec_31):
+                raise serializers.ValidationError({
+                    "start_date_budget": "Budget date must be full year (1 January - 31 December)"
+                })
+
+            start_year = start_str.split('-')[0]
+            end_year = end_str.split('-')[0]
+            if start_year != end_year:
+                raise serializers.ValidationError({
+                    "start_date_budget": "Budget start date and end date must be in the same year"
+                })
+
+        # 2. Duplicate & Similarity Checks against existing budgets
+        norm_name = normalize(budget_name)
+
+        queryset = Budget.objects.all()
+        for existing in queryset:
+            if self.instance and existing.pk == self.instance.pk:
+                continue
+
+            existing_norm_name = normalize(existing.budget_name)
+
+            # Budget name check
+            if norm_name and existing_norm_name and is_similar(norm_name, existing_norm_name):
+                raise serializers.ValidationError({
+                    "budget_name": "Budget name already exist or writing is too similar"
+                })
+
+            # Date overlap check
+            if start_date and end_date and existing.start_date_budget and existing.end_date_budget:
+                if str(start_date) == str(existing.start_date_budget) or str(end_date) == str(existing.end_date_budget):
+                    raise serializers.ValidationError({
+                        "start_date_budget": f"Budget for year {str(start_date).split('-')[0]} already exist"
+                    })
+
+        return data
+
 
 
 class DivisionSerializer(serializers.ModelSerializer):
@@ -872,6 +972,31 @@ class TnaParticipantSerializer(serializers.ModelSerializer):
             'iht_plus_public', 'tna_fulfilled', 'fulfillment_trainings'
         ]
 
+    def validate(self, data):
+        tna = data.get('tna')
+        if tna is None and self.instance:
+            tna = self.instance.tna
+
+        nik = data.get('nik')
+        if nik is None and self.instance:
+            nik = self.instance.nik
+
+        if tna and nik:
+            tna_pk = tna.pk if hasattr(tna, 'pk') else tna
+            nik_pk = nik.pk if hasattr(nik, 'pk') else nik
+
+            queryset = TnaParticipant.objects.filter(tna_id=tna_pk, nik_id=nik_pk)
+            if self.instance:
+                queryset = queryset.exclude(pk=self.instance.pk)
+
+            if queryset.exists():
+                emp_name = nik.full_name if hasattr(nik, 'full_name') and nik.full_name else 'Employee'
+                raise serializers.ValidationError({
+                    "nik": f"{emp_name} already registered in this TNA"
+                })
+
+        return data
+
     def get_iht_plus_public(self, obj):
         # Return count of IHT + Public for the specific year of the TNA period
         year = obj.tna.tna_period.year
@@ -1270,10 +1395,20 @@ class EventParticipantSerializer(serializers.ModelSerializer):
         if not event or not nik:
             return data
 
+        # Check for duplicate in same event
+        same_event_qs = EventParticipant.objects.filter(event=event, nik=nik)
+        if self.instance:
+            same_event_qs = same_event_qs.exclude(pk=self.instance.pk)
+        if same_event_qs.exists():
+            emp_name = nik.full_name if hasattr(nik, 'full_name') and nik.full_name else 'Employee'
+            raise serializers.ValidationError({
+                "nik": f"{emp_name} already registered in this training"
+            })
+
         # Get the dates of the current event
         new_start = event.start_date
         new_end = event.end_date
-        
+
         # Check for overlapping events for this employee
         # We use Q objects to check for overlap: (StartA <= EndB) and (EndA >= StartB)
         conflicts = EventParticipant.objects.filter(
@@ -1287,8 +1422,9 @@ class EventParticipantSerializer(serializers.ModelSerializer):
             
         if conflicts.exists():
             conflict_event = conflicts.first().event
+            emp_name = nik.full_name if hasattr(nik, 'full_name') and nik.full_name else 'Employee'
             raise serializers.ValidationError(
-                f"Employee already registered for other training: {conflict_event.training_topic} ({conflict_event.start_date} to {conflict_event.end_date})"
+                f"{emp_name} already registered for other training: {conflict_event.training_topic} ({conflict_event.start_date} to {conflict_event.end_date})"
             )
         
         return data

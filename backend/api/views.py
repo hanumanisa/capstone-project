@@ -540,6 +540,69 @@ class EventDocumentViewSet(viewsets.ModelViewSet):
     queryset = EventDocument.objects.all().order_by('-uploaded_at')
     serializer_class = EventDocumentSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
+def check_training_master_duplicates(training_code, training_title, exclude_pk=None):
+    import re
+    def normalize(val):
+        if not val:
+            return ""
+        return re.sub(r'[^a-zA-Z0-9]', '', str(val)).lower()
+
+    def get_levenshtein_similarity(s1, s2):
+        len1, len2 = len(s1), len(s2)
+        if len1 == 0:
+            return 1.0 if len2 == 0 else 0.0
+        if len2 == 0:
+            return 0.0
+
+        track = [[0] * (len1 + 1) for _ in range(len2 + 1)]
+        for i in range(len1 + 1):
+            track[0][i] = i
+        for j in range(1, len2 + 1):
+            track[j][0] = j
+
+        for j in range(1, len2 + 1):
+            for i in range(1, len1 + 1):
+                indicator = 0 if s1[i - 1] == s2[j - 1] else 1
+                track[j][i] = min(
+                    track[j][i - 1] + 1,
+                    track[j - 1][i] + 1,
+                    track[j - 1][i - 1] + indicator
+                )
+
+        distance = track[len2][len1]
+        return 1.0 - (distance / max(len1, len2))
+
+    def is_similar(s1, s2):
+        if s1 == s2:
+            return True
+        sim = get_levenshtein_similarity(s1, s2)
+        if sim >= 0.70:
+            return True
+        if s1.startswith(s2) or s2.startswith(s1) or s1.endswith(s2) or s2.endswith(s1):
+            if abs(len(s1) - len(s2)) <= 3:
+                return True
+        return False
+
+    norm_code = normalize(training_code)
+    norm_title = normalize(training_title)
+
+    queryset = TrainingMaster.objects.all()
+    if exclude_pk:
+        queryset = queryset.exclude(pk=exclude_pk)
+
+    for existing in queryset:
+        existing_norm_code = normalize(existing.training_code)
+        existing_norm_title = normalize(existing.training_title)
+
+        if norm_code and existing_norm_code and norm_code == existing_norm_code:
+            return "training code already exist, input other training code"
+
+        if norm_title and existing_norm_title and is_similar(norm_title, existing_norm_title):
+            return "training title already exist, input other training title"
+
+    return None
+
+
 class AddTrainingView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
 
@@ -557,6 +620,10 @@ class AddTrainingView(APIView):
     def post(self, request):
         data = request.data
         try:
+            code_err = check_training_master_duplicates(data.get('training_code'), data.get('training_title'))
+            if code_err:
+                return Response({"error": code_err}, status=status.HTTP_400_BAD_REQUEST)
+
             tm = TrainingMaster.objects.create(
                 training_code=data.get('training_code'),
                 training_type=data.get('training_type'),
@@ -682,6 +749,10 @@ class AddTrainingView(APIView):
         data = request.data
         try:
             tm = TrainingMaster.objects.get(pk=pk)
+            code_err = check_training_master_duplicates(data.get('training_code', tm.training_code), data.get('training_title', tm.training_title), exclude_pk=tm.pk)
+            if code_err:
+                return Response({"error": code_err}, status=status.HTTP_400_BAD_REQUEST)
+
             # Update TrainingMaster
             tm.training_code = data.get('training_code', tm.training_code)
             tm.training_type = data.get('training_type', tm.training_type)
@@ -1861,9 +1932,11 @@ class CheckParticipantConflictView(APIView):
 
         if conflicts.exists():
             conflict_event = conflicts.first().event
+            emp = Employee.objects.filter(nik=nik).first()
+            emp_name = emp.full_name if emp and emp.full_name else 'Employee'
             return Response({
                 "conflict": True,
-                "message": f"Employee already registered for other training: {conflict_event.training_topic} ({conflict_event.start_date} to {conflict_event.end_date})"
+                "message": f"{emp_name} already registered for other training: {conflict_event.training_topic} ({conflict_event.start_date} to {conflict_event.end_date})"
             })
         
         return Response({"conflict": False})

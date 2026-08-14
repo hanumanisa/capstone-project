@@ -188,10 +188,20 @@ export default function TrainingMasterPage() {
   const handleEmployeeChange = async (idx, nik) => {
     if (!nik) return;
 
+    const getNik = (val) => {
+      if (!val) return "";
+      if (typeof val === "object") return String(val.nik || val.nik_id || "");
+      return String(val);
+    };
+
+    const targetNik = getNik(nik);
+
     // Check if already in the list
-    const isDuplicate = participantRows.some((row, i) => i !== idx && row.employee === nik);
+    const isDuplicate = participantRows.some((row, i) => i !== idx && getNik(row.employee) === targetNik);
     if (isDuplicate) {
-      setToast({ message: "Employee already added to this list", type: "error" });
+      const emp = employees.find(e => getNik(e.nik) === targetNik);
+      const empName = emp ? emp.full_name : "Employee";
+      setToast({ message: `${empName} already registered in this training`, type: "error" });
       const a = [...participantRows];
       a[idx].employee = "";
       setParticipantRows(a);
@@ -232,12 +242,48 @@ export default function TrainingMasterPage() {
     fetchTrainings();
   };
 
+  const checkTrainingDuplicates = () => {
+    const normCode = trainingCode ? trainingCode.toLowerCase().replace(/[^a-zA-Z0-9]/g, '') : '';
+    const normTitle = trainingTitle ? trainingTitle.toLowerCase().replace(/[^a-zA-Z0-9]/g, '') : '';
+
+    const isDuplicateCode = trainings.some(t => {
+      if (isEditMode && t.training_id === editingId) return false;
+      const existCode = (t.training_code || '').toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+      return normCode && existCode && normCode === existCode;
+    });
+
+    if (isDuplicateCode) {
+      setToast({ message: "training code already exist, input other training code", type: "error" });
+      return true;
+    }
+
+    const isDuplicateTitle = trainings.some(t => {
+      if (isEditMode && t.training_id === editingId) return false;
+      const existTitle = (t.training_title || '').toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+      if (!normTitle || !existTitle) return false;
+      if (normTitle === existTitle) return true;
+      if (normTitle.startsWith(existTitle) || existTitle.startsWith(normTitle)) {
+        if (Math.abs(normTitle.length - existTitle.length) <= 3) return true;
+      }
+      return false;
+    });
+
+    if (isDuplicateTitle) {
+      setToast({ message: "training title already exist, input other training title", type: "error" });
+      return true;
+    }
+
+    return false;
+  };
+
   const handleSaveAll = async () => {
     try {
       if (!trainingCode || !courseCategory || !courseId || !pic || !vendorId) {
         setToast({ message: "Please complete all required fields!", type: "error" });
         return;
       }
+
+      if (checkTrainingDuplicates()) return;
 
       const payload = {
         training_code: trainingCode,
@@ -481,12 +527,34 @@ export default function TrainingMasterPage() {
   };
 
   const handleSaveBudget = async () => {
-    try {
-      if (!budgetName || !budgetStartDate || !budgetEndDate || !totalBudget) {
-        setToast({ message: "Please fill all fields", type: "error" });
-        return;
-      }
+    if (!budgetName.trim()) {
+      setToast({ message: "Budget Name is required", type: "error" });
+      return;
+    }
+    if (!budgetStartDate || !budgetEndDate) {
+      setToast({ message: "Start Date and End Date are required", type: "error" });
+      return;
+    }
+    if (!totalBudget) {
+      setToast({ message: "Total Budget is required", type: "error" });
+      return;
+    }
 
+    // Full Year Date Rule Check (1 Jan - 31 Dec)
+    const isJan1 = budgetStartDate.endsWith('-01-01');
+    const isDec31 = budgetEndDate.endsWith('-12-31');
+    const startYear = budgetStartDate.split('-')[0];
+    const endYear = budgetEndDate.split('-')[0];
+
+    if (!isJan1 || !isDec31 || startYear !== endYear) {
+      setToast({
+        message: `Budget date must be a full year (1 January ${startYear} - 31 December ${startYear})`,
+        type: "error"
+      });
+      return;
+    }
+
+    try {
       await api.post('/api/budgets/', {
         budget_name: budgetName,
         start_date_budget: budgetStartDate,
@@ -502,7 +570,32 @@ export default function TrainingMasterPage() {
       setTotalBudget("");
     } catch (err) {
       console.error("Failed to save budget", err);
-      setToast({ message: "Failed to save budget", type: "error" });
+      let errorMsg = "Failed to save budget";
+      if (err.response?.data) {
+        const data = err.response.data;
+        if (data.budget_name) {
+          errorMsg = Array.isArray(data.budget_name) ? data.budget_name[0] : data.budget_name;
+        } else if (data.start_date_budget) {
+          errorMsg = Array.isArray(data.start_date_budget) ? data.start_date_budget[0] : data.start_date_budget;
+        } else if (data.end_date_budget) {
+          errorMsg = Array.isArray(data.end_date_budget) ? data.end_date_budget[0] : data.end_date_budget;
+        } else if (typeof data === 'string') {
+          errorMsg = data;
+        } else if (data.non_field_errors) {
+          errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
+        } else if (data.detail) {
+          errorMsg = data.detail;
+        } else if (Array.isArray(data)) {
+          errorMsg = data[0];
+        } else {
+          const firstKey = Object.keys(data)[0];
+          if (firstKey) {
+            const val = data[firstKey];
+            errorMsg = Array.isArray(val) ? val[0] : val;
+          }
+        }
+      }
+      setToast({ message: errorMsg, type: "error" });
     }
   };
 
@@ -1428,7 +1521,21 @@ export default function TrainingMasterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                 <label className="text-black font-semibold">Course Category</label>
-                <select className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={courseCategory} onChange={(e) => setCourseCategory(e.target.value)}>
+                <select 
+                  className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" 
+                  value={courseCategory} 
+                  onChange={(e) => {
+                    const selectedCat = e.target.value;
+                    setCourseCategory(selectedCat);
+                    if (courseId) {
+                      const match = courses.find(c => {
+                        const catId = typeof c.course_category === 'object' ? c.course_category?.course_category_id : c.course_category;
+                        return String(c.course_id) === String(courseId) && String(catId) === String(selectedCat);
+                      });
+                      if (!match) setCourseId("");
+                    }
+                  }}
+                >
                   <option value="">Select Course Category</option>
                   {courseCategories.map((c, i) => (
                     <option key={i} value={c.course_category_id}>{c.category_name}</option>
@@ -1440,9 +1547,15 @@ export default function TrainingMasterPage() {
                 <label className="text-black font-semibold">Course</label>
                 <select className="sm:col-span-2 p-3 rounded-lg bg-gray-100 border-none focus:ring-2 focus:ring-[#2174C3] text-black" value={courseId} onChange={(e) => setCourseId(e.target.value)}>
                   <option value="">Select Course</option>
-                  {courses.map((c, i) => (
-                    <option key={i} value={c.course_id}>{c.course_id} - {c.course_name}</option>
-                  ))}
+                  {courses
+                    .filter((c) => {
+                      if (!courseCategory) return true;
+                      const catId = typeof c.course_category === 'object' ? c.course_category?.course_category_id : c.course_category;
+                      return String(catId) === String(courseCategory);
+                    })
+                    .map((c, i) => (
+                      <option key={i} value={c.course_id}>{c.course_id} - {c.course_name}</option>
+                    ))}
                 </select>
               </div>
 
@@ -1492,7 +1605,7 @@ export default function TrainingMasterPage() {
                 <button type="button" onClick={handleDeleteClick} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Delete</button>
               )}
               <button type="button" onClick={() => { setShowModal(false); setIsEditMode(false); setEditingId(null); }} className="bg-[#878D94] hover:bg-[#607D8B] text-white px-3 py-1 text-sm rounded font-medium transition-colors cursor-pointer">Cancel</button>
-              <button type="button" onClick={() => { setShowModal(false); setShowEventModal(true); }} className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer">Next</button>
+              <button type="button" onClick={() => { if (checkTrainingDuplicates()) return; setShowModal(false); setShowEventModal(true); }} className="bg-[#2174C3] hover:bg-[#1A5E9D] text-white px-4 py-1 text-sm rounded font-medium transition-colors shadow cursor-pointer">Next</button>
             </div>
           </div>
         </div>
@@ -2025,6 +2138,14 @@ export default function TrainingMasterPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </MainLayout>
   );

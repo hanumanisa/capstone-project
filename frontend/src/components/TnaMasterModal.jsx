@@ -164,6 +164,15 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
     };
 
     const handleParticipantChange = (index, value) => {
+        if (value) {
+            const isDuplicate = participants.some((p, i) => i !== index && p.nik === value);
+            if (isDuplicate) {
+                const emp = employees.find(e => String(e.nik) === String(value));
+                const empName = emp ? emp.full_name : 'Employee';
+                setToast({ message: `${empName} already registered in this TNA`, type: 'error' });
+                return;
+            }
+        }
         const newP = [...participants];
         newP[index].nik = value;
         setParticipants(newP);
@@ -188,6 +197,16 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
         }
         if (!formData.created_by) {
             setToast({ message: 'Created By is required', type: 'error' });
+            return;
+        }
+
+        // Check for duplicate employee selections
+        const selectedNiks = participants.map(p => p.nik).filter(Boolean);
+        const duplicateNik = selectedNiks.find((nik, index) => selectedNiks.indexOf(nik) !== index);
+        if (duplicateNik) {
+            const emp = employees.find(e => String(e.nik) === String(duplicateNik));
+            const empName = emp ? emp.full_name : 'Employee';
+            setToast({ message: `${empName} already registered in this TNA`, type: 'error' });
             return;
         }
 
