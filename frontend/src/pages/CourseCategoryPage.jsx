@@ -105,12 +105,84 @@ const CourseCategoryPage = () => {
             category_name: item.category_name || '',
             description: item.description || '',
             is_active: item.is_active,
+            original_category_name: item.category_name || '',
         });
         setShowModal(true);
     };
 
     const handleSave = async () => {
         if (!isAdmin) return;
+
+        const getLevenshteinSimilarity = (s1, s2) => {
+            const len1 = s1.length, len2 = s2.length;
+            if (len1 === 0) return len2 === 0 ? 1.0 : 0.0;
+            if (len2 === 0) return 0.0;
+            const track = Array(len2 + 1).fill(null).map(() => Array(len1 + 1).fill(0));
+            for (let i = 0; i <= len1; i++) track[0][i] = i;
+            for (let j = 0; j <= len2; j++) track[j][0] = j;
+            for (let j = 1; j <= len2; j++) {
+                for (let i = 1; i <= len1; i++) {
+                    const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+                    track[j][i] = Math.min(
+                        track[j][i - 1] + 1,
+                        track[j - 1][i] + 1,
+                        track[j - 1][i - 1] + indicator
+                    );
+                }
+            }
+            const distance = track[len2][len1];
+            return 1.0 - (distance / Math.max(len1, len2));
+        };
+
+        const norm = (val) => val ? val.toString().replace(/[^a-zA-Z0-9]/g, '').toLowerCase() : '';
+        const normId = norm(formData.course_category_id);
+        const normName = norm(formData.category_name);
+
+        const isSimilar = (s1, s2) => {
+            if (s1 === s2) return true;
+            const sim = getLevenshteinSimilarity(s1, s2);
+            if (sim >= 0.70) return true;
+            if (s1.startsWith(s2) || s2.startsWith(s1) || s1.endsWith(s2) || s2.endsWith(s1)) {
+                if (Math.abs(s1.length - s2.length) <= 3) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        if (!isEdit) {
+            // Creation mode: code requires exact match, name uses similarity
+            const isDuplicate = categories.some(c => {
+                const existingId = norm(c.course_category_id);
+                const existingName = norm(c.category_name);
+                const codeMatch = normId && existingId && normId === existingId;
+                const nameMatch = normName && existingName && isSimilar(normName, existingName);
+                return codeMatch || nameMatch;
+            });
+
+            if (isDuplicate) {
+                setToast({ message: "course category already exist, input other category code and category name", type: 'error' });
+                return;
+            }
+        } else {
+            // Edit mode: only validate name duplicate if user actually changed category_name
+            const normOriginalName = norm(formData.original_category_name);
+            if (normName && normName !== normOriginalName) {
+                const isDuplicate = categories.some(c => {
+                    if (norm(c.course_category_id) === norm(formData.course_category_id)) {
+                        return false;
+                    }
+                    const existingName = norm(c.category_name);
+                    return normName && existingName && isSimilar(normName, existingName);
+                });
+
+                if (isDuplicate) {
+                    setToast({ message: "course category already exist, input other category code and category name", type: 'error' });
+                    return;
+                }
+            }
+        }
+
         setSaving(true);
         try {
             if (isEdit) {
@@ -134,11 +206,13 @@ const CourseCategoryPage = () => {
             if (err.response?.data) {
                 const data = err.response.data;
                 if (data.course_category_id) {
-                    errorMsg = "Course Category code already exist";
+                    errorMsg = Array.isArray(data.course_category_id) ? data.course_category_id[0] : data.course_category_id;
+                } else if (data.category_name) {
+                    errorMsg = Array.isArray(data.category_name) ? data.category_name[0] : data.category_name;
                 } else if (typeof data === 'string') {
                     errorMsg = data;
                 } else if (data.non_field_errors) {
-                    errorMsg = data.non_field_errors[0];
+                    errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
                 } else if (data.detail) {
                     errorMsg = data.detail;
                 } else if (Array.isArray(data)) {
@@ -150,6 +224,9 @@ const CourseCategoryPage = () => {
                         errorMsg = Array.isArray(val) ? val[0] : val;
                     }
                 }
+            }
+            if (typeof errorMsg === 'string' && errorMsg.includes("course category already exist")) {
+                errorMsg = "course category already exist, input other category code and category name";
             }
             setToast({ message: errorMsg, type: 'error' });
         } finally {

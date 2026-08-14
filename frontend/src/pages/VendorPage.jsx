@@ -116,6 +116,63 @@ const VendorPage = () => {
             setToast({ message: 'Vendor Code and Name are required!', type: 'error' });
             return;
         }
+
+        // Client-side duplicate check (ignores symbols, whitespace, and case, handles typos and prefix similarity)
+        const norm = (str) => (str || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const normId = norm(formData.vendor_id);
+        const normName = norm(formData.vendor_name);
+
+        const getLevenshteinSimilarity = (s1, s2) => {
+            const len1 = s1.length;
+            const len2 = s2.length;
+            if (len1 === 0) return len2 === 0 ? 1.0 : 0.0;
+            if (len2 === 0) return 0.0;
+
+            const track = Array(len2 + 1).fill(null).map(() => Array(len1 + 1).fill(null));
+            for (let i = 0; i <= len1; i += 1) track[0][i] = i;
+            for (let j = 0; j <= len2; j += 1) track[j][0] = j;
+
+            for (let j = 1; j <= len2; j += 1) {
+                for (let i = 1; i <= len1; i += 1) {
+                    const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+                    track[j][i] = Math.min(
+                        track[j][i - 1] + 1, // deletion
+                        track[j - 1][i] + 1, // insertion
+                        track[j - 1][i - 1] + indicator // substitution
+                    );
+                }
+            }
+            const distance = track[len2][len1];
+            return 1.0 - (distance / Math.max(len1, len2));
+        };
+
+        const isSimilar = (s1, s2) => {
+            if (s1 === s2) return true;
+            const sim = getLevenshteinSimilarity(s1, s2);
+            if (sim >= 0.70) return true;
+            if (s1.startsWith(s2) || s2.startsWith(s1) || s1.endsWith(s2) || s2.endsWith(s1)) {
+                if (Math.abs(s1.length - s2.length) <= 3) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        const isDuplicate = vendors.some(v => {
+            if (isEdit && norm(v.vendor_id) === norm(formData.vendor_id)) {
+                return false;
+            }
+            const existingId = norm(v.vendor_id);
+            const existingName = norm(v.vendor_name);
+            return (normId && existingId && isSimilar(normId, existingId)) ||
+                (normName && existingName && isSimilar(normName, existingName));
+        });
+
+        if (isDuplicate) {
+            setToast({ message: "vendor already exist, input other vendor code and vendor name", type: 'error' });
+            return;
+        }
+
         setSaving(true);
         try {
             if (isEdit) {
@@ -135,11 +192,13 @@ const VendorPage = () => {
             if (err.response?.data) {
                 const data = err.response.data;
                 if (data.vendor_id) {
-                    errorMsg = "Vendor code already exist";
+                    errorMsg = Array.isArray(data.vendor_id) ? data.vendor_id[0] : data.vendor_id;
+                } else if (data.vendor_name) {
+                    errorMsg = Array.isArray(data.vendor_name) ? data.vendor_name[0] : data.vendor_name;
                 } else if (typeof data === 'string') {
                     errorMsg = data;
                 } else if (data.non_field_errors) {
-                    errorMsg = data.non_field_errors[0];
+                    errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
                 } else if (data.detail) {
                     errorMsg = data.detail;
                 } else if (Array.isArray(data)) {
@@ -151,6 +210,9 @@ const VendorPage = () => {
                         errorMsg = Array.isArray(val) ? val[0] : val;
                     }
                 }
+            }
+            if (typeof errorMsg === 'string' && errorMsg.includes("vendor already exist")) {
+                errorMsg = "vendor already exist, input other vendor code and vendor name";
             }
             setToast({ message: errorMsg, type: 'error' });
         } finally {

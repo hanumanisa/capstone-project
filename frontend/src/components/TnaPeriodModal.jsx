@@ -39,6 +39,39 @@ const TnaPeriodModal = ({ isOpen, onClose, period, onSave, setToast }) => {
     if (!isOpen) return null;
 
     const handleSave = async () => {
+        if (!formData.period_code.trim()) {
+            setToast({ message: 'Period code is required', type: 'error' });
+            return;
+        }
+        if (!formData.year) {
+            setToast({ message: 'Year is required', type: 'error' });
+            return;
+        }
+        if (!formData.period_name.trim()) {
+            setToast({ message: 'Period name is required', type: 'error' });
+            return;
+        }
+        if (!formData.open_date || !formData.close_date) {
+            setToast({ message: 'Open date and Close date are required', type: 'error' });
+            return;
+        }
+
+        // Full Year Date Rule Check (1 Jan - 31 Dec)
+        const openStr = formData.open_date;
+        const closeStr = formData.close_date;
+        const yearVal = formData.year.toString();
+
+        const isJan1 = openStr.endsWith('-01-01');
+        const isDec31 = closeStr.endsWith('-12-31');
+
+        if (!isJan1 || !isDec31 || !openStr.startsWith(yearVal) || !closeStr.startsWith(yearVal)) {
+            setToast({
+                message: `Period date must be a full year (1 January ${yearVal} - 31 December ${yearVal})`,
+                type: 'error'
+            });
+            return;
+        }
+
         setSaving(true);
         try {
             const isEdit = !!period?.tna_period_id;
@@ -60,11 +93,17 @@ const TnaPeriodModal = ({ isOpen, onClose, period, onSave, setToast }) => {
             if (err.response?.data) {
                 const data = err.response.data;
                 if (data.period_code) {
-                    errorMsg = "Period code already exist";
+                    errorMsg = Array.isArray(data.period_code) ? data.period_code[0] : data.period_code;
+                } else if (data.period_name) {
+                    errorMsg = Array.isArray(data.period_name) ? data.period_name[0] : data.period_name;
+                } else if (data.year) {
+                    errorMsg = Array.isArray(data.year) ? data.year[0] : data.year;
+                } else if (data.open_date) {
+                    errorMsg = Array.isArray(data.open_date) ? data.open_date[0] : data.open_date;
                 } else if (typeof data === 'string') {
                     errorMsg = data;
                 } else if (data.non_field_errors) {
-                    errorMsg = data.non_field_errors[0];
+                    errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
                 } else if (data.detail) {
                     errorMsg = data.detail;
                 } else if (Array.isArray(data)) {

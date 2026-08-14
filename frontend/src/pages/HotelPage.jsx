@@ -5,6 +5,7 @@ import api from '../api/axios';
 import * as XLSX from 'xlsx';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
+import { norm, isSimilar } from '../utils/similarity';
 
 const ITEMS_PER_PAGE = 50;
 
@@ -121,6 +122,36 @@ const HotelPage = () => {
 
     const handleSave = async () => {
         if (!isAdmin) return;
+        if (!formData.hotel_id || !formData.hotel_name) {
+            setToast({ message: 'Venue Code and Name are required!', type: 'error' });
+            return;
+        }
+
+        // Client-side duplicate check (ignores symbols, whitespace, and case, handles typos and prefix similarity)
+        const normId = norm(formData.hotel_id);
+        const normName = norm(formData.hotel_name);
+        const normCity = norm(formData.hotel_city);
+
+        const isDuplicate = hotels.some(h => {
+            if (isEdit && norm(h.hotel_id) === norm(formData.hotel_id)) {
+                return false;
+            }
+            const existingId = norm(h.hotel_id);
+            const existingName = norm(h.hotel_name);
+            const existingCity = norm(h.hotel_city);
+
+            const isIdDuplicate = normId && existingId && normId === existingId;
+            const isNameAndCityDuplicate = (normName && existingName && isSimilar(normName, existingName)) &&
+                (normCity && existingCity && isSimilar(normCity, existingCity));
+
+            return isIdDuplicate || isNameAndCityDuplicate;
+        });
+
+        if (isDuplicate) {
+            setToast({ message: "venue already exist, input other venue code and venue name", type: 'error' });
+            return;
+        }
+
         setSaving(true);
         try {
             if (isEdit) {
@@ -140,11 +171,13 @@ const HotelPage = () => {
             if (err.response?.data) {
                 const data = err.response.data;
                 if (data.hotel_id) {
-                    errorMsg = "Venue ID already exist";
+                    errorMsg = Array.isArray(data.hotel_id) ? data.hotel_id[0] : data.hotel_id;
+                } else if (data.hotel_name) {
+                    errorMsg = Array.isArray(data.hotel_name) ? data.hotel_name[0] : data.hotel_name;
                 } else if (typeof data === 'string') {
                     errorMsg = data;
                 } else if (data.non_field_errors) {
-                    errorMsg = data.non_field_errors[0];
+                    errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
                 } else if (data.detail) {
                     errorMsg = data.detail;
                 } else if (Array.isArray(data)) {
@@ -156,6 +189,9 @@ const HotelPage = () => {
                         errorMsg = Array.isArray(val) ? val[0] : val;
                     }
                 }
+            }
+            if (typeof errorMsg === 'string' && errorMsg.includes("venue already exist")) {
+                errorMsg = "venue already exist, input other venue code and venue name";
             }
             setToast({ message: errorMsg, type: 'error' });
         } finally {

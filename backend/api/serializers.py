@@ -376,11 +376,92 @@ class CourseCategorySerializer(serializers.ModelSerializer):
     def get_course_count(self, obj):
         return obj.course_set.count()
 
-    def validate_course_category_id(self, value):
-        if self.instance is None:  # Only for creation
-            if CourseCategory.objects.filter(course_category_id=value).exists():
-                raise serializers.ValidationError("Course Category Code already exists.")
-        return value
+    def validate(self, data):
+        import re
+        def normalize(val):
+            if not val:
+                return ""
+            return re.sub(r'[^a-zA-Z0-9]', '', val).lower()
+
+        def get_levenshtein_similarity(s1, s2):
+            len1, len2 = len(s1), len(s2)
+            if len1 == 0:
+                return 1.0 if len2 == 0 else 0.0
+            if len2 == 0:
+                return 0.0
+
+            track = [[0] * (len1 + 1) for _ in range(len2 + 1)]
+            for i in range(len1 + 1):
+                track[0][i] = i
+            for j in range(len2 + 1):
+                track[j][0] = j
+
+            for j in range(1, len2 + 1):
+                for i in range(1, len1 + 1):
+                    indicator = 0 if s1[i - 1] == s2[j - 1] else 1
+                    track[j][i] = min(
+                        track[j][i - 1] + 1,
+                        track[j - 1][i] + 1,
+                        track[j - 1][i - 1] + indicator
+                    )
+
+            distance = track[len2][len1]
+            return 1.0 - (distance / max(len1, len2))
+
+        def is_similar(s1, s2):
+            if s1 == s2:
+                return True
+            sim = get_levenshtein_similarity(s1, s2)
+            if sim >= 0.70:
+                return True
+            if s1.startswith(s2) or s2.startswith(s1) or s1.endswith(s2) or s2.endswith(s1):
+                if abs(len(s1) - len(s2)) <= 3:
+                    return True
+            return False
+
+        queryset = CourseCategory.objects.all()
+
+        if self.instance is None:
+            # Creation mode
+            course_category_id = data.get('course_category_id')
+            category_name = data.get('category_name')
+
+            norm_id = normalize(course_category_id)
+            norm_name = normalize(category_name)
+
+            for existing in queryset:
+                existing_norm_id = normalize(existing.course_category_id)
+                existing_norm_name = normalize(existing.category_name)
+
+                # Code check must be exact match (norm_id == existing_norm_id)
+                if norm_id and existing_norm_id and norm_id == existing_norm_id:
+                    raise serializers.ValidationError({
+                        "course_category_id": "course category already exist, input course category code and other category name"
+                    })
+                # Name check uses similarity
+                if norm_name and existing_norm_name and is_similar(norm_name, existing_norm_name):
+                    raise serializers.ValidationError({
+                        "category_name": "course category already exist, input course category code and other category name"
+                    })
+        else:
+            # Edit mode
+            category_name = data.get('category_name')
+            if category_name is not None:
+                norm_new_name = normalize(category_name)
+                norm_old_name = normalize(self.instance.category_name)
+
+                # Only check duplicate if category_name has actually been modified
+                if norm_new_name != norm_old_name:
+                    for existing in queryset:
+                        if normalize(existing.course_category_id) == normalize(self.instance.course_category_id):
+                            continue
+                        existing_norm_name = normalize(existing.category_name)
+                        if norm_new_name and existing_norm_name and is_similar(norm_new_name, existing_norm_name):
+                            raise serializers.ValidationError({
+                                "category_name": "course category already exist, input course category code and other category name"
+                            })
+
+        return data
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -401,11 +482,92 @@ class CourseSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['created_at']
 
-    def validate_course_id(self, value):
-        if self.instance is None:  # Only for creation
-            if Course.objects.filter(course_id=value).exists():
-                raise serializers.ValidationError("Course Code already exists.")
-        return value
+    def validate(self, data):
+        import re
+        def normalize(val):
+            if not val:
+                return ""
+            return re.sub(r'[^a-zA-Z0-9]', '', val).lower()
+
+        def get_levenshtein_similarity(s1, s2):
+            len1, len2 = len(s1), len(s2)
+            if len1 == 0:
+                return 1.0 if len2 == 0 else 0.0
+            if len2 == 0:
+                return 0.0
+
+            track = [[0] * (len1 + 1) for _ in range(len2 + 1)]
+            for i in range(len1 + 1):
+                track[0][i] = i
+            for j in range(len2 + 1):
+                track[j][0] = j
+
+            for j in range(1, len2 + 1):
+                for i in range(1, len1 + 1):
+                    indicator = 0 if s1[i - 1] == s2[j - 1] else 1
+                    track[j][i] = min(
+                        track[j][i - 1] + 1,
+                        track[j - 1][i] + 1,
+                        track[j - 1][i - 1] + indicator
+                    )
+
+            distance = track[len2][len1]
+            return 1.0 - (distance / max(len1, len2))
+
+        def is_similar(s1, s2):
+            if s1 == s2:
+                return True
+            sim = get_levenshtein_similarity(s1, s2)
+            if sim >= 0.70:
+                return True
+            if s1.startswith(s2) or s2.startswith(s1) or s1.endswith(s2) or s2.endswith(s1):
+                if abs(len(s1) - len(s2)) <= 3:
+                    return True
+            return False
+
+        queryset = Course.objects.all()
+
+        if self.instance is None:
+            # Creation mode
+            course_id = data.get('course_id')
+            course_name = data.get('course_name')
+
+            norm_id = normalize(course_id)
+            norm_name = normalize(course_name)
+
+            for existing in queryset:
+                existing_norm_id = normalize(existing.course_id)
+                existing_norm_name = normalize(existing.course_name)
+
+                # Code check must be exact match (norm_id == existing_norm_id)
+                if norm_id and existing_norm_id and norm_id == existing_norm_id:
+                    raise serializers.ValidationError({
+                        "course_id": "course already exist, input other course code and course name"
+                    })
+                # Name check uses similarity
+                if norm_name and existing_norm_name and is_similar(norm_name, existing_norm_name):
+                    raise serializers.ValidationError({
+                        "course_name": "course already exist, input other course code and course name"
+                    })
+        else:
+            # Edit mode
+            course_name = data.get('course_name')
+            if course_name is not None:
+                norm_new_name = normalize(course_name)
+                norm_old_name = normalize(self.instance.course_name)
+
+                # Only check duplicate if course_name has actually been modified
+                if norm_new_name != norm_old_name:
+                    for existing in queryset:
+                        if normalize(existing.course_id) == normalize(self.instance.course_id):
+                            continue
+                        existing_norm_name = normalize(existing.course_name)
+                        if norm_new_name and existing_norm_name and is_similar(norm_new_name, existing_norm_name):
+                            raise serializers.ValidationError({
+                                "course_name": "course already exist, input other course code and course name"
+                            })
+
+        return data
 
 
 class VendorSerializer(serializers.ModelSerializer):
@@ -427,11 +589,78 @@ class VendorSerializer(serializers.ModelSerializer):
             for t in trainings
         ]
 
-    def validate_vendor_id(self, value):
-        if self.instance is None:  # Only for creation
-            if Vendor.objects.filter(vendor_id=value).exists():
-                raise serializers.ValidationError("Vendor Code already exists.")
-        return value
+    def validate(self, data):
+        vendor_id = data.get('vendor_id')
+        if vendor_id is None and self.instance:
+            vendor_id = self.instance.vendor_id
+            
+        vendor_name = data.get('vendor_name')
+        if vendor_name is None and self.instance:
+            vendor_name = self.instance.vendor_name
+
+        import re
+        def normalize(val):
+            if not val:
+                return ""
+            return re.sub(r'[^a-zA-Z0-9]', '', val).lower()
+
+        norm_id = normalize(vendor_id)
+        norm_name = normalize(vendor_name)
+
+        def get_levenshtein_similarity(s1, s2):
+            len1, len2 = len(s1), len(s2)
+            if len1 == 0:
+                return 1.0 if len2 == 0 else 0.0
+            if len2 == 0:
+                return 0.0
+                
+            track = [[0] * (len1 + 1) for _ in range(len2 + 1)]
+            for i in range(len1 + 1):
+                track[0][i] = i
+            for j in range(len2 + 1):
+                track[j][0] = j
+                
+            for j in range(1, len2 + 1):
+                for i in range(1, len1 + 1):
+                    indicator = 0 if s1[i - 1] == s2[j - 1] else 1
+                    track[j][i] = min(
+                        track[j][i - 1] + 1,
+                        track[j - 1][i] + 1,
+                        track[j - 1][i - 1] + indicator
+                    )
+                    
+            distance = track[len2][len1]
+            return 1.0 - (distance / max(len1, len2))
+
+        def is_similar(s1, s2):
+            if s1 == s2:
+                return True
+            sim = get_levenshtein_similarity(s1, s2)
+            if sim >= 0.70:
+                return True
+            if s1.startswith(s2) or s2.startswith(s1) or s1.endswith(s2) or s2.endswith(s1):
+                if abs(len(s1) - len(s2)) <= 3:
+                    return True
+            return False
+
+        queryset = Vendor.objects.all()
+        for existing in queryset:
+            if self.instance and normalize(existing.pk) == normalize(self.instance.pk):
+                continue
+            existing_norm_id = normalize(existing.vendor_id)
+            existing_norm_name = normalize(existing.vendor_name)
+            
+            if norm_id and existing_norm_id and is_similar(norm_id, existing_norm_id):
+                raise serializers.ValidationError({
+                    "vendor_id": "vendor already exist, input vendor code and other vendor name"
+                })
+            if norm_name and existing_norm_name and is_similar(norm_name, existing_norm_name):
+                raise serializers.ValidationError({
+                    "vendor_name": "vendor already exist, input vendor code and other vendor name"
+                })
+
+        return data
+
 
 
 class TnaPeriodSerializer(serializers.ModelSerializer):
@@ -439,6 +668,122 @@ class TnaPeriodSerializer(serializers.ModelSerializer):
         model = TnaPeriod
         fields = '__all__'
         read_only_fields = ['created_at']
+
+    def validate(self, data):
+        import re
+        def normalize(val):
+            if not val:
+                return ""
+            return re.sub(r'[^a-zA-Z0-9]', '', str(val)).lower()
+
+        def get_levenshtein_similarity(s1, s2):
+            len1, len2 = len(s1), len(s2)
+            if len1 == 0:
+                return 1.0 if len2 == 0 else 0.0
+            if len2 == 0:
+                return 0.0
+
+            track = [[0] * (len1 + 1) for _ in range(len2 + 1)]
+            for i in range(len1 + 1):
+                track[0][i] = i
+            for j in range(1, len2 + 1):
+                track[j][0] = j
+
+            for j in range(1, len2 + 1):
+                for i in range(1, len1 + 1):
+                    indicator = 0 if s1[i - 1] == s2[j - 1] else 1
+                    track[j][i] = min(
+                        track[j][i - 1] + 1,
+                        track[j - 1][i] + 1,
+                        track[j - 1][i - 1] + indicator
+                    )
+
+            distance = track[len2][len1]
+            return 1.0 - (distance / max(len1, len2))
+
+        def is_similar(s1, s2):
+            if s1 == s2:
+                return True
+            sim = get_levenshtein_similarity(s1, s2)
+            if sim >= 0.70:
+                return True
+            if s1.startswith(s2) or s2.startswith(s1) or s1.endswith(s2) or s2.endswith(s1):
+                if abs(len(s1) - len(s2)) <= 3:
+                    return True
+            return False
+
+        year = data.get('year')
+        if year is None and self.instance:
+            year = self.instance.year
+
+        open_date = data.get('open_date')
+        if open_date is None and self.instance:
+            open_date = self.instance.open_date
+
+        close_date = data.get('close_date')
+        if close_date is None and self.instance:
+            close_date = self.instance.close_date
+
+        # 1. Full Year Date Check (Open date must be Jan 1 and Close date must be Dec 31)
+        if open_date and close_date:
+            open_str = str(open_date)
+            close_str = str(close_date)
+
+            is_jan_1 = open_str.endswith('-01-01')
+            is_dec_31 = close_str.endswith('-12-31')
+
+            if not (is_jan_1 and is_dec_31):
+                raise serializers.ValidationError({
+                    "open_date": "Period date must be full year (1 January - 31 December)"
+                })
+
+            if year:
+                expected_open = f"{year}-01-01"
+                expected_close = f"{year}-12-31"
+                if open_str != expected_open or close_str != expected_close:
+                    raise serializers.ValidationError({
+                        "open_date": f"Date for year {year} must be {expected_open} to {expected_close}"
+                    })
+
+        # 2. Duplicate & Similarity Checks against existing periods
+        period_code = data.get('period_code')
+        if period_code is None and self.instance:
+            period_code = self.instance.period_code
+
+        period_name = data.get('period_name')
+        if period_name is None and self.instance:
+            period_name = self.instance.period_name
+
+        norm_code = normalize(period_code)
+        norm_name = normalize(period_name)
+
+        queryset = TnaPeriod.objects.all()
+        for existing in queryset:
+            if self.instance and existing.pk == self.instance.pk:
+                continue
+
+            # Year uniqueness
+            if year and existing.year == int(year):
+                raise serializers.ValidationError({
+                    "year": f"TNA Period for year {year} already exist"
+                })
+
+            existing_norm_code = normalize(existing.period_code)
+            existing_norm_name = normalize(existing.period_name)
+
+            # Period code check
+            if norm_code and existing_norm_code and is_similar(norm_code, existing_norm_code):
+                raise serializers.ValidationError({
+                    "period_code": "Period code already exist or writing is too similar"
+                })
+
+            # Period name check
+            if norm_name and existing_norm_name and is_similar(norm_name, existing_norm_name):
+                raise serializers.ValidationError({
+                    "period_name": "Period name already exist or writing is too similar"
+                })
+
+        return data
 
 
 class TnaMasterSerializer(serializers.ModelSerializer):
@@ -456,6 +801,56 @@ class TnaMasterSerializer(serializers.ModelSerializer):
             'group_name', 'created_by', 'creator_name', 'created_at'
         ]
         read_only_fields = ['created_at']
+
+    def validate(self, data):
+        tna_id = data.get('tna_id')
+        if tna_id is None and self.instance:
+            tna_id = self.instance.tna_id
+
+        tna_period = data.get('tna_period')
+        if tna_period is None and self.instance:
+            tna_period = self.instance.tna_period
+
+        course_category = data.get('course_category')
+        if course_category is None and self.instance:
+            course_category = self.instance.course_category
+
+        course = data.get('course')
+        if course is None and self.instance:
+            course = self.instance.course
+
+        group_name = data.get('group_name')
+        if group_name is None and self.instance:
+            group_name = self.instance.group_name
+
+        # 1. TNA ID uniqueness check for creation
+        if self.instance is None and tna_id:
+            if TnaMaster.objects.filter(tna_id__iexact=tna_id).exists():
+                raise serializers.ValidationError({
+                    "tna_id": "TNA ID already exist"
+                })
+
+        # 2. Check (tna_period, course_category, course, group_name) combination
+        period_pk = tna_period.pk if hasattr(tna_period, 'pk') else tna_period
+        cat_pk = course_category.pk if hasattr(course_category, 'pk') else course_category
+        course_pk = course.pk if hasattr(course, 'pk') else course
+
+        if period_pk and cat_pk and course_pk and group_name is not None:
+            queryset = TnaMaster.objects.filter(
+                tna_period_id=period_pk,
+                course_category_id=cat_pk,
+                course_id=course_pk,
+                group_name=group_name
+            )
+            if self.instance:
+                queryset = queryset.exclude(pk=self.instance.pk)
+
+            if queryset.exists():
+                raise serializers.ValidationError({
+                    "non_field_errors": "TNA with the same Period, Category, and Course already exist"
+                })
+
+        return data
 
 
 class TnaParticipantSerializer(serializers.ModelSerializer):
@@ -511,11 +906,84 @@ class HotelSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['created_at']
 
-    def validate_hotel_id(self, value):
-        if self.instance is None:  # Only for creation
-            if Hotel.objects.filter(hotel_id=value).exists():
-                raise serializers.ValidationError("Hotel ID already exists.")
-        return value
+    def validate(self, data):
+        hotel_id = data.get('hotel_id')
+        if hotel_id is None and self.instance:
+            hotel_id = self.instance.hotel_id
+            
+        hotel_name = data.get('hotel_name')
+        if hotel_name is None and self.instance:
+            hotel_name = self.instance.hotel_name
+
+        hotel_city = data.get('hotel_city')
+        if hotel_city is None and self.instance:
+            hotel_city = self.instance.hotel_city
+
+        import re
+        def normalize(val):
+            if not val:
+                return ""
+            return re.sub(r'[^a-zA-Z0-9]', '', val).lower()
+
+        norm_id = normalize(hotel_id)
+        norm_name = normalize(hotel_name)
+        norm_city = normalize(hotel_city)
+
+        def get_levenshtein_similarity(s1, s2):
+            len1, len2 = len(s1), len(s2)
+            if len1 == 0:
+                return 1.0 if len2 == 0 else 0.0
+            if len2 == 0:
+                return 0.0
+                
+            track = [[0] * (len1 + 1) for _ in range(len2 + 1)]
+            for i in range(len1 + 1):
+                track[0][i] = i
+            for j in range(len2 + 1):
+                track[j][0] = j
+                
+            for j in range(1, len2 + 1):
+                for i in range(1, len1 + 1):
+                    indicator = 0 if s1[i - 1] == s2[j - 1] else 1
+                    track[j][i] = min(
+                        track[j][i - 1] + 1,
+                        track[j - 1][i] + 1,
+                        track[j - 1][i - 1] + indicator
+                    )
+                    
+            distance = track[len2][len1]
+            return 1.0 - (distance / max(len1, len2))
+
+        def is_similar(s1, s2):
+            if s1 == s2:
+                return True
+            sim = get_levenshtein_similarity(s1, s2)
+            if sim >= 0.70:
+                return True
+            if s1.startswith(s2) or s2.startswith(s1) or s1.endswith(s2) or s2.endswith(s1):
+                if abs(len(s1) - len(s2)) <= 3:
+                    return True
+            return False
+
+        queryset = Hotel.objects.all()
+        for existing in queryset:
+            if self.instance and normalize(existing.pk) == normalize(self.instance.pk):
+                continue
+            existing_norm_id = normalize(existing.hotel_id)
+            existing_norm_name = normalize(existing.hotel_name)
+            existing_norm_city = normalize(existing.hotel_city)
+            
+            if norm_id and existing_norm_id and norm_id == existing_norm_id:
+                raise serializers.ValidationError({
+                    "hotel_id": "venue already exist, input other venue code and venue name"
+                })
+            if norm_name and existing_norm_name and is_similar(norm_name, existing_norm_name):
+                if norm_city and existing_norm_city and is_similar(norm_city, existing_norm_city):
+                    raise serializers.ValidationError({
+                        "hotel_name": "venue already exist, input other venue code and venue name"
+                    })
+
+        return data
 
 
 class TrainingMasterSerializer(serializers.ModelSerializer):

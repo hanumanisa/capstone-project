@@ -170,6 +170,18 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
     };
 
     const handleSave = async () => {
+        if (!formData.tna_period) {
+            setToast({ message: 'TNA Period is required', type: 'error' });
+            return;
+        }
+        if (!formData.course_category) {
+            setToast({ message: 'Course Category is required', type: 'error' });
+            return;
+        }
+        if (!formData.course) {
+            setToast({ message: 'Course is required', type: 'error' });
+            return;
+        }
         if (!formData.tna_id) {
             setToast({ message: 'TNA ID is required', type: 'error' });
             return;
@@ -177,6 +189,44 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
         if (!formData.created_by) {
             setToast({ message: 'Created By is required', type: 'error' });
             return;
+        }
+
+        const isUpdate = !!tnaRecord?.tna_id;
+
+        // Pre-validation duplicate check
+        try {
+            // Check TNA ID
+            if (!isUpdate) {
+                try {
+                    const resMasterById = await api.get(`/api/tna-master/${formData.tna_id}/`);
+                    if (resMasterById.data && resMasterById.data.tna_id) {
+                        setToast({ message: "TNA ID already exist", type: 'error' });
+                        return;
+                    }
+                } catch (e) {
+                    // ID does not exist, proceed
+                }
+            }
+
+            // Check Period + Course + Group combination
+            const resCombo = await api.get('/api/tna-master/', {
+                params: {
+                    period: formData.tna_period,
+                    course: formData.course,
+                    group_name: formData.group_name
+                }
+            });
+            if (Array.isArray(resCombo.data)) {
+                const existingCombo = resCombo.data.find(
+                    m => (!isUpdate || m.tna_id !== tnaRecord.tna_id)
+                );
+                if (existingCombo) {
+                    setToast({ message: "TNA with the same Period, Category, and Course already exist", type: 'error' });
+                    return;
+                }
+            }
+        } catch (e) {
+            console.error('Error pre-validating TNA Master:', e);
         }
 
         setSaving(true);
@@ -209,7 +259,6 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                 }
             }
 
-            const isUpdate = !!tnaRecord?.tna_id;
             setToast({
                 message: isUpdate ? 'TNA Update succesfully' : 'TNA Added succesfully',
                 type: 'success'
@@ -221,12 +270,17 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
             let errorMsg = 'TNA Added Unsuccesfully';
             if (err.response?.data) {
                 const data = err.response.data;
-                if (typeof data === 'string') errorMsg = data;
-                else if (data.non_field_errors) errorMsg = data.non_field_errors[0];
-                else if (data.detail) errorMsg = data.detail;
-                else if (Array.isArray(data)) errorMsg = data[0];
-                else {
-                    // Try to find the first error message in any field
+                if (data.tna_id) {
+                    errorMsg = Array.isArray(data.tna_id) ? data.tna_id[0] : data.tna_id;
+                } else if (data.non_field_errors) {
+                    errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
+                } else if (typeof data === 'string') {
+                    errorMsg = data;
+                } else if (data.detail) {
+                    errorMsg = data.detail;
+                } else if (Array.isArray(data)) {
+                    errorMsg = data[0];
+                } else {
                     const firstKey = Object.keys(data)[0];
                     if (firstKey) {
                         const val = data[firstKey];
@@ -258,6 +312,21 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
         }
     };
 
+    // Filter Categories based on selected TNA Period year
+    const selectedPeriodObj = periods.find(p => String(p.tna_period_id) === String(formData.tna_period));
+    const yearSuffix = selectedPeriodObj?.year ? String(selectedPeriodObj.year).slice(-2) : '';
+
+    const filteredCategories = formData.tna_period
+        ? categories.filter(c => !yearSuffix || c.course_category_id.includes(yearSuffix))
+        : [];
+
+    // Filter Courses based on selected Category
+    const filteredCourses = formData.course_category
+        ? courses
+            .filter(c => c.course_category === formData.course_category)
+            .sort((a, b) => (a.course_name || '').localeCompare(b.course_name || ''))
+        : [];
+
     const administratorList = Array.isArray(employees) ? employees.filter(e => e.role === 'Administrator') : [];
 
     return (
@@ -286,7 +355,12 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                             <div className="w-[20%] p-4 border-r border-gray-50">
                                 <select
                                     value={formData.tna_period}
-                                    onChange={(e) => setFormData({ ...formData, tna_period: e.target.value })}
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        tna_period: e.target.value,
+                                        course_category: '',
+                                        course: ''
+                                    })}
                                     className="w-full border-none rounded-lg p-3 bg-gray-100 focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black outline-none"
                                 >
                                     <option value="">Select Period</option>
@@ -298,11 +372,16 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                             <div className="w-[20%] p-4 border-r border-gray-50">
                                 <select
                                     value={formData.course_category}
-                                    onChange={(e) => setFormData({ ...formData, course_category: e.target.value })}
-                                    className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        course_category: e.target.value,
+                                        course: ''
+                                    })}
+                                    disabled={!formData.tna_period}
+                                    className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <option value="">Select Category</option>
-                                    {categories.map(c => (
+                                    {filteredCategories.map(c => (
                                         <option key={c.course_category_id} value={c.course_category_id}>{c.category_name}</option>
                                     ))}
                                 </select>
@@ -311,16 +390,13 @@ const TnaMasterModal = ({ isOpen, onClose, tnaRecord, onSave, setToast }) => {
                                 <select
                                     value={formData.course}
                                     onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                                    className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black"
+                                    disabled={!formData.course_category}
+                                    className="w-full border-none rounded-lg p-3 bg-gray-100 outline-none focus:ring-2 focus:ring-[#2174C3] transition-all text-sm text-black disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <option value="">Select Course</option>
-                                    {courses
-                                        .filter(c => !formData.course_category || c.course_category === formData.course_category)
-                                        .sort((a, b) => (a.course_name || '').localeCompare(b.course_name || ''))
-                                        .map(c => (
-                                            <option key={c.course_id} value={c.course_id}>{c.course_name}</option>
-                                        ))
-                                    }
+                                    {filteredCourses.map(c => (
+                                        <option key={c.course_id} value={c.course_id}>{c.course_name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="w-[10%] p-4 border-r border-gray-50">

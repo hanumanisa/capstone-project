@@ -335,7 +335,14 @@ export default function TrainingEvaluationPage() {
 
     /** Submits a new Evaluation Template header */
     const submitTemplate = async () => {
-        if (!tplName.trim() || tplNameDuplicate) return;
+        if (!tplTrainingId) {
+            setToast({ message: 'Please select a training first', type: 'error' });
+            return;
+        }
+        if (!tplName.trim()) {
+            setToast({ message: 'Template Name is required', type: 'error' });
+            return;
+        }
 
         try {
             const typeValue = tplType === 'L1_Templates' ? 'L1' : 'L2';
@@ -354,10 +361,29 @@ export default function TrainingEvaluationPage() {
             setTplDesc('');
             setTplTrainingId('');
             setTplDeadline('');
+            setToast({ message: 'Evaluation template added successfully', type: 'success' });
             loadForms();
         } catch (err) {
-            alert('Failed to save template');
             console.error(err);
+            let errorMsg = 'Failed to save template';
+            if (err.response?.data) {
+                const data = err.response.data;
+                if (typeof data === 'string') errorMsg = data;
+                else if (data.non_field_errors) errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
+                else if (data.detail) errorMsg = data.detail;
+                else if (Array.isArray(data)) errorMsg = data[0];
+                else {
+                    const firstKey = Object.keys(data)[0];
+                    if (firstKey) {
+                        const val = data[firstKey];
+                        errorMsg = Array.isArray(val) ? val[0] : val;
+                    }
+                }
+            }
+            if (typeof errorMsg === 'string' && errorMsg.includes("template already exist")) {
+                errorMsg = "template already exist, input other training and template type";
+            }
+            setToast({ message: errorMsg, type: 'error' });
         }
     };
 
@@ -407,7 +433,7 @@ export default function TrainingEvaluationPage() {
     const saveEvaluation = async () => {
         if (isSaving) return;
         if (!selectedTraining) {
-            alert('Please select a training first');
+            setToast({ message: 'Please select a training first', type: 'error' });
             return;
         }
         const trainingIdx = allCards.findIndex(c => `${c.title} - ${c.trainingTitle}` === selectedTraining);
@@ -472,8 +498,26 @@ export default function TrainingEvaluationPage() {
             setTimeout(() => setShowSuccessMessage(false), 3000);
             loadForms();
         } catch (err) {
-            alert('Failed to save evaluation');
             console.error(err);
+            let errorMsg = 'Failed to save evaluation';
+            if (err.response?.data) {
+                const data = err.response.data;
+                if (typeof data === 'string') errorMsg = data;
+                else if (data.non_field_errors) errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
+                else if (data.detail) errorMsg = data.detail;
+                else if (Array.isArray(data)) errorMsg = data[0];
+                else {
+                    const firstKey = Object.keys(data)[0];
+                    if (firstKey) {
+                        const val = data[firstKey];
+                        errorMsg = Array.isArray(val) ? val[0] : val;
+                    }
+                }
+            }
+            if (typeof errorMsg === 'string' && errorMsg.includes("template already exist")) {
+                errorMsg = "template already exist, input other training and template type";
+            }
+            setToast({ message: errorMsg, type: 'error' });
         } finally {
             setIsSaving(false);
         }

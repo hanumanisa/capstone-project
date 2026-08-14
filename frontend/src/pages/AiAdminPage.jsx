@@ -317,7 +317,7 @@ const AiAdminPage = () => {
                                     <input type="date" value={exportDates.to} onChange={(e) => setExportDates({ ...exportDates, to: e.target.value })} className="w-full bg-white border border-[#B7E4CB] rounded-lg p-1 text-[10px]" />
                                 </div>
                             </div>
-                            <button onClick={exportToExcel} className="w-full bg-[#1D6F42] text-white text-[11px] font-bold py-2.5 rounded-lg hover:bg-[#155230] transition-all shadow-sm tracking-wide">Export</button>
+                            <button onClick={exportToExcel} className="w-full bg-[#1D6F42] text-white text-[11px] font-bold py-2.5 rounded-lg hover:bg-[#155230] transition-all shadow-sm tracking-wide">Download Report</button>
                             {exportStatus && <p className="text-center text-[#1D6F42] text-[10px] mt-2 font-medium">{exportStatus}</p>}
                         </div>
                     </section>

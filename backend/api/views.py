@@ -8,7 +8,7 @@ from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q, Count, Sum, Case, When, F
-from rest_framework import viewsets, permissions, exceptions, filters, status
+from rest_framework import viewsets, permissions, serializers, exceptions, filters, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -861,6 +861,32 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         data = request.data
+        form_name = data.get('form_name', '')
+        form_type = data.get('form_type', '')
+        training_id = data.get('training_id')
+
+        import re
+        norm_name = re.sub(r'[^a-zA-Z0-9]', '', form_name.lower().replace('[l1]', '').replace('[l2]', '')) if form_name else ''
+
+        # 1. Crucial check: Same Training and Same Form Type
+        if training_id and form_type:
+            if EvaluationForm.objects.filter(training_master_id=training_id, form_type=form_type).exists():
+                raise serializers.ValidationError({
+                    "non_field_errors": "template already exist, input other training and template type"
+                })
+
+        # 2. Check Name + Form Type + Training
+        if norm_name and form_type:
+            existing_forms = EvaluationForm.objects.filter(form_type=form_type)
+            if training_id:
+                existing_forms = existing_forms.filter(training_master_id=training_id)
+            for existing in existing_forms:
+                existing_norm = re.sub(r'[^a-zA-Z0-9]', '', existing.form_name.lower().replace('[l1]', '').replace('[l2]', '')) if existing.form_name else ''
+                if norm_name and existing_norm and norm_name == existing_norm:
+                    raise serializers.ValidationError({
+                        "non_field_errors": "template already exist, input other training and template type"
+                    })
+
         now = timezone.now()
         form = EvaluationForm.objects.create(
             form_name=data.get('form_name'),
@@ -904,7 +930,33 @@ class EvaluationFormViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         form = self.get_object()
         data = request.data
-        
+
+        form_name = data.get('form_name', form.form_name)
+        form_type = data.get('form_type', form.form_type)
+        training_id = data.get('training_id', form.training_master_id)
+
+        import re
+        norm_name = re.sub(r'[^a-zA-Z0-9]', '', form_name.lower().replace('[l1]', '').replace('[l2]', '')) if form_name else ''
+
+        # 1. Crucial check: Same Training and Same Form Type
+        if training_id and form_type:
+            if EvaluationForm.objects.filter(training_master_id=training_id, form_type=form_type).exclude(pk=form.pk).exists():
+                raise serializers.ValidationError({
+                    "non_field_errors": "template already exist, input other training and template type"
+                })
+
+        # 2. Check Name + Form Type + Training
+        if norm_name and form_type:
+            existing_forms = EvaluationForm.objects.filter(form_type=form_type).exclude(pk=form.pk)
+            if training_id:
+                existing_forms = existing_forms.filter(training_master_id=training_id)
+            for existing in existing_forms:
+                existing_norm = re.sub(r'[^a-zA-Z0-9]', '', existing.form_name.lower().replace('[l1]', '').replace('[l2]', '')) if existing.form_name else ''
+                if norm_name and existing_norm and norm_name == existing_norm:
+                    raise serializers.ValidationError({
+                        "non_field_errors": "template already exist, input other training and template type"
+                    })
+
         # Update main form info
         if 'form_name' in data:
             form.form_name = data['form_name']
